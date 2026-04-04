@@ -63,12 +63,22 @@ export interface AutoCommitConfig {
   maxPendingBytes?: number;
 }
 
+export interface PayloadLimitsConfig {
+  maxDepth?: number;
+  maxKeyBytes?: number;
+  maxStringBytes?: number;
+  maxKeysPerObject?: number;
+  maxTotalKeys?: number;
+  maxTotalBytes?: number;
+}
+
 export interface DatastoreCommonConfig {
   key?: DatastoreKeyDefinition<unknown, unknown>;
   capacity?: CapacityConfig;
   autoCommit?: AutoCommitConfig;
   duplicateKeys?: DuplicateKeyPolicy;
   skipPayloadValidation?: boolean;
+  payloadLimits?: PayloadLimitsConfig;
 }
 
 export interface FileTargetByPathConfig {

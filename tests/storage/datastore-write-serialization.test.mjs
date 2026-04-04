@@ -161,6 +161,116 @@ test('D1: concurrent puts with same key under replace policy produce exactly one
 // B1: pendingInit Single-Flight (race condition fix)
 // =============================================================================
 
+// =============================================================================
+// D1: replaceById and deleteByIds Write Serialization
+// =============================================================================
+
+test('D1: concurrent replaceById operations maintain consistency', async () => {
+  const { Datastore } = await loadStorageModule();
+  const datastore = new Datastore({ key: createStringKeyDefinition() });
+
+  // Seed records
+  const N = 10;
+  for (let i = 0; i < N; i++) {
+    await datastore.put({ key: `item-${i}`, payload: { value: i } });
+  }
+
+  const records = await datastore.getAll();
+  assert.equal(records.length, N);
+
+  // Concurrently replace all records
+  const replacements = records.map((r) =>
+    datastore.replaceById(r._id, { replaced: true, seq: r.payload.value * 100 }),
+  );
+  const results = await Promise.all(replacements);
+
+  // All replacements must have succeeded
+  assert.ok(results.every((r) => r === true), 'All concurrent replaceById must return true');
+
+  // Each record must have the replaced payload (old fields gone)
+  for (let i = 0; i < N; i++) {
+    const found = await datastore.get(`item-${i}`);
+    assert.equal(found.length, 1);
+    assert.equal(found[0].payload.replaced, true, `item-${i} must have replaced=true`);
+    assert.equal(found[0].payload.seq, i * 100, `item-${i} must have seq=${i * 100}`);
+    assert.equal(found[0].payload.value, undefined, `item-${i} must not retain old value field`);
+  }
+
+  await datastore.close();
+});
+
+test('D1: concurrent deleteByIds operations maintain consistency', async () => {
+  const { Datastore } = await loadStorageModule();
+  const datastore = new Datastore({ key: createStringKeyDefinition() });
+
+  // Seed records
+  const N = 20;
+  for (let i = 0; i < N; i++) {
+    await datastore.put({ key: `item-${i}`, payload: { v: i } });
+  }
+
+  const records = await datastore.getAll();
+  assert.equal(records.length, N);
+
+  // Split ids into two batches and delete concurrently
+  const batch1 = records.filter((_, i) => i % 2 === 0).map((r) => r._id);
+  const batch2 = records.filter((_, i) => i % 2 === 1).map((r) => r._id);
+
+  const [count1, count2] = await Promise.all([
+    datastore.deleteByIds(batch1),
+    datastore.deleteByIds(batch2),
+  ]);
+
+  // All records must be deleted (serialized, so no conflicts)
+  assert.equal(count1 + count2, N, `Total deleted must be ${N}`);
+
+  const remaining = await datastore.count();
+  assert.equal(remaining, 0, 'No records must remain');
+
+  await datastore.close();
+});
+
+test('D1: concurrent replaceById and deleteByIds do not corrupt state', async () => {
+  const { Datastore } = await loadStorageModule();
+  const datastore = new Datastore({
+    key: createStringKeyDefinition(),
+    capacity: { maxSize: '64KB', policy: 'strict' },
+  });
+
+  // Seed records
+  const N = 10;
+  for (let i = 0; i < N; i++) {
+    await datastore.put({ key: `item-${i}`, payload: { data: 'x'.repeat(50) } });
+  }
+
+  const records = await datastore.getAll();
+  const replaceTargets = records.slice(0, 5);
+  const deleteTargets = records.slice(5).map((r) => r._id);
+
+  // Fire replaceById and deleteByIds concurrently
+  const ops = [
+    ...replaceTargets.map((r) =>
+      datastore.replaceById(r._id, { data: 'y'.repeat(30) }),
+    ),
+    datastore.deleteByIds(deleteTargets),
+  ];
+
+  await Promise.all(ops);
+
+  const count = await datastore.count();
+  assert.equal(count, 5, 'Only replaced records must remain');
+
+  // Verify capacity is not corrupted: should be able to insert more
+  await datastore.put({ key: 'extra', payload: { data: 'small' } });
+  assert.equal(await datastore.count(), 6);
+
+  await datastore.close();
+});
+
+// =============================================================================
+// B1: pendingInit Single-Flight (race condition fix)
+// =============================================================================
+
 test('B1: concurrent operations during async init all succeed and init runs exactly once', async () => {
   const { Datastore } = await loadStorageModule();
 

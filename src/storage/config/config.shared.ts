@@ -3,8 +3,13 @@ import type {
   AutoCommitConfig,
   CapacityConfig,
   DuplicateKeyPolicy,
+  PayloadLimitsConfig,
 } from '../../types.js';
 import type { CapacityState, FileAutoCommitState } from '../backend/types.js';
+import {
+  DEFAULT_PAYLOAD_LIMITS,
+  type ResolvedPayloadLimits,
+} from '../../validation/payload.js';
 
 const BYTE_SIZE_REGEX = /^(\d+)(B|KB|MB|GB)$/;
 const BYTE_SIZE_MULTIPLIER: Readonly<Record<string, number>> = {
@@ -159,5 +164,38 @@ export const parseDuplicateKeyConfig = (
     );
   }
   return duplicateKeys;
+};
+
+const PAYLOAD_LIMIT_FIELD_NAMES: readonly (keyof PayloadLimitsConfig)[] = [
+  'maxDepth',
+  'maxKeyBytes',
+  'maxStringBytes',
+  'maxKeysPerObject',
+  'maxTotalKeys',
+  'maxTotalBytes',
+];
+
+export const parsePayloadLimitsConfig = (
+  payloadLimits?: PayloadLimitsConfig,
+): ResolvedPayloadLimits => {
+  if (payloadLimits === undefined) {
+    return DEFAULT_PAYLOAD_LIMITS;
+  }
+
+  const resolved = { ...DEFAULT_PAYLOAD_LIMITS };
+  for (const field of PAYLOAD_LIMIT_FIELD_NAMES) {
+    const value = payloadLimits[field];
+    if (value === undefined) {
+      continue;
+    }
+    if (!Number.isSafeInteger(value) || value <= 0) {
+      throw new ConfigurationError(
+        `payloadLimits.${field} must be a positive safe integer.`,
+      );
+    }
+    resolved[field] = value;
+  }
+
+  return resolved;
 };
 

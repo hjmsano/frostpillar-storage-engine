@@ -25,6 +25,7 @@ export type {
   KeyedRecord,
   LocalStorageConfig,
   OpfsConfig,
+  PayloadLimitsConfig,
   PersistedRecord,
   RecordPayload,
   SyncStorageConfig,

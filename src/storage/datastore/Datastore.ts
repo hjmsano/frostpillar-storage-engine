@@ -21,15 +21,17 @@ import type {
 } from '../../types.js';
 import { emitAutoCommitErrorToListeners } from '../backend/autoCommit.js';
 import { AsyncMutex } from '../backend/asyncMutex.js';
-import { validateAndNormalizePayload } from '../../validation/payload.js';
+import { validateAndNormalizePayload, type ResolvedPayloadLimits } from '../../validation/payload.js';
 import { enforceCapacityPolicy } from '../backend/capacity.js';
 import { resolveCapacityState } from '../backend/capacityResolver.js';
 import { estimateKeySizeBytes, estimateRecordSizeBytes } from '../backend/encoding.js';
-import { parseDuplicateKeyConfig } from '../config/config.shared.js';
+import { parseDuplicateKeyConfig, parsePayloadLimitsConfig } from '../config/config.shared.js';
 import { DatastoreLifecycle } from './datastoreLifecycle.js';
 import {
   deleteRecordById,
+  deleteRecordByIds,
   getPublicRecordById,
+  replaceRecordById,
   updateRecordById,
 } from './mutationById.js';
 import { closeDatastore } from './datastoreClose.js';
@@ -52,6 +54,7 @@ export class Datastore {
   private readonly duplicateKeyPolicy: DuplicateKeyPolicy;
   private readonly capacityState: CapacityState | null;
   private readonly skipPayloadValidation: boolean;
+  private readonly payloadLimits: ResolvedPayloadLimits;
   private readonly lifecycle: DatastoreLifecycle;
   private readonly writeMutex: AsyncMutex;
   private currentSizeBytes: number;
@@ -70,6 +73,7 @@ export class Datastore {
     });
     this.capacityState = resolveCapacityState(config);
     this.skipPayloadValidation = config.skipPayloadValidation === true;
+    this.payloadLimits = parsePayloadLimitsConfig(config.payloadLimits);
     this.lifecycle = new DatastoreLifecycle();
     this.writeMutex = new AsyncMutex();
     this.currentSizeBytes = 0;
@@ -208,7 +212,7 @@ export class Datastore {
           }
           const normalizedPayload = this.skipPayloadValidation
             ? record.payload
-            : validateAndNormalizePayload(record.payload).payload;
+            : validateAndNormalizePayload(record.payload, this.payloadLimits).payload;
           this.keyIndex.put(normalizedKey, { payload: normalizedPayload, sizeBytes: 0 });
         }
         return;
@@ -314,8 +318,35 @@ export class Datastore {
         capacityState: this.capacityState,
         currentSizeBytes: this.currentSizeBytes,
         skipPayloadValidation: this.skipPayloadValidation,
+        payloadLimits: this.payloadLimits,
       });
       if (!result.updated) {
+        return false;
+      }
+
+      this.currentSizeBytes = result.currentSizeBytes;
+      await this.backendController?.handleRecordAppended(
+        result.durabilitySignalBytes,
+      );
+      return true;
+    });
+  }
+
+  public replaceById(
+    id: EntryId,
+    payload: RecordPayload,
+  ): Promise<boolean> {
+    return this.runWithOpenExclusive(async (): Promise<boolean> => {
+      const result = replaceRecordById({
+        keyIndex: this.keyIndex,
+        id,
+        payload,
+        capacityState: this.capacityState,
+        currentSizeBytes: this.currentSizeBytes,
+        skipPayloadValidation: this.skipPayloadValidation,
+        payloadLimits: this.payloadLimits,
+      });
+      if (!result.replaced) {
         return false;
       }
 
@@ -343,6 +374,30 @@ export class Datastore {
         result.durabilitySignalBytes,
       );
       return true;
+    });
+  }
+
+  public deleteByIds(ids: EntryId[]): Promise<number> {
+    return this.runWithOpenExclusive(async (): Promise<number> => {
+      if (ids.length === 0) {
+        return 0;
+      }
+
+      const result = deleteRecordByIds({
+        keyIndex: this.keyIndex,
+        ids,
+        currentSizeBytes: this.currentSizeBytes,
+      });
+
+      if (result.deletedCount === 0) {
+        return 0;
+      }
+
+      this.currentSizeBytes = result.currentSizeBytes;
+      await this.backendController?.handleRecordAppended(
+        result.durabilitySignalBytes,
+      );
+      return result.deletedCount;
     });
   }
 
@@ -393,7 +448,7 @@ export class Datastore {
       const payload = record.payload;
       return { payload, encodedBytes: estimateRecordSizeBytes(normalizedKey, payload) };
     }
-    const validationResult = validateAndNormalizePayload(record.payload);
+    const validationResult = validateAndNormalizePayload(record.payload, this.payloadLimits);
     const keyBytes = estimateKeySizeBytes(normalizedKey);
     return { payload: validationResult.payload, encodedBytes: validationResult.sizeBytes + keyBytes };
   }
@@ -413,7 +468,7 @@ export class Datastore {
     if (this.capacityState === null && this.backendController === null) {
       const normalizedPayload = this.skipPayloadValidation
         ? record.payload
-        : validateAndNormalizePayload(record.payload).payload;
+        : validateAndNormalizePayload(record.payload, this.payloadLimits).payload;
       this.keyIndex.put(normalizedKey, { payload: normalizedPayload, sizeBytes: 0 });
       return;
     }
