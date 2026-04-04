@@ -31,7 +31,7 @@ Trigger policy:
 
 - workflow name MUST be `CI`.
 - trigger MUST be `push`.
-- `release` and `release/*` branches MUST be excluded.
+- `main/*` branches MUST be excluded.
 - tags matching `v*` MUST be excluded.
 
 Permission policy:
