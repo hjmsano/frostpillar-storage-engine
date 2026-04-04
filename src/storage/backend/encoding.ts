@@ -108,7 +108,8 @@ export const estimateObjectSizeBytes = (value: unknown): number => {
       const obj = value as Record<string, unknown>;
       let size = 2; // { }
       let visibleCount = 0;
-      for (const k of Object.keys(obj)) {
+      for (const k in obj) {
+        if (!Object.hasOwn(obj, k)) continue;
         const v = obj[k];
         // JSON.stringify omits undefined values
         if (v === undefined) {
