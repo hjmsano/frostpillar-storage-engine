@@ -20,9 +20,13 @@ export const cleanupGenerationChunks = (
       return;
     }
     for (let i = 0; i < knownChunkCount; i += 1) {
-      state.adapter.removeItem(
-        chunkKey(state.keyPrefix, state.databaseKey, generation, i),
-      );
+      try {
+        state.adapter.removeItem(
+          chunkKey(state.keyPrefix, state.databaseKey, generation, i),
+        );
+      } catch {
+        // best-effort cleanup; continue deleting remaining chunks
+      }
     }
     return;
   }
@@ -34,7 +38,11 @@ export const cleanupGenerationChunks = (
   for (let i = 0; i < state.maxChunks; i += 1) {
     const key = chunkKey(state.keyPrefix, state.databaseKey, generation, i);
     if (state.adapter.getItem(key) !== null) {
-      state.adapter.removeItem(key);
+      try {
+        state.adapter.removeItem(key);
+      } catch {
+        // best-effort cleanup; continue deleting remaining chunks
+      }
     }
   }
 };

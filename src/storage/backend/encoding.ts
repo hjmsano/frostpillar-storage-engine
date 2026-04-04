@@ -18,10 +18,13 @@ const computeUtf8ByteLengthJs = (value: string): number => {
         bytes += 4;
         i++; // skip low surrogate
       } else {
-        bytes += 3; // lone high surrogate → U+FFFD replacement (3 bytes)
+        // Lone high surrogate: Node.js encodes as 3-byte CESU-8 (not U+FFFD).
+        // For JSON-serialized byte counts, use estimateJsonStringBytes() instead.
+        bytes += 3;
       }
     } else if (code >= 0xdc00 && code <= 0xdfff) {
-      bytes += 3; // lone low surrogate → U+FFFD replacement (3 bytes)
+      // Lone low surrogate — same platform-dependent caveat as above.
+      bytes += 3;
     } else {
       bytes += 3;
     }

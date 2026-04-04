@@ -62,7 +62,7 @@ interface LoadedFileSnapshot {
 
 const ensureNonNegativeSafeInteger = (value: unknown, field: string): number => {
   if (!Number.isSafeInteger(value) || typeof value !== 'number' || value < 0) {
-    throw new PageCorruptionError(`${field} must be a non-negative safe integer.`);
+    throw new PageCorruptionError(`${field} must be a non-negative safe integer, got ${String(value)}.`);
   }
 
   return value;
