@@ -28,13 +28,10 @@ export const isQuotaBrowserError = (error: unknown): boolean => {
   if (!(error instanceof Error)) {
     return false;
   }
+  // Known browser patterns: "QuotaExceededError", "quota_bytes", "quota_bytes_per_item", "max_items".
+  // "quota" subsumes all quota_* variants; "max_items" is the only independent pattern.
   const normalized = `${error.name}:${error.message}`.toLowerCase();
-  return (
-    normalized.includes('quota') ||
-    normalized.includes('max_items') ||
-    normalized.includes('quota_bytes') ||
-    normalized.includes('quota_bytes_per_item')
-  );
+  return normalized.includes('quota') || normalized.includes('max_items');
 };
 
 export const validateSyncStorageCommitQuota = (
