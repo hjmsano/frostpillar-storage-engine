@@ -29,6 +29,11 @@ export const parseLocalStorageConfig = (
       'localStorage.maxChunks must be a positive safe integer.',
     );
   }
+  if (maxChunkChars * maxChunks > Number.MAX_SAFE_INTEGER) {
+    throw new ConfigurationError(
+      'localStorage.maxChunkChars * localStorage.maxChunks product exceeds Number.MAX_SAFE_INTEGER.',
+    );
+  }
 
   return { keyPrefix, databaseKey, maxChunkChars, maxChunks };
 };

@@ -147,7 +147,16 @@ export const loadIndexedDBSnapshot = async (
   if (typeof treeJSON !== 'object' || treeJSON === null || Array.isArray(treeJSON)) {
     throw new PageCorruptionError('treeJSON must be a non-null plain object.');
   }
-  const currentSizeBytes = computeUtf8ByteLength(JSON.stringify(treeJSON));
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(treeJSON);
+  } catch (err) {
+    throw new PageCorruptionError(
+      'Failed to serialize BTree snapshot for size estimation.',
+      { cause: err },
+    );
+  }
+  const currentSizeBytes = computeUtf8ByteLength(serialized);
 
   return { treeJSON, currentSizeBytes, commitId };
 };

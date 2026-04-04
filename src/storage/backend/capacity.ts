@@ -44,5 +44,8 @@ export const enforceCapacityPolicy = (
     nextSizeBytes -= evictedBytes;
   }
 
+  // Underflow is not expected: evictedBytes are always > 0 (enforced above) and
+  // derived from sizeBytes accumulated on insert. Math.max is a defensive guard
+  // against cumulative estimation rounding inconsistencies.
   return Math.max(0, nextSizeBytes);
 };

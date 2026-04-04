@@ -97,6 +97,9 @@ export const updateRecordById = (
     throw new IndexCorruptionError('Record index state is inconsistent during updateById.');
   }
 
+  // Underflow is not possible: encodedDelta = newSize - oldSize, and oldSize was
+  // accumulated into currentSizeBytes on insertion. Math.max is purely defensive
+  // against any future estimation inconsistency.
   return {
     updated: true,
     currentSizeBytes: Math.max(0, options.currentSizeBytes + encodedDelta),
@@ -130,6 +133,9 @@ export const deleteRecordById = (
 
   const freedBytes = removedFromIndex.value.sizeBytes;
 
+  // Underflow is not possible: freedBytes was accumulated into currentSizeBytes
+  // on insertion and has not been modified since. Math.max is purely defensive
+  // against any future estimation inconsistency.
   return {
     deleted: true,
     currentSizeBytes: Math.max(

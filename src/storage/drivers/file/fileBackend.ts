@@ -94,6 +94,12 @@ const verifyLockOwnership = (lockPath: string): void => {
 };
 
 const acquireFileLock = (lockPath: string): void => {
+  // Normal lifecycle: releaseFileLock() removes the lock file on close(), so
+  // lock files do not accumulate under normal operation. A lock file persisting
+  // after this process exits signals abnormal termination (crash / SIGKILL).
+  // That stale file is recovered lazily by tryRecoverStaleLock() the next time
+  // any process attempts to acquire the same datastore path — so no proactive
+  // sweep is needed and none is performed here.
   try {
     writeLockFile(lockPath);
   } catch (error) {

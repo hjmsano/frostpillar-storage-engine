@@ -251,6 +251,9 @@ export class Datastore {
             freedBytes += entry.value.sizeBytes;
           }
           totalRemoved += this.keyIndex.deleteRange(normalizedKey, normalizedKey);
+          // Underflow is not possible here: freedBytes is the sum of sizeBytes values
+          // that were accumulated into currentSizeBytes on insertion. Math.max is
+          // purely defensive against any future estimation inconsistency.
           this.currentSizeBytes = Math.max(0, this.currentSizeBytes - freedBytes);
         }
         return totalRemoved;
@@ -438,6 +441,9 @@ export class Datastore {
     if (this.duplicateKeyPolicy === 'replace') {
       const existing = this.keyIndex.findFirst(normalizedKey);
       if (existing !== null) {
+        // Underflow is not possible here: existing.value.sizeBytes was added to
+        // currentSizeBytes on insert and has not been modified since. Math.max is
+        // purely defensive against any future estimation inconsistency.
         this.currentSizeBytes = Math.max(0, this.currentSizeBytes - existing.value.sizeBytes);
         this.keyIndex.removeById(existing.entryId);
       }
@@ -458,7 +464,10 @@ export class Datastore {
     );
 
     this.keyIndex.put(normalizedKey, persistedRecord);
-    this.currentSizeBytes = Math.max(0, this.currentSizeBytes + encodedBytes);
+    // encodedBytes is always >= 0, so this addition cannot produce a negative result.
+    // Math.max is omitted here intentionally: the guard would be misleading, implying
+    // a negative sum is possible when it is not.
+    this.currentSizeBytes = this.currentSizeBytes + encodedBytes;
     await this.backendController?.handleRecordAppended(encodedBytes);
   }
 
@@ -497,6 +506,10 @@ export class Datastore {
       this.keyIndex.put(normalizedKey, persistedRecord);
     }
 
+    // effectiveTotalDelta may be negative (net shrink from replacements), but
+    // cannot bring currentSizeBytes below 0 because actualReplaced is bounded
+    // by the bytes already present in currentSizeBytes. Math.max is purely
+    // defensive against any future estimation inconsistency.
     this.currentSizeBytes = Math.max(0, this.currentSizeBytes + effectiveTotalDelta);
     await this.backendController?.handleRecordAppended(totalEncodedBytes);
   }
@@ -559,6 +572,9 @@ export class Datastore {
 
     const removedCount = this.keyIndex.deleteRange(normalizedKey, normalizedKey);
 
+    // Underflow is not possible here: freedBytes is the sum of sizeBytes values
+    // that were accumulated into currentSizeBytes on insertion. Math.max is
+    // purely defensive against any future estimation inconsistency.
     this.currentSizeBytes = Math.max(0, this.currentSizeBytes - freedBytes);
     await this.backendController?.handleRecordAppended(freedBytes);
     return removedCount;
