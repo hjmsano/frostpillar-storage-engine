@@ -9,6 +9,7 @@ Last Updated: 2026-03-31
 This spec defines internal performance optimizations targeting hot-path allocation and redundant B-tree traversals.
 
 In scope:
+
 - B-tree lookup consolidation in `putSingle()` write path
 - non-allocating UTF-8 byte length computation
 - TextEncoder instance consolidation
@@ -16,6 +17,7 @@ In scope:
 - config parser constant hoisting
 
 Out of scope:
+
 - public API changes (none; all optimizations are internal)
 - backend format changes (none; on-disk/storage formats are unchanged)
 - query-language or query-API changes (handled by `frostpillar-query-interface`)
@@ -89,10 +91,10 @@ if (replacedBytes > 0 && this.keyIndex.findFirst(normalizedKey) === null) {
 
 ### 3.4 Affected Files
 
-| File | Change |
-|------|--------|
-| `src/storage/btree/recordKeyIndexBTree.ts` | Add `findFirst()` method |
-| `src/storage/datastore/Datastore.ts` | Refactor `putSingle()` to use single `findFirst()` call |
+| File                                       | Change                                                  |
+| ------------------------------------------ | ------------------------------------------------------- |
+| `src/storage/btree/recordKeyIndexBTree.ts` | Add `findFirst()` method                                |
+| `src/storage/datastore/Datastore.ts`       | Refactor `putSingle()` to use single `findFirst()` call |
 
 ## 4. P1-B: Non-Allocating UTF-8 Byte Length
 
@@ -136,10 +138,10 @@ For JSON strings (predominantly ASCII in typical storage-engine payloads), this 
 
 ### 4.4 Affected Files
 
-| File | Change |
-|------|--------|
+| File                              | Change                                                                              |
+| --------------------------------- | ----------------------------------------------------------------------------------- |
 | `src/storage/backend/encoding.ts` | Replace `utf8ByteLength` with `computeUtf8ByteLength`; export for reuse by backends |
-| `src/validation/payload.ts` | Replace `utf8ByteLength` with `computeUtf8ByteLength` |
+| `src/validation/payload.ts`       | Replace `utf8ByteLength` with `computeUtf8ByteLength`                               |
 
 ## 5. P1-C: Consolidate TextEncoder Instances
 
@@ -169,10 +171,10 @@ After P1-B is applied:
 
 ### 5.4 Affected Files
 
-| File | Change |
-|------|--------|
-| `src/storage/backend/encoding.ts` | Remove `TextEncoder` instance |
-| `src/validation/payload.ts` | Remove `UTF8_ENCODER` export; use `computeUtf8ByteLength` |
+| File                                                  | Change                                                          |
+| ----------------------------------------------------- | --------------------------------------------------------------- |
+| `src/storage/backend/encoding.ts`                     | Remove `TextEncoder` instance                                   |
+| `src/validation/payload.ts`                           | Remove `UTF8_ENCODER` export; use `computeUtf8ByteLength`       |
 | `src/storage/drivers/syncStorage/syncStorageQuota.ts` | Create own `TextEncoder` instead of importing from `payload.ts` |
 
 ## 6. P2-A: Eliminate Re-Stringify at Load Time
@@ -201,7 +203,9 @@ Re-serializing a parsed JSON object produces a throwaway string (potentially lar
 
 ```typescript
 // Before
-const currentSizeBytes = utf8Encoder.encode(JSON.stringify(treeJSON)).byteLength;
+const currentSizeBytes = utf8Encoder.encode(
+  JSON.stringify(treeJSON),
+).byteLength;
 
 // After
 const currentSizeBytes = computeUtf8ByteLength(JSON.stringify(treeJSON));
@@ -211,10 +215,10 @@ This still re-stringifies (unavoidable for IndexedDB) but eliminates the `Uint8A
 
 ### 6.4 Affected Files
 
-| File | Change |
-|------|--------|
-| `src/storage/drivers/file/fileBackendSnapshot.ts` | Return `treeJsonSizeBytes` from `loadAndValidateGenerationFile()`; remove re-stringify in `loadFileSnapshot` |
-| `src/storage/drivers/IndexedDB/indexedDBBackend.ts` | Use `computeUtf8ByteLength()` instead of `TextEncoder.encode().byteLength` |
+| File                                                | Change                                                                                                       |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/storage/drivers/file/fileBackendSnapshot.ts`   | Return `treeJsonSizeBytes` from `loadAndValidateGenerationFile()`; remove re-stringify in `loadFileSnapshot` |
+| `src/storage/drivers/IndexedDB/indexedDBBackend.ts` | Use `computeUtf8ByteLength()` instead of `TextEncoder.encode().byteLength`                                   |
 
 ## 7. P4: Hoist Config Parser Constants
 
@@ -257,8 +261,8 @@ Reference these constants inside `normalizeByteSizeInput()` and `parseFrequencyS
 
 ### 7.4 Affected Files
 
-| File | Change |
-|------|--------|
+| File                                  | Change                                               |
+| ------------------------------------- | ---------------------------------------------------- |
 | `src/storage/config/config.shared.ts` | Hoist regex and multiplier constants to module level |
 
 ## 8. Invariants
@@ -278,6 +282,7 @@ All optimizations MUST preserve existing behavior exactly. The following invaria
 ### 9.1 P1-A: `findFirst()` Adapter and `putSingle()` Refactor
 
 New unit tests in B-tree adapter test file:
+
 - `findFirst()` returns `BTreeEntry` when key exists (single entry).
 - `findFirst()` returns `BTreeEntry` for first match when duplicate keys exist (`'allow'` policy).
 - `findFirst()` returns `null` when key does not exist.
@@ -288,6 +293,7 @@ Existing `putSingle()` tests cover all three duplicate key policies. Verify they
 ### 9.2 P1-B: Non-Allocating UTF-8 Byte Length
 
 New unit tests for `computeUtf8ByteLength`:
+
 - ASCII-only string returns correct byte count.
 - 2-byte characters (e.g., `\u00e9`, Latin Extended) return correct byte count.
 - 3-byte characters (e.g., CJK ideographs `\u4e16`) return correct byte count.
@@ -296,6 +302,7 @@ New unit tests for `computeUtf8ByteLength`:
 - Empty string returns 0.
 
 Cross-validation test:
+
 - For a representative set of strings, assert `computeUtf8ByteLength(s) === new TextEncoder().encode(s).byteLength`.
 
 ### 9.3 P1-C: TextEncoder Consolidation
@@ -312,7 +319,7 @@ No new tests. Pure refactor of constant placement. Existing config parsing tests
 
 ### 9.6 Regression
 
-Run full test suite (`npm test`) to confirm all existing tests pass. No test modifications expected.
+Run full test suite (`pnpm test`) to confirm all existing tests pass. No test modifications expected.
 
 ## 10. P3-A: Inline Size Estimation into Validation
 
@@ -330,20 +337,20 @@ Callers compute: `validationResult.sizeBytes + computeUtf8ByteLength(JSON.string
 
 ### 10.3 Size Estimation Constants
 
-| Primitive | Estimation Bytes | JSON Actual | Notes |
-|-----------|-----------------|-------------|-------|
-| string | JSON-escaped UTF-8 + 2 (quotes) via `estimateJsonStringBytes` | exact | Accounts for JSON escaping (`\"`, `\\`, `\n`, control chars) |
-| number | 8 | 1–21 | Conservative worst-case for typical numbers |
-| boolean | 5 | 4–5 (`true`/`false`) | Worst-case (`false`) |
-| null | 4 | 4 | Exact match |
+| Primitive | Estimation Bytes                                              | JSON Actual          | Notes                                                        |
+| --------- | ------------------------------------------------------------- | -------------------- | ------------------------------------------------------------ |
+| string    | JSON-escaped UTF-8 + 2 (quotes) via `estimateJsonStringBytes` | exact                | Accounts for JSON escaping (`\"`, `\\`, `\n`, control chars) |
+| number    | 8                                                             | 1–21                 | Conservative worst-case for typical numbers                  |
+| boolean   | 5                                                             | 4–5 (`true`/`false`) | Worst-case (`false`)                                         |
+| null      | 4                                                             | 4                    | Exact match                                                  |
 
 ### 10.4 Affected Files
 
-| File | Change |
-|------|--------|
-| `src/validation/payload.ts` | Return `PayloadValidationResult`; use `estimateJsonStringBytes` for JSON-escape-aware size estimation |
-| `src/storage/datastore/Datastore.ts` | Use validation sizeBytes instead of `estimateRecordSizeBytes` |
-| `src/storage/datastore/mutationById.ts` | Same pattern for `updateRecordById` |
+| File                                    | Change                                                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `src/validation/payload.ts`             | Return `PayloadValidationResult`; use `estimateJsonStringBytes` for JSON-escape-aware size estimation |
+| `src/storage/datastore/Datastore.ts`    | Use validation sizeBytes instead of `estimateRecordSizeBytes`                                         |
+| `src/storage/datastore/mutationById.ts` | Same pattern for `updateRecordById`                                                                   |
 
 ## 11. P3-B: Lightweight Comparator Clamping in Hot Path
 
@@ -374,6 +381,7 @@ BTree operations no longer throw `IndexCorruptionError` for non-integer/non-fini
 ### 13.2 Problem
 
 For in-memory datastores without capacity config (the primary "ephemeral, tiny, fast" use case), every `put()` pays for:
+
 1. `JSON.stringify(normalizedKey)` — allocates a string.
 2. `computeUtf8ByteLength()` on the serialized key — a loop over the string.
 3. `enforceCapacityPolicy()` function call — returns immediately but still called.
@@ -384,6 +392,7 @@ For in-memory datastores without capacity config (the primary "ephemeral, tiny, 
 Add a fast-path branch at the top of `putSingle()`:
 
 **When `capacityState === null` AND `backendController === null`** (pure in-memory, no capacity):
+
 - Skip key-byte computation entirely.
 - Skip `enforceCapacityPolicy()` call.
 - Skip `currentSizeBytes` accumulation.
@@ -391,6 +400,7 @@ Add a fast-path branch at the top of `putSingle()`:
 - Proceed directly to validation → B-tree insertion.
 
 **When `capacityState === null` AND `backendController !== null`** (durable, no capacity):
+
 - Compute `encodedBytes` (needed for `handleRecordAppended()` auto-commit threshold).
 - Skip `enforceCapacityPolicy()` call.
 - Skip `currentSizeBytes` tracking (never read without capacity).
@@ -399,8 +409,8 @@ Add a fast-path branch at the top of `putSingle()`:
 
 ### 13.4 Affected Files
 
-| File | Change |
-|------|--------|
+| File                                 | Change                                |
+| ------------------------------------ | ------------------------------------- |
 | `src/storage/datastore/Datastore.ts` | Add fast-path branch in `putSingle()` |
 
 ## 14. P5-B: Batch Capacity Pre-Check in `putMany()`
@@ -422,6 +432,7 @@ Replace the `putSingle()` loop in `putMany()` with policy-aware batch logic:
 **No capacity (`capacityState === null`)**: loop records calling fast-path `putSingle()` (P5-A). No batch overhead.
 
 **Strict policy**:
+
 1. Compute `remainingCapacity = capacityState.maxSizeBytes - currentSizeBytes` once.
 2. **Prepare phase**: for each record, validate payload, compute `encodedBytes`, compute `capacityDelta` (accounting for replace), accumulate `totalBatchDelta`. If any single record exceeds `maxSizeBytes`, throw `QuotaExceededError`. If `totalBatchDelta > remainingCapacity`, throw `QuotaExceededError` — no partial insertion.
 3. **Insert phase**: for each prepared record, insert into B-tree.
@@ -438,8 +449,8 @@ This makes strict-policy `putMany()` all-or-nothing: either all records fit, or 
 
 ### 14.5 Affected Files
 
-| File | Change |
-|------|--------|
+| File                                 | Change                                             |
+| ------------------------------------ | -------------------------------------------------- |
 | `src/storage/datastore/Datastore.ts` | Refactor `putMany()` with policy-aware batch logic |
 
 ## 15. P5 Invariants
@@ -489,15 +500,18 @@ Add `skipPayloadValidation?: boolean` to `DatastoreConfig` (default `false`).
 When `skipPayloadValidation` is `true`:
 
 **`putSingle()` behavior:**
+
 - Skip `validateAndNormalizePayload()` entirely.
 - Store `record.payload` by reference (no deep clone).
 - For **in-memory no-capacity** (P5-A): `sizeBytes = 0`. No size computation.
 - For **capacity or durable backends**: compute `encodedBytes` via `estimateRecordSizeBytes(normalizedKey, payload)`.
 
 **`prepareBatchRecord()` behavior (P5-B strict batch):**
+
 - Same skip logic as `putSingle()`.
 
 **`updateById()` behavior:**
+
 - Skip `validateAndNormalizePayload()` on the merged payload.
 - Store merged payload directly (no clone, no validation).
 - Compute size via `estimateRecordSizeBytes()` when capacity is configured.
@@ -512,11 +526,11 @@ When `skipPayloadValidation` is `true`:
 
 ### 17.5 Affected Files
 
-| File | Change |
-|------|--------|
-| `src/types.ts` | Add `skipPayloadValidation?: boolean` to `DatastoreCommonConfig` |
-| `src/storage/datastore/Datastore.ts` | Branch on `skipPayloadValidation` in `putSingle()` and `prepareBatchRecord()` |
-| `src/storage/datastore/mutationById.ts` | Branch on `skipPayloadValidation` in `buildMergedPayload()` |
+| File                                    | Change                                                                        |
+| --------------------------------------- | ----------------------------------------------------------------------------- |
+| `src/types.ts`                          | Add `skipPayloadValidation?: boolean` to `DatastoreCommonConfig`              |
+| `src/storage/datastore/Datastore.ts`    | Branch on `skipPayloadValidation` in `putSingle()` and `prepareBatchRecord()` |
+| `src/storage/datastore/mutationById.ts` | Branch on `skipPayloadValidation` in `buildMergedPayload()`                   |
 
 ### 17.6 Test Plan
 
@@ -535,6 +549,7 @@ When `skipPayloadValidation` is `true`:
 ### 18.2 Problem
 
 Every read operation pays for:
+
 1. A microtask tick from `await` — forces at least one event loop iteration even when the operation is synchronous.
 2. `Promise` allocation + GC pressure from `Promise.resolve()`.
 
@@ -569,8 +584,8 @@ Public read methods remain `async` in their signatures for API backward compatib
 
 ### 18.4 Affected Files
 
-| File | Change |
-|------|--------|
+| File                                 | Change                                            |
+| ------------------------------------ | ------------------------------------------------- |
 | `src/storage/datastore/Datastore.ts` | Refactor `runWithOpen()` to synchronous fast-path |
 
 ## 19. P8: Platform-Native UTF-8 Byte Length
@@ -586,15 +601,19 @@ V8's `Buffer.byteLength(str, 'utf8')` is implemented in C++ and is 3-10x faster 
 ### 19.3 Solution
 
 Use platform-conditional implementation:
+
 - **Node.js**: `Buffer.byteLength(value, 'utf8')` — single native call.
 - **Browser fallback**: retain the existing hand-rolled loop.
 
 ```typescript
-const hasBuffer = typeof Buffer !== 'undefined' && typeof Buffer.byteLength === 'function';
+const hasBuffer =
+  typeof Buffer !== 'undefined' && typeof Buffer.byteLength === 'function';
 
 export const computeUtf8ByteLength: (value: string) => number = hasBuffer
   ? (value: string): number => Buffer.byteLength(value, 'utf8')
-  : (value: string): number => { /* existing hand-rolled loop */ };
+  : (value: string): number => {
+      /* existing hand-rolled loop */
+    };
 ```
 
 ### 19.4 Invariants
@@ -605,8 +624,8 @@ export const computeUtf8ByteLength: (value: string) => number = hasBuffer
 
 ### 19.5 Affected Files
 
-| File | Change |
-|------|--------|
+| File                              | Change                                       |
+| --------------------------------- | -------------------------------------------- |
 | `src/storage/backend/encoding.ts` | Platform-conditional `computeUtf8ByteLength` |
 
 ## 20. P9: Structural Size Estimation (No JSON.stringify)
@@ -627,16 +646,16 @@ Add `estimateObjectSizeBytes(value)` — a structural walker that accumulates JS
 
 ```typescript
 export const estimateObjectSizeBytes = (value: unknown): number => {
-  if (value === null) return 4;          // "null"
-  if (typeof value === 'string') return computeUtf8ByteLength(value) + 2;  // quotes
+  if (value === null) return 4; // "null"
+  if (typeof value === 'string') return computeUtf8ByteLength(value) + 2; // quotes
   if (typeof value === 'number') return numberByteLength(value);
-  if (typeof value === 'boolean') return value ? 4 : 5;  // "true"/"false"
+  if (typeof value === 'boolean') return value ? 4 : 5; // "true"/"false"
   if (typeof value === 'object') {
     const entries = Object.entries(value as Record<string, unknown>);
-    let bytes = 2;  // braces
+    let bytes = 2; // braces
     for (let i = 0; i < entries.length; i++) {
-      if (i > 0) bytes += 1;  // comma
-      bytes += computeUtf8ByteLength(entries[i][0]) + 3;  // key: quotes + colon
+      if (i > 0) bytes += 1; // comma
+      bytes += computeUtf8ByteLength(entries[i][0]) + 3; // key: quotes + colon
       bytes += estimateObjectSizeBytes(entries[i][1]);
     }
     return bytes;
@@ -649,7 +668,7 @@ For numbers, use actual stringified length rather than worst-case estimate:
 
 ```typescript
 const numberByteLength = (value: number): number => {
-  if (value === 0) return 1;                // "0"
+  if (value === 0) return 1; // "0"
   if (Number.isInteger(value)) {
     // Floor(log10(abs(value))) + 1 + (sign ? 1 : 0)
     const abs = Math.abs(value);
@@ -664,11 +683,21 @@ const numberByteLength = (value: number): number => {
 Then replace `estimateRecordSizeBytes`:
 
 ```typescript
-export const estimateRecordSizeBytes = (key: unknown, payload: RecordPayload): number => {
+export const estimateRecordSizeBytes = (
+  key: unknown,
+  payload: RecordPayload,
+): number => {
   // Structural equivalent of: computeUtf8ByteLength(JSON.stringify([key, { payload }]))
   // [key,{"payload":value}] = "[" + key + "," + '{"payload":' + value + "}" + "]"
-  return 1 + estimateObjectSizeBytes(key) + 1 +
-         12 + estimateObjectSizeBytes(payload) + 1 + 1;
+  return (
+    1 +
+    estimateObjectSizeBytes(key) +
+    1 +
+    12 +
+    estimateObjectSizeBytes(payload) +
+    1 +
+    1
+  );
 };
 ```
 
@@ -678,8 +707,8 @@ Breaking down: `[` + key_json + `,` + `{"payload":` + payload_json + `}` + `]` =
 
 ### 20.4 Affected Files
 
-| File | Change |
-|------|--------|
+| File                              | Change                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------- |
 | `src/storage/backend/encoding.ts` | Add `estimateObjectSizeBytes`, `numberByteLength`; refactor `estimateRecordSizeBytes` |
 
 ## 21. P10: Unify resolvePayload Paths
@@ -687,6 +716,7 @@ Breaking down: `[` + key_json + `,` + `{"payload":` + payload_json + `}` + `]` =
 ### 21.1 Current Behavior
 
 `resolvePayload()` in `Datastore.ts` has two paths:
+
 - `skipPayloadValidation=true`: calls `estimateRecordSizeBytes(normalizedKey, payload)` (full JSON.stringify before P9).
 - `skipPayloadValidation=false`: calls `validateAndNormalizePayload()` (returns `sizeBytes` via structural estimation) then adds `computeUtf8ByteLength(JSON.stringify(normalizedKey))` for the key portion.
 
@@ -705,15 +735,16 @@ export const estimateKeySizeBytes = (key: unknown): number => {
 ```
 
 Update `resolvePayload`:
+
 - `skipPayloadValidation=true`: use `estimateObjectSizeBytes(payload) + estimateKeySizeBytes(key) + JSON_ROOT_WRAPPER_OVERHEAD` (from P9).
 - `skipPayloadValidation=false`: use `validationResult.sizeBytes + estimateKeySizeBytes(normalizedKey)` (replaces `computeUtf8ByteLength(JSON.stringify(normalizedKey))`).
 
 ### 21.4 Affected Files
 
-| File | Change |
-|------|--------|
-| `src/storage/backend/encoding.ts` | Export `estimateKeySizeBytes` |
-| `src/storage/datastore/Datastore.ts` | Use `estimateKeySizeBytes` in `resolvePayload` |
+| File                                    | Change                                             |
+| --------------------------------------- | -------------------------------------------------- |
+| `src/storage/backend/encoding.ts`       | Export `estimateKeySizeBytes`                      |
+| `src/storage/datastore/Datastore.ts`    | Use `estimateKeySizeBytes` in `resolvePayload`     |
 | `src/storage/datastore/mutationById.ts` | Use `estimateKeySizeBytes` in `buildMergedPayload` |
 
 ## 22. P11: Reduce B-tree Lookup Redundancy in putSingle (Replace + Capacity)
@@ -721,6 +752,7 @@ Update `resolvePayload`:
 ### 22.1 Current Behavior
 
 When `duplicateKeyPolicy === 'replace'` with capacity configured, `putSingle()` performs:
+
 1. `computeReplacedBytes()` → `findFirst(normalizedKey)` — 1st B-tree traversal
 2. After capacity enforcement → `findFirst(normalizedKey)` at line 417 — 2nd traversal (re-checks if eviction removed the existing record)
 3. `keyIndex.put(normalizedKey, ...)` — 3rd traversal (insert/replace)
@@ -734,9 +766,10 @@ Three O(log n) traversals for a single put when one lookup + one insert suffices
 Cache the initial `findFirst` result and reuse it:
 
 ```typescript
-const existingEntry = (this.duplicateKeyPolicy === 'replace')
-  ? this.keyIndex.findFirst(normalizedKey)
-  : null;
+const existingEntry =
+  this.duplicateKeyPolicy === 'replace'
+    ? this.keyIndex.findFirst(normalizedKey)
+    : null;
 let replacedBytes = existingEntry !== null ? existingEntry.value.sizeBytes : 0;
 ```
 
@@ -754,8 +787,8 @@ Actually, looking more carefully, the main savings is removing `computeReplacedB
 
 ### 22.4 Affected Files
 
-| File | Change |
-|------|--------|
+| File                                 | Change                                                      |
+| ------------------------------------ | ----------------------------------------------------------- |
 | `src/storage/datastore/Datastore.ts` | Inline `computeReplacedBytes` logic, skip unnecessary calls |
 
 ## 23. P12: Synchronous Loop for In-Memory putMany/deleteMany
@@ -775,16 +808,18 @@ For pure in-memory datastores (the primary "fast" use case), batch operations ar
 Detect the pure in-memory case and run tight synchronous loops:
 
 For `putMany`:
+
 ```typescript
 if (this.capacityState === null && this.backendController === null) {
   for (const record of records) {
-    this.putSingleSync(record);  // synchronous fast path
+    this.putSingleSync(record); // synchronous fast path
   }
   return;
 }
 ```
 
 For `deleteMany`:
+
 ```typescript
 if (this.backendController === null) {
   let totalRemoved = 0;
@@ -799,8 +834,8 @@ Extract synchronous versions of `putSingle` and `deleteSingle` that skip the `aw
 
 ### 23.4 Affected Files
 
-| File | Change |
-|------|--------|
+| File                                 | Change                                             |
+| ------------------------------------ | -------------------------------------------------- |
 | `src/storage/datastore/Datastore.ts` | Add sync loops for pure in-memory batch operations |
 
 ## 24. P13: O(1) Mutex Dequeue
@@ -840,10 +875,10 @@ export class AsyncMutex {
       released = true;
       if (this.head < this.queue.length) {
         const next = this.queue[this.head];
-        this.queue[this.head] = undefined!;  // allow GC
+        this.queue[this.head] = undefined!; // allow GC
         this.head += 1;
         // Compact when more than half the array is dead entries
-        if (this.head > 1024 && this.head > (this.queue.length >>> 1)) {
+        if (this.head > 1024 && this.head > this.queue.length >>> 1) {
           this.queue = this.queue.slice(this.head);
           this.head = 0;
         }
@@ -860,8 +895,8 @@ export class AsyncMutex {
 
 ### 24.4 Affected Files
 
-| File | Change |
-|------|--------|
+| File                                | Change                                             |
+| ----------------------------------- | -------------------------------------------------- |
 | `src/storage/backend/asyncMutex.ts` | Replace shift-based queue with index-based dequeue |
 
 ## 25. P14: Drop Comparator Validation in Public API Loops
@@ -894,10 +929,10 @@ Export `clampComparatorResult` from `recordKeyIndexBTree.ts` for use in `Datasto
 
 ### 25.5 Affected Files
 
-| File | Change |
-|------|--------|
-| `src/storage/btree/recordKeyIndexBTree.ts` | Export `clampComparatorResult` |
-| `src/storage/datastore/Datastore.ts` | Use `clampComparatorResult` in `getRange`, `getMany`, `keys` |
+| File                                       | Change                                                       |
+| ------------------------------------------ | ------------------------------------------------------------ |
+| `src/storage/btree/recordKeyIndexBTree.ts` | Export `clampComparatorResult`                               |
+| `src/storage/datastore/Datastore.ts`       | Use `clampComparatorResult` in `getRange`, `getMany`, `keys` |
 
 ## 26. P15: Skip JSON.stringify for String Keys in Batch Dedup
 
@@ -928,8 +963,8 @@ Replace `JSON.stringify(normalizedKey)` calls in `prepareBatchRecord()` with `th
 
 ### 26.5 Affected Files
 
-| File | Change |
-|------|--------|
+| File                                 | Change                                             |
+| ------------------------------------ | -------------------------------------------------- |
 | `src/storage/datastore/Datastore.ts` | Add `keyToString()`, use in `prepareBatchRecord()` |
 
 ## 27. P7-P15 Invariants
@@ -947,42 +982,51 @@ All optimizations MUST preserve existing behavior exactly:
 ## 28. P7-P15 Test Plan
 
 ### 28.1 P7: Sync Read Fast-Path
+
 - Verify `get()`, `has()`, `count()`, `keys()`, `getAll()` return correct results on pure in-memory datastore.
 - Verify these methods still work correctly when `pendingInit` is present (async backend).
 - Verify `ClosedDatastoreError` is still thrown after `close()`.
 
 ### 28.2 P8: Native UTF-8 Byte Length
+
 - Cross-validate: for representative strings, `computeUtf8ByteLength(s)` using native path matches `new TextEncoder().encode(s).byteLength`.
 - Lone surrogate handling matches.
 
 ### 28.3 P9: Structural Size Estimation
+
 - `estimateObjectSizeBytes` for primitives: string, number, boolean, null.
 - `estimateObjectSizeBytes` for nested objects matches `computeUtf8ByteLength(JSON.stringify(obj))`.
 - `estimateRecordSizeBytes` produces identical values before and after refactor.
 
 ### 28.4 P10: Unified resolvePayload
+
 - `put()` with `skipPayloadValidation=true`: sizeBytes matches original computation.
 - `put()` with `skipPayloadValidation=false`: sizeBytes matches original computation.
 - `updateById()`: sizeBytes delta matches original.
 
 ### 28.5 P11: B-tree Lookup Reduction
+
 - All duplicate-key policy behaviors preserved (existing tests cover this).
 
 ### 28.6 P12: Sync Batch Loop
+
 - `putMany()` on pure in-memory datastore: all records inserted.
 - `deleteMany()` on pure in-memory datastore: all records deleted, correct count returned.
 
 ### 28.7 P13: O(1) Mutex
+
 - Acquire/release under no contention works.
 - Multiple concurrent acquires are served in FIFO order.
 - Queue compaction occurs when threshold is reached.
 
 ### 28.8 P14: Comparator Clamping
+
 - `getRange` with valid range: correct results.
 - `getMany` with duplicate keys: dedup works correctly.
 - `keys()`: returns distinct keys in order.
 
 ### 28.9 P15: String Key Dedup
+
 - `putMany` with string keys and `strict` policy: all-or-nothing behavior preserved.
 - `putMany` with `reject` policy: intra-batch duplicates rejected.
 
@@ -992,13 +1036,13 @@ Run full test suite (`pnpm test`).
 
 ## Revision History
 
-| Version | Date | Summary |
-|---------|------|---------|
-| 0.1 | 2026-03-30 | Initial specification. |
-| 1.0 | 2026-03-31 | Implemented. Added lone surrogate handling in `computeUtf8ByteLength`. |
-| 1.1 | 2026-03-31 | Per-driver config split for ESM tree-shaking. Early reject in `putSingle()`. `getFirst()` uses `findFirst()`. |
-| 2.0 | 2026-04-02 | P3-A: inline size estimation. P3-B: lightweight comparator clamping. P3-C: remove deepFreeze from hot path. |
-| 3.0 | 2026-04-02 | P5-A: capacity-bypass fast path. P5-B: batch putMany with strict atomicity. |
-| 4.0 | 2026-04-02 | P6: skipPayloadValidation trusted input mode. |
-| 5.0 | 2026-04-02 | P7-P15: sync read fast-path, native UTF-8, structural size estimation, unified resolvePayload, B-tree lookup reduction, sync batch loops, O(1) mutex, comparator clamping in API, string key dedup. |
-| 5.1 | 2026-04-02 | P3-A fix: payload string size estimation now uses `estimateJsonStringBytes` to account for JSON escaping overhead. |
+| Version | Date       | Summary                                                                                                                                                                                             |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1     | 2026-03-30 | Initial specification.                                                                                                                                                                              |
+| 1.0     | 2026-03-31 | Implemented. Added lone surrogate handling in `computeUtf8ByteLength`.                                                                                                                              |
+| 1.1     | 2026-03-31 | Per-driver config split for ESM tree-shaking. Early reject in `putSingle()`. `getFirst()` uses `findFirst()`.                                                                                       |
+| 2.0     | 2026-04-02 | P3-A: inline size estimation. P3-B: lightweight comparator clamping. P3-C: remove deepFreeze from hot path.                                                                                         |
+| 3.0     | 2026-04-02 | P5-A: capacity-bypass fast path. P5-B: batch putMany with strict atomicity.                                                                                                                         |
+| 4.0     | 2026-04-02 | P6: skipPayloadValidation trusted input mode.                                                                                                                                                       |
+| 5.0     | 2026-04-02 | P7-P15: sync read fast-path, native UTF-8, structural size estimation, unified resolvePayload, B-tree lookup reduction, sync batch loops, O(1) mutex, comparator clamping in API, string key dedup. |
+| 5.1     | 2026-04-02 | P3-A fix: payload string size estimation now uses `estimateJsonStringBytes` to account for JSON escaping overhead.                                                                                  |
