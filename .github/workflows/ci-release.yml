@@ -1,0 +1,83 @@
+name: Release Please Publish
+
+on:
+  push:
+    branches:
+      - "main"
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38
+        with:
+          target-branch: "main"
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Checkout release commit
+        if: steps.release.outputs.release_created == 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ${{ steps.release.outputs.tag_name }}
+
+      - name: Setup pnpm
+        if: steps.release.outputs.release_created == 'true'
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        if: steps.release.outputs.release_created == 'true'
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: 24.x
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.release.outputs.release_created == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Run quality checks
+        if: steps.release.outputs.release_created == 'true'
+        run: pnpm check
+
+      - name: Build package
+        if: steps.release.outputs.release_created == 'true'
+        run: pnpm build
+
+      - name: Build browser minified bundle
+        if: steps.release.outputs.release_created == 'true'
+        run: pnpm build:bundle
+
+      - name: Upload release asset
+        if: steps.release.outputs.release_created == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release upload "${{ steps.release.outputs.tag_name }}"
+          dist/frostpillar-storage-engine.min.js
+          --clobber
+
+      - name: Remove browser bundle from npm publish payload
+        if: steps.release.outputs.release_created == 'true'
+        run: |
+          rm -f dist/frostpillar-storage-engine.min.js
+          if [[ -f dist/frostpillar-storage-engine.min.js ]]; then
+            echo "ERROR: browser bundle still present after removal"
+            exit 1
+          fi
+
+      - name: Publish to npm
+        if: steps.release.outputs.release_created == 'true'
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,0 +1,111 @@
+{
+  "name": "@frostpillar/frostpillar-storage-engine",
+  "version": "0.0.1",
+  "description": "Chunk-based storage engine for browsers and Node.js that packs many small key-value entries into a single backing store.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./drivers/file": {
+      "types": "./dist/drivers/file.d.ts",
+      "require": "./dist/drivers/file.cjs",
+      "default": "./dist/drivers/file.js"
+    },
+    "./drivers/localStorage": {
+      "types": "./dist/drivers/localStorage.d.ts",
+      "require": "./dist/drivers/localStorage.cjs",
+      "default": "./dist/drivers/localStorage.js"
+    },
+    "./drivers/indexedDB": {
+      "types": "./dist/drivers/indexedDB.d.ts",
+      "require": "./dist/drivers/indexedDB.cjs",
+      "default": "./dist/drivers/indexedDB.js"
+    },
+    "./drivers/opfs": {
+      "types": "./dist/drivers/opfs.d.ts",
+      "require": "./dist/drivers/opfs.cjs",
+      "default": "./dist/drivers/opfs.js"
+    },
+    "./drivers/syncStorage": {
+      "types": "./dist/drivers/syncStorage.d.ts",
+      "require": "./dist/drivers/syncStorage.cjs",
+      "default": "./dist/drivers/syncStorage.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "README-JA.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean:build": "rm -rf dist tsconfig.tsbuildinfo",
+    "build": "pnpm clean:build && tsc --build && pnpm build:cjs",
+    "build:cjs": "esbuild src/index.ts src/drivers/file.ts src/drivers/localStorage.ts src/drivers/indexedDB.ts src/drivers/opfs.ts src/drivers/syncStorage.ts --bundle --packages=external --platform=node --format=cjs --target=es2022 --tsconfig=tsconfig.bundle.json --outdir=dist --outbase=src --out-extension:.js=.cjs",
+    "build:bundle": "tsc --project tsconfig.bundle.json --noEmit && esbuild src/index.ts --bundle --minify --target=es2020 --tsconfig=tsconfig.bundle.json --platform=browser --format=iife --global-name=FrostpillarStorageEngine --outfile=dist/frostpillar-storage-engine.min.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "textlint": "textlint \"**/*.md\"",
+    "textlint:fix": "textlint \"**/*.md\" --fix",
+    "format:md": "pnpm textlint:fix",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm textlint",
+    "test": "node ./scripts/run-tests.mjs",
+    "test:coverage": "node ./scripts/run-tests.mjs --experimental-test-coverage",
+    "typecheck": "tsc --noEmit",
+    "bench": "node ./scripts/run-benchmarks.mjs"
+  },
+  "keywords": [
+    "storage-engine",
+    "key-value",
+    "typescript",
+    "lightweight",
+    "browser",
+    "nodejs",
+    "database",
+    "indexeddb",
+    "opfs",
+    "embedded"
+  ],
+  "author": "Hajime Sano",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hjmsano/frostpillar-storage-engine.git"
+  },
+  "homepage": "https://github.com/hjmsano/frostpillar-storage-engine#readme",
+  "bugs": {
+    "url": "https://github.com/hjmsano/frostpillar-storage-engine/issues"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "esbuild": "^0.27.3",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "textlint": "^15.5.2",
+    "textlint-rule-preset-ja-technical-writing": "^12.0.2",
+    "prettier": "^3.2.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "dependencies": {
+    "@frostpillar/frostpillar-btree": "0.2.2"
+  }
+}

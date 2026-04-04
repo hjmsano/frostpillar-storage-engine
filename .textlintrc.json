@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "preset-ja-technical-writing": {
+      "max-comma": false,
+      "max-kanji-continuous-len": false,
+      "no-mix-dearu-desumasu": false,
+      "ja-no-redundant-expression": false,
+      "ja-no-weak-phrase": false,
+      "sentence-length": false,
+      "no-exclamation-question-mark": false,
+      "ja-no-mixed-period": {
+        "allowPeriodMarks": [
+          ".",
+          "。",
+          ":",
+          "："
+        ]
+      }
+    }
+  }
+}
