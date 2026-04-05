@@ -72,11 +72,18 @@ export interface PayloadLimitsConfig {
   maxTotalBytes?: number;
 }
 
+export interface IndexConfig {
+  autoScale?: boolean;
+  maxLeafEntries?: number;
+  maxBranchChildren?: number;
+}
+
 export interface DatastoreCommonConfig {
   key?: DatastoreKeyDefinition<unknown, unknown>;
   capacity?: CapacityConfig;
   autoCommit?: AutoCommitConfig;
   duplicateKeys?: DuplicateKeyPolicy;
+  index?: IndexConfig;
   skipPayloadValidation?: boolean;
   payloadLimits?: PayloadLimitsConfig;
 }

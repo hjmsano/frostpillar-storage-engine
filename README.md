@@ -246,6 +246,32 @@ const db = new Datastore({ skipPayloadValidation: true });
 
 > **Warning:** Skipping validation disables all payload safety checks and ignores `payloadLimits`. Only use this when you are certain the input is well-formed.
 
+#### Index Configuration
+
+The B+Tree index automatically scales node capacity as data grows (auto-scale). You can override this behavior:
+
+```ts
+// Auto-scale (default) — node capacity grows with entry count
+const db = new Datastore({});
+
+// Fixed capacity with custom node sizes
+const db2 = new Datastore({
+  index: {
+    autoScale: false,
+    maxLeafEntries: 128,
+    maxBranchChildren: 64,
+  },
+});
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `index.autoScale` | `boolean` | `true` | Automatically scale node capacity as data grows |
+| `index.maxLeafEntries` | `number` | btree default (64) | Max entries per leaf node (3–16384, only when `autoScale: false`) |
+| `index.maxBranchChildren` | `number` | btree default (64) | Max children per branch node (3–16384, only when `autoScale: false`) |
+
+Setting `maxLeafEntries` or `maxBranchChildren` when `autoScale` is `true` throws `ConfigurationError`.
+
 ---
 
 ### CRUD Operations
@@ -1162,6 +1188,7 @@ If both a deferred backend initialization failure and a backend close failure oc
 | `RecordPayload` | Payload value type (nested record of strings, numbers, booleans, nulls, and arrays) |
 | `EntryId` | Branded `number` identifying a specific record (ephemeral, re-issued on restore) |
 | `DuplicateKeyPolicy` | `'allow' \| 'reject' \| 'replace'` |
+| `IndexConfig` | Index configuration (`autoScale`, `maxLeafEntries`, `maxBranchChildren`) |
 | `CapacityConfig` | Capacity control configuration (`maxSize` + `policy`) |
 | `CapacityPolicy` | `'strict' \| 'turnover'` |
 | `AutoCommitConfig` | Auto-commit configuration (`frequency` + `maxPendingBytes`) |

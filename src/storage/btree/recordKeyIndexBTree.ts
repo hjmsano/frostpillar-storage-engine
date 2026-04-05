@@ -20,6 +20,9 @@ export interface RecordKeyIndexBTreeStats {
 export interface RecordKeyIndexBTreeConfig<TKey> {
   compareKeys: (left: TKey, right: TKey) => number;
   duplicateKeys?: DuplicateKeyPolicy;
+  autoScale?: boolean;
+  maxLeafEntries?: number;
+  maxBranchChildren?: number;
 }
 
 export const normalizeComparatorResult = (compared: number): number => {
@@ -62,6 +65,9 @@ export class RecordKeyIndexBTree<TKey = unknown, TValue = unknown> {
       compareKeys: wrappedComparator,
       duplicateKeys: config.duplicateKeys ?? 'allow',
       enableEntryIdLookup: true,
+      autoScale: config.autoScale ?? true,
+      maxLeafEntries: config.maxLeafEntries,
+      maxBranchChildren: config.maxBranchChildren,
     };
     this.tree = new InMemoryBTree<TKey, TValue>(treeConfig);
   }

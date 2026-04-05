@@ -3,6 +3,7 @@ import type {
   AutoCommitConfig,
   CapacityConfig,
   DuplicateKeyPolicy,
+  IndexConfig,
   PayloadLimitsConfig,
 } from '../../types.js';
 import type { CapacityState, FileAutoCommitState } from '../backend/types.js';
@@ -10,6 +11,52 @@ import {
   DEFAULT_PAYLOAD_LIMITS,
   type ResolvedPayloadLimits,
 } from '../../validation/payload.js';
+
+export interface ResolvedIndexConfig {
+  autoScale: boolean;
+  maxLeafEntries: number | undefined;
+  maxBranchChildren: number | undefined;
+}
+
+const validateNodeCapacity = (value: unknown, field: string): void => {
+  if (!Number.isSafeInteger(value) || (value as number) < 3 || (value as number) > 16384) {
+    throw new ConfigurationError(
+      `index.${field} must be an integer between 3 and 16384.`,
+    );
+  }
+};
+
+export const parseIndexConfig = (
+  index?: IndexConfig,
+): ResolvedIndexConfig => {
+  if (index === undefined) {
+    return { autoScale: true, maxLeafEntries: undefined, maxBranchChildren: undefined };
+  }
+
+  const autoScale = index.autoScale ?? true;
+
+  if (autoScale) {
+    if (index.maxLeafEntries !== undefined || index.maxBranchChildren !== undefined) {
+      throw new ConfigurationError(
+        'index.maxLeafEntries and index.maxBranchChildren cannot be set when index.autoScale is true.',
+      );
+    }
+    return { autoScale: true, maxLeafEntries: undefined, maxBranchChildren: undefined };
+  }
+
+  if (index.maxLeafEntries !== undefined) {
+    validateNodeCapacity(index.maxLeafEntries, 'maxLeafEntries');
+  }
+  if (index.maxBranchChildren !== undefined) {
+    validateNodeCapacity(index.maxBranchChildren, 'maxBranchChildren');
+  }
+
+  return {
+    autoScale: false,
+    maxLeafEntries: index.maxLeafEntries,
+    maxBranchChildren: index.maxBranchChildren,
+  };
+};
 
 const BYTE_SIZE_REGEX = /^(\d+)(B|KB|MB|GB)$/;
 const BYTE_SIZE_MULTIPLIER: Readonly<Record<string, number>> = {

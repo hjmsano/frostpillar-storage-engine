@@ -25,7 +25,7 @@ import { validateAndNormalizePayload, type ResolvedPayloadLimits } from '../../v
 import { enforceCapacityPolicy } from '../backend/capacity.js';
 import { resolveCapacityState } from '../backend/capacityResolver.js';
 import { estimateRecordSizeBytes } from '../backend/encoding.js';
-import { parseDuplicateKeyConfig, parsePayloadLimitsConfig } from '../config/config.shared.js';
+import { parseIndexConfig, parseDuplicateKeyConfig, parsePayloadLimitsConfig } from '../config/config.shared.js';
 import { DatastoreLifecycle } from './datastoreLifecycle.js';
 import {
   deleteRecordById,
@@ -68,9 +68,13 @@ export class Datastore {
     this.keyDefinition = resolveKeyDefinition(config);
     const duplicateKeys = parseDuplicateKeyConfig(config.duplicateKeys);
     this.duplicateKeyPolicy = duplicateKeys;
+    const indexConfig = parseIndexConfig(config.index);
     this.keyIndex = new RecordKeyIndexBTree<unknown, PersistedRecord>({
       compareKeys: (left: unknown, right: unknown): number => this.keyDefinition.compare(left, right),
       duplicateKeys,
+      autoScale: indexConfig.autoScale,
+      maxLeafEntries: indexConfig.maxLeafEntries,
+      maxBranchChildren: indexConfig.maxBranchChildren,
     });
     this.capacityState = resolveCapacityState(config);
     this.skipPayloadValidation = config.skipPayloadValidation === true;

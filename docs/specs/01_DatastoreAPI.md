@@ -76,6 +76,24 @@ Validation rules:
 - when `duplicateKeys` is not one of the three valid string values, construction MUST fail with `ConfigurationError`.
 - the resolved policy value is stored internally for forwarding to the B+Tree adapter (see §6 B-Tree Adapter Boundary in `03_InternalArchitecture.md`).
 
+### 2.2 Index Configuration (`config.index`)
+
+`DatastoreConfig` accepts an optional `index` field:
+
+```typescript
+index?: {
+  autoScale?: boolean;
+  maxLeafEntries?: number;
+  maxBranchChildren?: number;
+};
+```
+
+- when `index` is omitted or `undefined`, MUST default to `{ autoScale: true }`.
+- `autoScale` (default `true`): when `true`, the B+Tree index automatically increases node capacity as the entry count grows.
+- `maxLeafEntries` and `maxBranchChildren`: optional fixed node capacities forwarded to frostpillar-btree. Only valid when `autoScale` is `false` or omitted as `false`.
+- when `autoScale` is `true` and `maxLeafEntries` or `maxBranchChildren` is also set, construction MUST fail with `ConfigurationError`.
+- all resolved values are forwarded to the B+Tree adapter (see §6 B-Tree Adapter Boundary in `03_InternalArchitecture.md`).
+
 ## 3. Core Methods
 
 Key-based operations:

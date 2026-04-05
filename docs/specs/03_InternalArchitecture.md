@@ -100,6 +100,8 @@ Key type:
 - adapter MUST use the plain user key `TKey` as btree key (not a composite key).
 - duplicate key handling MUST be delegated to the btree's native `DuplicateKeyPolicy`.
 - adapter constructor MUST accept `duplicateKeys: DuplicateKeyPolicy` and forward it to the btree config.
+- adapter constructor MUST accept `autoScale?: boolean`, `maxLeafEntries?: number`, and `maxBranchChildren?: number` and forward them to the btree config.
+- adapter MUST default `autoScale` to `true` when not explicitly provided.
 - adapter MUST enable `enableEntryIdLookup: true` in btree config.
 
 Mutation:
