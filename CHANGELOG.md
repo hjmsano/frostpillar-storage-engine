@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.1...v0.1.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* Add ability to BTree auto-scaling and configuration options ([d9ca3af](https://github.com/hjmsano/frostpillar-storage-engine/commit/d9ca3afdb0a4355ff19db06f7645cdafb52cece9))
+
 ## [0.1.1](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.0...v0.1.1) (2026-04-05)
 
 
