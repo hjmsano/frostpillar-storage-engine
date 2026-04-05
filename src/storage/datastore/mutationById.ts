@@ -40,26 +40,24 @@ export interface UpdateByIdResult {
   durabilitySignalBytes: number;
 }
 
-interface MergedPayloadResult {
+export interface ValidatedPayloadResult {
   payload: RecordPayload;
   sizeBytes: number;
 }
 
-const buildMergedPayload = (
-  targetRecord: PersistedRecord,
-  patch: Partial<KeyedRecord<unknown>['payload']>,
+export const validateAndEstimateSize = (
+  payload: RecordPayload,
   entryKey: unknown,
   skipValidation: boolean,
   payloadLimits: ResolvedPayloadLimits,
-): MergedPayloadResult => {
-  const merged = { ...targetRecord.payload, ...patch } as RecordPayload;
+): ValidatedPayloadResult => {
   if (skipValidation) {
     return {
-      payload: merged,
-      sizeBytes: estimateRecordSizeBytes(entryKey, merged),
+      payload,
+      sizeBytes: estimateRecordSizeBytes(entryKey, payload),
     };
   }
-  const validationResult = validateAndNormalizePayload(merged, payloadLimits);
+  const validationResult = validateAndNormalizePayload(payload, payloadLimits);
   const keyBytes = estimateKeySizeBytes(entryKey);
   return {
     payload: validationResult.payload,
@@ -77,7 +75,8 @@ export const updateRecordById = (
 
   const targetRecord = entry.value;
   const oldSize = targetRecord.sizeBytes;
-  const mergedResult = buildMergedPayload(targetRecord, options.patch, entry.key, options.skipPayloadValidation, options.payloadLimits);
+  const merged = { ...targetRecord.payload, ...options.patch } as RecordPayload;
+  const mergedResult = validateAndEstimateSize(merged, entry.key, options.skipPayloadValidation, options.payloadLimits);
   const mergedPayload = mergedResult.payload;
   const newSize = mergedResult.sizeBytes;
   const encodedDelta = newSize - oldSize;
@@ -125,26 +124,6 @@ export interface ReplaceByIdResult {
   durabilitySignalBytes: number;
 }
 
-const buildReplacementPayload = (
-  newPayload: RecordPayload,
-  entryKey: unknown,
-  skipValidation: boolean,
-  payloadLimits: ResolvedPayloadLimits,
-): MergedPayloadResult => {
-  if (skipValidation) {
-    return {
-      payload: newPayload,
-      sizeBytes: estimateRecordSizeBytes(entryKey, newPayload),
-    };
-  }
-  const validationResult = validateAndNormalizePayload(newPayload, payloadLimits);
-  const keyBytes = estimateKeySizeBytes(entryKey);
-  return {
-    payload: validationResult.payload,
-    sizeBytes: validationResult.sizeBytes + keyBytes,
-  };
-};
-
 export const replaceRecordById = (
   options: ReplaceByIdOptions,
 ): ReplaceByIdResult => {
@@ -154,7 +133,7 @@ export const replaceRecordById = (
   }
 
   const oldSize = entry.value.sizeBytes;
-  const replacementResult = buildReplacementPayload(options.payload, entry.key, options.skipPayloadValidation, options.payloadLimits);
+  const replacementResult = validateAndEstimateSize(options.payload, entry.key, options.skipPayloadValidation, options.payloadLimits);
   const newSize = replacementResult.sizeBytes;
   const encodedDelta = newSize - oldSize;
 

@@ -24,7 +24,7 @@ import { AsyncMutex } from '../backend/asyncMutex.js';
 import { validateAndNormalizePayload, type ResolvedPayloadLimits } from '../../validation/payload.js';
 import { enforceCapacityPolicy } from '../backend/capacity.js';
 import { resolveCapacityState } from '../backend/capacityResolver.js';
-import { estimateKeySizeBytes, estimateRecordSizeBytes } from '../backend/encoding.js';
+import { estimateRecordSizeBytes } from '../backend/encoding.js';
 import { parseDuplicateKeyConfig, parsePayloadLimitsConfig } from '../config/config.shared.js';
 import { DatastoreLifecycle } from './datastoreLifecycle.js';
 import {
@@ -33,6 +33,7 @@ import {
   getPublicRecordById,
   replaceRecordById,
   updateRecordById,
+  validateAndEstimateSize,
 } from './mutationById.js';
 import { closeDatastore } from './datastoreClose.js';
 import type { CapacityState, DurableBackendController } from '../backend/types.js';
@@ -444,13 +445,8 @@ export class Datastore {
   }
 
   private resolvePayload(record: InputRecord<unknown>, normalizedKey: unknown): { payload: RecordPayload; encodedBytes: number } {
-    if (this.skipPayloadValidation) {
-      const payload = record.payload;
-      return { payload, encodedBytes: estimateRecordSizeBytes(normalizedKey, payload) };
-    }
-    const validationResult = validateAndNormalizePayload(record.payload, this.payloadLimits);
-    const keyBytes = estimateKeySizeBytes(normalizedKey);
-    return { payload: validationResult.payload, encodedBytes: validationResult.sizeBytes + keyBytes };
+    const result = validateAndEstimateSize(record.payload, normalizedKey, this.skipPayloadValidation, this.payloadLimits);
+    return { payload: result.payload, encodedBytes: result.sizeBytes };
   }
 
   private async putSingle(record: InputRecord<unknown>): Promise<void> {
