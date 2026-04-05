@@ -20,6 +20,7 @@ export type {
   FileTargetByDirectoryConfig,
   FileTargetByPathConfig,
   FileTargetConfig,
+  IndexConfig,
   InputRecord,
   IndexedDBConfig,
   KeyedRecord,

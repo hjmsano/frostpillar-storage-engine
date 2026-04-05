@@ -246,6 +246,32 @@ const db = new Datastore({ skipPayloadValidation: true });
 
 > **警告:** バリデーションのスキップは、すべてのペイロード安全チェックを無効化し、`payloadLimits` も無視されます。入力が正しい形式であることが確実な場合のみ使用してください。
 
+#### インデックス設定
+
+B+Tree インデックスはデータ量に応じてノード容量を自動スケーリングします（デフォルト動作）。この動作をカスタマイズできます：
+
+```ts
+// 自動スケーリング（デフォルト）— エントリ数に応じてノード容量が増加
+const db = new Datastore({});
+
+// 固定容量でカスタムノードサイズを指定
+const db2 = new Datastore({
+  index: {
+    autoScale: false,
+    maxLeafEntries: 128,
+    maxBranchChildren: 64,
+  },
+});
+```
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|------|-----------|------|
+| `index.autoScale` | `boolean` | `true` | データ増加に応じてノード容量を自動スケーリング |
+| `index.maxLeafEntries` | `number` | btree デフォルト (64) | リーフノードの最大エントリ数（3〜16384、`autoScale: false` 時のみ） |
+| `index.maxBranchChildren` | `number` | btree デフォルト (64) | ブランチノードの最大子ノード数（3〜16384、`autoScale: false` 時のみ） |
+
+`autoScale` が `true` の状態で `maxLeafEntries` や `maxBranchChildren` を設定すると `ConfigurationError` がスローされます。
+
 ---
 
 ### CRUD 操作
@@ -1162,6 +1188,7 @@ try {
 | `RecordPayload` | ペイロードの値型（文字列、数値、真偽値、null、配列のネストされたレコード） |
 | `EntryId` | レコードを識別するブランド付き `number`（エフェメラル、復元時に再発行） |
 | `DuplicateKeyPolicy` | `'allow' \| 'reject' \| 'replace'` |
+| `IndexConfig` | インデックス設定（`autoScale`、`maxLeafEntries`、`maxBranchChildren`） |
 | `CapacityConfig` | 容量制御設定（`maxSize` + `policy`） |
 | `CapacityPolicy` | `'strict' \| 'turnover'` |
 | `AutoCommitConfig` | 自動コミット設定（`frequency` + `maxPendingBytes`） |

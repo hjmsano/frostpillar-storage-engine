@@ -100,6 +100,8 @@ Key type:
 - adapter MUST use the plain user key `TKey` as btree key (not a composite key).
 - duplicate key handling MUST be delegated to the btree's native `DuplicateKeyPolicy`.
 - adapter constructor MUST accept `duplicateKeys: DuplicateKeyPolicy` and forward it to the btree config.
+- adapter constructor MUST accept `autoScale?: boolean`, `maxLeafEntries?: number`, and `maxBranchChildren?: number` and forward them to the btree config.
+- adapter MUST default `autoScale` to `true` when not explicitly provided.
 - adapter MUST enable `enableEntryIdLookup: true` in btree config.
 
 Mutation:
@@ -126,6 +128,7 @@ Range and bulk:
 Serialization:
 - `toJSON()` MUST return `BTreeJSON` via btree's `toJSON`.
 - static `fromJSON(json, config)` MUST restore adapter from `BTreeJSON` via btree's `fromJSON`.
+- `fromJSON` MUST patch the snapshot's config with the provided `config` values (`duplicateKeys`, `autoScale`, `maxLeafEntries`, `maxBranchChildren`) so that constructor-time settings override whatever was persisted in the snapshot.
 
 Lifecycle:
 - `clear()` MUST call btree's `clear`.
