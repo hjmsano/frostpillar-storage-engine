@@ -68,13 +68,10 @@ export class Datastore {
     this.keyDefinition = resolveKeyDefinition(config);
     const duplicateKeys = parseDuplicateKeyConfig(config.duplicateKeys);
     this.duplicateKeyPolicy = duplicateKeys;
-    const indexConfig = parseIndexConfig(config.index);
     this.keyIndex = new RecordKeyIndexBTree<unknown, PersistedRecord>({
       compareKeys: (left: unknown, right: unknown): number => this.keyDefinition.compare(left, right),
       duplicateKeys,
-      autoScale: indexConfig.autoScale,
-      maxLeafEntries: indexConfig.maxLeafEntries,
-      maxBranchChildren: indexConfig.maxBranchChildren,
+      ...parseIndexConfig(config.index),
     });
     this.capacityState = resolveCapacityState(config);
     this.skipPayloadValidation = config.skipPayloadValidation === true;
