@@ -1,6 +1,6 @@
 {
   "name": "@frostpillar/frostpillar-storage-engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Chunk-based storage engine for browsers and Node.js that packs many small key-value entries into a single backing store.",
   "type": "module",
   "main": "./dist/index.js",
