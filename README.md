@@ -207,16 +207,29 @@ const db = new Datastore({
 
 #### Payload Validation
 
-Payloads are validated on every `put()`, `putMany()`, and `updateById()` call. The following limits apply:
+Payloads are validated on every `put()`, `putMany()`, `updateById()`, and `replaceById()` call. The following default limits apply:
 
-| Constraint | Limit |
-|------------|-------|
-| Total payload bytes | 1,048,576 (1 MB) |
-| Max nesting depth | 64 object levels |
-| Max total keys | 4,096 |
-| Max keys per object | 256 |
-| Max key size | 1,024 bytes (UTF-8) |
-| Max string value | 65,535 bytes (UTF-8) |
+| Constraint | Default | Config key |
+|------------|---------|------------|
+| Total payload bytes | 1,048,576 (1 MB) | `maxTotalBytes` |
+| Max nesting depth | 64 object levels | `maxDepth` |
+| Max total keys | 4,096 | `maxTotalKeys` |
+| Max keys per object | 256 | `maxKeysPerObject` |
+| Max key size | 1,024 bytes (UTF-8) | `maxKeyBytes` |
+| Max string value | 65,535 bytes (UTF-8) | `maxStringBytes` |
+
+These limits can be customized per-datastore via `payloadLimits`:
+
+```ts
+const db = new Datastore({
+  payloadLimits: {
+    maxDepth: 8,
+    maxTotalBytes: 4096,
+  },
+});
+```
+
+Each field is independently optional; omitted fields use the default value. Each value must be a positive safe integer, otherwise construction fails with `ConfigurationError`.
 
 Additional rules:
 - Payload must be a plain object (no arrays, functions, or `BigInt` at top level).
@@ -231,7 +244,7 @@ For trusted input where you control the shape, you can skip validation:
 const db = new Datastore({ skipPayloadValidation: true });
 ```
 
-> **Warning:** Skipping validation disables all payload safety checks. Only use this when you are certain the input is well-formed.
+> **Warning:** Skipping validation disables all payload safety checks and ignores `payloadLimits`. Only use this when you are certain the input is well-formed.
 
 ---
 
@@ -316,6 +329,12 @@ All record-returning APIs include the `_id` field in the result.
 const updated = await db.updateById(id, { name: 'Alice V2' });
 ```
 
+**`replaceById(id, payload)`** — fully replace the payload of a record by `_id`. Unlike `updateById`, existing fields not present in the new payload are removed. Returns `true` if found, `false` otherwise. Does not change `key` or `_id`.
+
+```ts
+const replaced = await db.replaceById(id, { name: 'Alice V3', score: 100 });
+```
+
 #### Delete
 
 **`delete(key)`** — remove all records with `key`. Returns the number of records removed.
@@ -334,6 +353,12 @@ const removed = await db.deleteById(id);
 
 ```ts
 const count = await db.deleteMany(['k1', 'k2']);
+```
+
+**`deleteByIds(ids)`** — remove records by their `_id` values. Returns total deleted (non-existent ids are skipped).
+
+```ts
+const count = await db.deleteByIds([id1, id2, id3]);
 ```
 
 **`clear()`** — remove all records.
@@ -1090,11 +1115,12 @@ If both a deferred backend initialization failure and a backend close failure oc
 
 ### ID-Based Operations
 
-| Method                  | Parameters               | Returns                        | Description          |
-| ----------------------- | ------------------------ | ------------------------------ | -------------------- |
-| `getById(id)`           | `EntryId`                | `Promise<KeyedRecord \| null>` | Get by record ID     |
-| `updateById(id, patch)` | `EntryId`, payload patch | `Promise<boolean>`             | Shallow-merge update |
-| `deleteById(id)`        | `EntryId`                | `Promise<boolean>`             | Delete by record ID  |
+| Method                     | Parameters               | Returns                        | Description            |
+| -------------------------- | ------------------------ | ------------------------------ | ---------------------- |
+| `getById(id)`              | `EntryId`                | `Promise<KeyedRecord \| null>` | Get by record ID       |
+| `updateById(id, patch)`    | `EntryId`, payload patch | `Promise<boolean>`             | Shallow-merge update   |
+| `replaceById(id, payload)` | `EntryId`, full payload  | `Promise<boolean>`             | Full payload replace   |
+| `deleteById(id)`           | `EntryId`                | `Promise<boolean>`             | Delete by record ID    |
 
 ### Bulk Operations
 
@@ -1105,6 +1131,7 @@ If both a deferred backend initialization failure and a backend close failure oc
 | `getMany(keys)`        | key array          | `Promise<KeyedRecord[]>` | Records for multiple keys   |
 | `putMany(records)`     | record array       | `Promise<void>`          | Insert multiple records     |
 | `deleteMany(keys)`     | key array          | `Promise<number>`        | Delete across multiple keys |
+| `deleteByIds(ids)`     | `EntryId` array    | `Promise<number>`        | Delete by record IDs        |
 | `clear()`              | —                  | `Promise<void>`          | Remove all records          |
 
 ### Metadata

@@ -207,16 +207,29 @@ const db = new Datastore({
 
 #### ペイロードバリデーション
 
-ペイロードは `put()`、`putMany()`、`updateById()` の呼び出しごとにバリデーションされます。以下の制限が適用されます：
+ペイロードは `put()`、`putMany()`、`updateById()`、`replaceById()` の呼び出しごとにバリデーションされます。以下のデフォルト制限が適用されます：
 
-| 制約 | 上限 |
-|------|------|
-| ペイロード合計バイト数 | 1,048,576（1 MB） |
-| 最大ネスト深度 | 64 オブジェクトレベル |
-| キー合計数 | 4,096 |
-| オブジェクトあたりの最大キー数 | 256 |
-| キーの最大サイズ | 1,024 バイト（UTF-8） |
-| 文字列値の最大サイズ | 65,535 バイト（UTF-8） |
+| 制約 | デフォルト | 設定キー |
+|------|-----------|----------|
+| ペイロード合計バイト数 | 1,048,576（1 MB） | `maxTotalBytes` |
+| 最大ネスト深度 | 64 オブジェクトレベル | `maxDepth` |
+| キー合計数 | 4,096 | `maxTotalKeys` |
+| オブジェクトあたりの最大キー数 | 256 | `maxKeysPerObject` |
+| キーの最大サイズ | 1,024 バイト（UTF-8） | `maxKeyBytes` |
+| 文字列値の最大サイズ | 65,535 バイト（UTF-8） | `maxStringBytes` |
+
+これらの制限は `payloadLimits` でデータストアごとにカスタマイズできます：
+
+```ts
+const db = new Datastore({
+  payloadLimits: {
+    maxDepth: 8,
+    maxTotalBytes: 4096,
+  },
+});
+```
+
+各フィールドは独立してオプションです。省略されたフィールドはデフォルト値を使用します。各値は正の安全な整数である必要があり、そうでない場合は `ConfigurationError` で構築が失敗します。
 
 追加ルール：
 - ペイロードはプレーンオブジェクトである必要があります（トップレベルで配列、関数、`BigInt` は不可）。
@@ -231,7 +244,7 @@ const db = new Datastore({
 const db = new Datastore({ skipPayloadValidation: true });
 ```
 
-> **警告:** バリデーションのスキップは、すべてのペイロード安全チェックを無効化します。入力が正しい形式であることが確実な場合のみ使用してください。
+> **警告:** バリデーションのスキップは、すべてのペイロード安全チェックを無効化し、`payloadLimits` も無視されます。入力が正しい形式であることが確実な場合のみ使用してください。
 
 ---
 
@@ -316,6 +329,12 @@ const exists = await db.has('k1');
 const updated = await db.updateById(id, { name: 'Alice V2' });
 ```
 
+**`replaceById(id, payload)`** — `_id` で指定したレコードの payload を完全に置換します。`updateById` とは異なり、新しい payload に存在しない既存フィールドは削除されます。見つかった場合は `true`、見つからなかった場合は `false` を返します。`key` や `_id` は変更されません。
+
+```ts
+const replaced = await db.replaceById(id, { name: 'Alice V3', score: 100 });
+```
+
 #### 削除
 
 **`delete(key)`** — 指定キーのすべてのレコードを削除します。削除件数を返します。
@@ -334,6 +353,12 @@ const removed = await db.deleteById(id);
 
 ```ts
 const count = await db.deleteMany(['k1', 'k2']);
+```
+
+**`deleteByIds(ids)`** — `_id` の配列でレコードを削除します。実際に削除された件数を返します（存在しない id はスキップされます）。
+
+```ts
+const count = await db.deleteByIds([id1, id2, id3]);
 ```
 
 **`clear()`** — 全レコードを削除します。
@@ -1090,11 +1115,12 @@ try {
 
 ### ID ベース操作
 
-| メソッド                | パラメータ                | 戻り値                         | 説明                 |
-| ----------------------- | ------------------------- | ------------------------------ | -------------------- |
-| `getById(id)`           | `EntryId`                 | `Promise<KeyedRecord \| null>` | レコード ID で取得   |
-| `updateById(id, patch)` | `EntryId`、payload パッチ | `Promise<boolean>`             | shallow merge で更新 |
-| `deleteById(id)`        | `EntryId`                 | `Promise<boolean>`             | レコード ID で削除   |
+| メソッド                       | パラメータ                | 戻り値                         | 説明                   |
+| ------------------------------ | ------------------------- | ------------------------------ | ---------------------- |
+| `getById(id)`                  | `EntryId`                 | `Promise<KeyedRecord \| null>` | レコード ID で取得     |
+| `updateById(id, patch)`        | `EntryId`、payload パッチ | `Promise<boolean>`             | shallow merge で更新   |
+| `replaceById(id, payload)`     | `EntryId`、完全な payload | `Promise<boolean>`             | payload を完全置換     |
+| `deleteById(id)`               | `EntryId`                 | `Promise<boolean>`             | レコード ID で削除     |
 
 ### バルク操作
 
@@ -1105,6 +1131,7 @@ try {
 | `getMany(keys)`        | キー配列           | `Promise<KeyedRecord[]>` | 複数キーのレコード       |
 | `putMany(records)`     | レコード配列       | `Promise<void>`          | 複数レコードを挿入       |
 | `deleteMany(keys)`     | キー配列           | `Promise<number>`        | 複数キーのレコードを削除 |
+| `deleteByIds(ids)`     | `EntryId` 配列     | `Promise<number>`        | レコード ID 群で削除     |
 | `clear()`              | —                  | `Promise<void>`          | 全レコードを削除         |
 
 ### メタデータ

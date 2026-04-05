@@ -530,7 +530,7 @@ When `skipPayloadValidation` is `true`:
 | --------------------------------------- | ----------------------------------------------------------------------------- |
 | `src/types.ts`                          | Add `skipPayloadValidation?: boolean` to `DatastoreCommonConfig`              |
 | `src/storage/datastore/Datastore.ts`    | Branch on `skipPayloadValidation` in `putSingle()` and `prepareBatchRecord()` |
-| `src/storage/datastore/mutationById.ts` | Branch on `skipPayloadValidation` in `buildMergedPayload()`                   |
+| `src/storage/datastore/mutationById.ts` | Branch on `skipPayloadValidation` in `validateAndEstimateSize()`              |
 
 ### 17.6 Test Plan
 
@@ -745,7 +745,7 @@ Update `resolvePayload`:
 | --------------------------------------- | -------------------------------------------------- |
 | `src/storage/backend/encoding.ts`       | Export `estimateKeySizeBytes`                      |
 | `src/storage/datastore/Datastore.ts`    | Use `estimateKeySizeBytes` in `resolvePayload`     |
-| `src/storage/datastore/mutationById.ts` | Use `estimateKeySizeBytes` in `buildMergedPayload` |
+| `src/storage/datastore/mutationById.ts` | Use `estimateKeySizeBytes` in `validateAndEstimateSize` |
 
 ## 22. P11: Reduce B-tree Lookup Redundancy in putSingle (Replace + Capacity)
 

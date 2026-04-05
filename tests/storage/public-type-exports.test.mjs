@@ -11,3 +11,12 @@ test('public root type exports include DatastoreDriverSnapshot for custom driver
 
   assert.match(indexSource, /DatastoreDriverSnapshot/);
 });
+
+test('public root type exports include PayloadLimitsConfig for custom payload limits', async () => {
+  const indexSource = await readFile(
+    path.resolve(process.cwd(), 'src/index.ts'),
+    'utf8',
+  );
+
+  assert.match(indexSource, /PayloadLimitsConfig/);
+});

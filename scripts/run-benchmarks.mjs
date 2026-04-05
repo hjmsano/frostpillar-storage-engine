@@ -282,12 +282,47 @@ const benchDeleteById = async (size, configOverrides) => {
   return { elapsedNs, operationCount: size };
 };
 
+const benchReplaceById = async (size, configOverrides) => {
+  const replaceCount = Math.min(size, 1000);
+  const elapsedNs = await benchAsync(
+    async () => {
+      const ds = await populateDatastore(size, configOverrides);
+      const all = await ds.getAll();
+      const targets = all.slice(0, replaceCount);
+      return { ds, targets };
+    },
+    async (ctx) => {
+      for (const record of ctx.targets) {
+        await ctx.ds.replaceById(record._id, {
+          name: `replaced-${record.payload.value}`,
+          score: record.payload.value * 10,
+        });
+      }
+    },
+  );
+  return { elapsedNs, operationCount: replaceCount };
+};
+
 const benchDeleteMany = async (size, configOverrides) => {
   const keys = Array.from({ length: size }, (_, i) => padKey(i));
   const elapsedNs = await benchAsync(
     async () => ({ ds: await populateDatastore(size, configOverrides) }),
     async (ctx) => {
       await ctx.ds.deleteMany(keys);
+    },
+  );
+  return { elapsedNs, operationCount: size };
+};
+
+const benchDeleteByIds = async (size, configOverrides) => {
+  const elapsedNs = await benchAsync(
+    async () => {
+      const ds = await populateDatastore(size, configOverrides);
+      const all = await ds.getAll();
+      return { ds, ids: all.map((r) => r._id) };
+    },
+    async (ctx) => {
+      await ctx.ds.deleteByIds(ctx.ids);
     },
   );
   return { elapsedNs, operationCount: size };
@@ -364,65 +399,45 @@ const benchCount = async (size, configOverrides) => {
 
 const formatNumber = (value, fractionDigits) => value.toFixed(fractionDigits);
 
-const formatRow = (cells, widths) =>
-  cells.map((cell, i) => cell.padStart(widths[i] ?? 14)).join(' ');
-
-const DEFAULT_WIDTHS = [16, 8, 12, 12, 16, 10];
-const VARIANT_WIDTHS = [12, 16, 8, 12, 12, 16, 10];
-
 const CONSTANT_TIME_OPS = new Set(['getAll', 'clear', 'count']);
 
-const printHeader = (widths, extraLabel) => {
-  const cols = extraLabel
-    ? [
-        extraLabel,
-        'operation',
-        'N',
-        'median-ms',
-        'ns/op',
-        'normalized',
-        'ratio',
-      ]
-    : ['operation', 'N', 'median-ms', 'ns/op', 'normalized', 'ratio'];
-  const divs = cols.map(() => '----------');
-  console.log(formatRow(cols, widths));
-  console.log(formatRow(divs, widths));
+const OP_CATEGORIES = {
+  write: { label: 'Write', ops: ['put', 'putMany'] },
+  read: { label: 'Read', ops: ['get', 'getFirst', 'has', 'getAll', 'getRange', 'getMany'] },
+  update: { label: 'Update', ops: ['updateById', 'replaceById'] },
+  delete: { label: 'Delete', ops: ['delete', 'deleteById', 'deleteMany', 'deleteByIds'] },
+  meta: { label: 'Metadata', ops: ['count', 'clear'] },
 };
 
-const printRows = (rows, baselines, widths, configLabel) => {
-  for (const row of rows) {
-    const nsPerOp = row.elapsedNs / row.operationCount;
-    const isConstant = CONSTANT_TIME_OPS.has(row.operation);
-    const normalized = isConstant ? nsPerOp : nsPerOp / Math.log2(row.size);
-    const baseline = baselines.get(row.operation);
-    const ratio = baseline === undefined ? 1 : normalized / baseline;
-    const normalizedLabel = isConstant
-      ? `${formatNumber(normalized, 2)}ns`
-      : `${formatNumber(normalized, 2)}ns/log2N`;
+const printLine = (char, width) => console.log(char.repeat(width));
 
-    const cells =
-      configLabel !== undefined
-        ? [
-            configLabel,
-            row.operation,
-            String(row.size),
-            formatNumber(row.elapsedNs / 1e6, 3),
-            formatNumber(nsPerOp, 2),
-            normalizedLabel,
-            formatNumber(ratio, 2),
-          ]
-        : [
-            row.operation,
-            String(row.size),
-            formatNumber(row.elapsedNs / 1e6, 3),
-            formatNumber(nsPerOp, 2),
-            normalizedLabel,
-            formatNumber(ratio, 2),
-          ];
+const TABLE_WIDTH = 78;
 
-    console.log(formatRow(cells, widths));
-  }
+const printTableHeader = (columns, widths) => {
+  const header = columns.map((col, i) => col.padEnd(widths[i])).join('  ');
+  console.log(header);
+  console.log(widths.map((w) => '-'.repeat(w)).join('  '));
 };
+
+const printTableRow = (cells, widths, alignRight = []) => {
+  const formatted = cells.map((cell, i) =>
+    alignRight.includes(i) ? cell.padStart(widths[i]) : cell.padEnd(widths[i]),
+  );
+  console.log(formatted.join('  '));
+};
+
+const DEFAULT_COLS = ['Operation', 'N', 'Median (ms)', 'ns/op', 'Normalized', 'Ratio'];
+const DEFAULT_WIDTHS = [14, 7, 12, 12, 16, 7];
+const DEFAULT_ALIGN_RIGHT = [1, 2, 3, 4, 5];
+
+const VARIANT_COLS = ['Config', 'Operation', 'N', 'Median (ms)', 'ns/op', 'Normalized', 'Ratio'];
+const VARIANT_WIDTHS = [13, 14, 7, 12, 12, 16, 7];
+const VARIANT_ALIGN_RIGHT = [2, 3, 4, 5, 6];
+
+const formatNsPerOp = (nsPerOp, isConstant) =>
+  isConstant
+    ? `${formatNumber(nsPerOp, 2)}ns`
+    : `${formatNumber(nsPerOp, 2)}ns/lg`;
 
 const computeBaselines = (rows) => {
   const baselines = new Map();
@@ -437,6 +452,59 @@ const computeBaselines = (rows) => {
     }
   }
   return baselines;
+};
+
+const printGroupedRows = (rows, baselines) => {
+  const printed = new Set();
+  for (const category of Object.values(OP_CATEGORIES)) {
+    const categoryRows = rows.filter((r) => category.ops.includes(r.operation));
+    if (categoryRows.length === 0) continue;
+
+    for (const row of categoryRows) {
+      const nsPerOp = row.elapsedNs / row.operationCount;
+      const isConstant = CONSTANT_TIME_OPS.has(row.operation);
+      const normalized = isConstant ? nsPerOp : nsPerOp / Math.log2(row.size);
+      const baseline = baselines.get(row.operation);
+      const ratio = baseline === undefined ? 1 : normalized / baseline;
+
+      printTableRow(
+        [
+          row.operation,
+          String(row.size),
+          formatNumber(row.elapsedNs / 1e6, 3),
+          formatNumber(nsPerOp, 2),
+          formatNsPerOp(normalized, isConstant),
+          formatNumber(ratio, 2),
+        ],
+        DEFAULT_WIDTHS,
+        DEFAULT_ALIGN_RIGHT,
+      );
+      printed.add(row);
+    }
+  }
+
+  // Print any uncategorized rows at the end
+  for (const row of rows) {
+    if (printed.has(row)) continue;
+    const nsPerOp = row.elapsedNs / row.operationCount;
+    const isConstant = CONSTANT_TIME_OPS.has(row.operation);
+    const normalized = isConstant ? nsPerOp : nsPerOp / Math.log2(row.size);
+    const baseline = baselines.get(row.operation);
+    const ratio = baseline === undefined ? 1 : normalized / baseline;
+
+    printTableRow(
+      [
+        row.operation,
+        String(row.size),
+        formatNumber(row.elapsedNs / 1e6, 3),
+        formatNumber(nsPerOp, 2),
+        formatNsPerOp(normalized, isConstant),
+        formatNumber(ratio, 2),
+      ],
+      DEFAULT_WIDTHS,
+      DEFAULT_ALIGN_RIGHT,
+    );
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -504,9 +572,11 @@ const runDefaultBenchmarks = async () => {
       { name: 'getMany', fn: benchGetMany },
       { name: 'count', fn: benchCount },
       { name: 'updateById', fn: benchUpdateById },
+      { name: 'replaceById', fn: benchReplaceById },
       { name: 'delete', fn: benchDeleteByKey },
       { name: 'deleteById', fn: benchDeleteById },
       { name: 'deleteMany', fn: benchDeleteMany },
+      { name: 'deleteByIds', fn: benchDeleteByIds },
       { name: 'clear', fn: benchClear },
     ];
 
@@ -524,7 +594,7 @@ const runDefaultBenchmarks = async () => {
   return rows;
 };
 
-const VARIANT_OPS = ['put', 'putMany', 'get', 'updateById', 'delete'];
+const VARIANT_OPS = ['put', 'putMany', 'get', 'updateById', 'replaceById', 'delete', 'deleteByIds'];
 
 const runVariantBenchmarks = async () => {
   const configs = [
@@ -545,7 +615,9 @@ const runVariantBenchmarks = async () => {
     putMany: benchPutMany,
     get: benchGet,
     updateById: benchUpdateById,
+    replaceById: benchReplaceById,
     delete: benchDeleteByKey,
+    deleteByIds: benchDeleteByIds,
   };
 
   const rows = [];
@@ -678,11 +750,12 @@ const runP5Benchmarks = async () => {
   return rows;
 };
 
+const P5_COLS = ['Layer', 'Operation', 'N', 'Median (ms)', 'ns/op', 'vs BTree'];
+const P5_COL_WIDTHS = [10, 10, 7, 12, 12, 9];
+const P5_ALIGN_RIGHT = [2, 3, 4, 5];
+
 const printP5Section = (rows) => {
-  const header = ['layer', 'operation', 'N', 'median-ms', 'ns/op', 'vs-BTree'];
-  const divs = header.map(() => '----------');
-  console.log(formatRow(header, P5_WIDTHS));
-  console.log(formatRow(divs, P5_WIDTHS));
+  printTableHeader(P5_COLS, P5_COL_WIDTHS);
 
   // Build baselines from BTree rows for each (operation, size) pair
   const btreeBaseline = new Map();
@@ -698,18 +771,17 @@ const printP5Section = (rows) => {
     const base = btreeBaseline.get(baseKey);
     const ratio = base !== undefined ? `${formatNumber(nsPerOp / base, 2)}x` : '1.00x';
 
-    console.log(
-      formatRow(
-        [
-          row.layer,
-          row.operation,
-          String(row.size),
-          formatNumber(row.elapsedNs / 1e6, 3),
-          formatNumber(nsPerOp, 2),
-          ratio,
-        ],
-        P5_WIDTHS,
-      ),
+    printTableRow(
+      [
+        row.layer,
+        row.operation,
+        String(row.size),
+        formatNumber(row.elapsedNs / 1e6, 3),
+        formatNumber(nsPerOp, 2),
+        ratio,
+      ],
+      P5_COL_WIDTHS,
+      P5_ALIGN_RIGHT,
     );
   }
 };
@@ -725,31 +797,41 @@ const run = async () => {
   const btreeMod = await import('@frostpillar/frostpillar-btree');
   InMemoryBTreeClass = btreeMod.InMemoryBTree;
 
-  console.log('Frostpillar Storage Engine \u2014 I/O Benchmark');
-  console.log(`Node.js ${process.version}`);
-  console.log(`Date: ${new Date().toISOString()}`);
-  console.log(`Warmup: ${WARMUP_ROUNDS} | Measure: ${MEASURE_ROUNDS} (median)`);
-  console.log(`Input sizes: ${INPUT_SIZES.join(', ')}`);
+  printLine('=', TABLE_WIDTH);
+  console.log('  Frostpillar Storage Engine \u2014 Benchmark Suite');
+  printLine('=', TABLE_WIDTH);
+  console.log();
+  console.log(`  Runtime:     Node.js ${process.version}`);
+  console.log(`  Date:        ${new Date().toISOString()}`);
+  console.log(`  Warmup:      ${WARMUP_ROUNDS} round(s)`);
+  console.log(`  Measure:     ${MEASURE_ROUNDS} rounds (median)`);
+  console.log(`  Input sizes: ${INPUT_SIZES.join(', ')}`);
+  console.log();
 
   // --- Section 1: P5 Optimization Impact ---
-  console.log();
-  console.log('=== P5: BTree vs Datastore write-path overhead ===');
+  printLine('-', TABLE_WIDTH);
+  console.log('  1. Write-Path Overhead: Raw BTree vs Datastore Layers');
+  printLine('-', TABLE_WIDTH);
   console.log();
   const p5Rows = await runP5Benchmarks();
   printP5Section(p5Rows);
 
   // --- Section 2: Default benchmarks ---
   console.log();
-  console.log('=== Datastore (default config) ===');
+  printLine('-', TABLE_WIDTH);
+  console.log('  2. Core Operations (default config)');
+  printLine('-', TABLE_WIDTH);
   console.log();
   const defaultRows = await runDefaultBenchmarks();
   const defaultBaselines = computeBaselines(defaultRows);
-  printHeader(DEFAULT_WIDTHS);
-  printRows(defaultRows, defaultBaselines, DEFAULT_WIDTHS);
+  printTableHeader(DEFAULT_COLS, DEFAULT_WIDTHS);
+  printGroupedRows(defaultRows, defaultBaselines);
 
   // --- Section 3: Config variants ---
   console.log();
-  console.log('=== Datastore (config variants) ===');
+  printLine('-', TABLE_WIDTH);
+  console.log('  3. Config Variants (duplicate key policies, capacity modes)');
+  printLine('-', TABLE_WIDTH);
   console.log();
   const variantRows = await runVariantBenchmarks();
   const variantBaselines = new Map();
@@ -760,7 +842,7 @@ const run = async () => {
       variantBaselines.set(key, nsPerOp / Math.log2(row.size));
     }
   }
-  printHeader(VARIANT_WIDTHS, 'config');
+  printTableHeader(VARIANT_COLS, VARIANT_WIDTHS);
   for (const row of variantRows) {
     const key = `${row.config}:${row.operation}`;
     const nsPerOp = row.elapsedNs / row.operationCount;
@@ -768,41 +850,43 @@ const run = async () => {
     const baseline = variantBaselines.get(key);
     const ratio = baseline === undefined ? 1 : normalized / baseline;
 
-    console.log(
-      formatRow(
-        [
-          row.config,
-          row.operation,
-          String(row.size),
-          formatNumber(row.elapsedNs / 1e6, 3),
-          formatNumber(nsPerOp, 2),
-          `${formatNumber(normalized, 2)}ns/log2N`,
-          formatNumber(ratio, 2),
-        ],
-        VARIANT_WIDTHS,
-      ),
+    printTableRow(
+      [
+        row.config,
+        row.operation,
+        String(row.size),
+        formatNumber(row.elapsedNs / 1e6, 3),
+        formatNumber(nsPerOp, 2),
+        `${formatNumber(normalized, 2)}ns/lg`,
+        formatNumber(ratio, 2),
+      ],
+      VARIANT_WIDTHS,
+      VARIANT_ALIGN_RIGHT,
     );
   }
 
   // --- Section 4: Concurrent read/write ---
   console.log();
-  console.log('=== Concurrent read+write ===');
+  printLine('-', TABLE_WIDTH);
+  console.log('  4. Concurrent Read + Write Workload');
+  printLine('-', TABLE_WIDTH);
   console.log();
   const concurrentSize = INPUT_SIZES[INPUT_SIZES.length > 1 ? 1 : 0];
   const concResult = await benchConcurrentReadWrite(concurrentSize);
   const concNsPerOp = concResult.elapsedNs / concResult.operationCount;
-  console.log(
-    `  N=${concurrentSize}  total-ops=${concResult.operationCount}  ` +
-      `median=${formatNumber(concResult.elapsedNs / 1e6, 3)}ms  ` +
-      `ns/op=${formatNumber(concNsPerOp, 2)}`,
-  );
+  console.log(`  N:         ${concurrentSize}`);
+  console.log(`  Total ops: ${concResult.operationCount}`);
+  console.log(`  Median:    ${formatNumber(concResult.elapsedNs / 1e6, 3)} ms`);
+  console.log(`  ns/op:     ${formatNumber(concNsPerOp, 2)}`);
 
   if (sideEffectSink === Number.MIN_SAFE_INTEGER) {
     console.error('unreachable branch for side-effect sink');
   }
 
   console.log();
-  console.log('Benchmark complete.');
+  printLine('=', TABLE_WIDTH);
+  console.log('  Benchmark complete.');
+  printLine('=', TABLE_WIDTH);
 };
 
 run().catch((error) => {

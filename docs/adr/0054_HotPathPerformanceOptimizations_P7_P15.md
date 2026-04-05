@@ -23,7 +23,7 @@ Profiling the storage engine revealed several hot-path inefficiencies in read/wr
 
 ### P10: Unified key size estimation
 
-Added `estimateKeySizeBytes()` which delegates to `estimateObjectSizeBytes()`. Replaced `computeUtf8ByteLength(JSON.stringify(normalizedKey))` in `resolvePayload()` and `buildMergedPayload()` — eliminating a `JSON.stringify` allocation per write/update.
+Added `estimateKeySizeBytes()` which delegates to `estimateObjectSizeBytes()`. Replaced `computeUtf8ByteLength(JSON.stringify(normalizedKey))` in `resolvePayload()` and `validateAndEstimateSize()` — eliminating a `JSON.stringify` allocation per write/update.
 
 ### P11: Inline computeReplacedBytes
 

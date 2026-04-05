@@ -1,8 +1,8 @@
 # Spec: Datastore API (Core Baseline)
 
 Status: Active
-Version: 0.10
-Last Updated: 2026-04-04
+Version: 0.12
+Last Updated: 2026-04-05
 
 ## 1. Scope
 
@@ -89,6 +89,7 @@ Key-based operations:
 ID-based operations (target exactly one record by system-generated `_id`):
 - `getById(id): Promise<KeyedRecord | null>`
 - `updateById(id, patch): Promise<boolean>`
+- `replaceById(id, payload): Promise<boolean>`
 - `deleteById(id): Promise<boolean>`
 
 Bulk operations:
@@ -97,6 +98,7 @@ Bulk operations:
 - `getMany(keys[]): Promise<KeyedRecord[]>`
 - `putMany(records[]): Promise<void>`
 - `deleteMany(keys[]): Promise<number>`
+- `deleteByIds(ids[]): Promise<number>`
 - `clear(): Promise<void>`
 
 Metadata operations:
@@ -141,6 +143,15 @@ All record-returning APIs (`get`, `getFirst`, `getLast`, `getById`, `getAll`, `g
 - executes left-to-right by input order.
 - non-atomic: if an element fails, previously applied elements remain applied.
 - MUST return the total number of records removed across all keys.
+
+`deleteByIds(ids[])`:
+- MUST delete records by their `EntryId` values (not by key).
+- MUST return the total number of records actually deleted (some ids may not exist).
+- if the array is empty, MUST return 0 (no-op).
+- each deletion follows the same semantics as `deleteById` (remove from B+Tree, update size tracking).
+- all deletions MUST execute within a single mutex acquisition for atomicity with respect to other operations.
+- MUST forward a single aggregated durability signal (total freed bytes) to backend controller after all deletions, rather than per-deletion signals.
+- non-atomic with respect to partial progress: if the array contains both valid and invalid ids, valid ids are deleted and invalid ids are skipped.
 
 `clear()`:
 - MUST remove all records from the datastore.
@@ -243,6 +254,17 @@ When `duplicateKeys` is `'replace'` and `put()` targets an existing key:
 - merged payload (existing + patch) MUST satisfy all payload validation constraints (§7) before being stored; if the merged result violates any constraint, the operation MUST fail with `ValidationError` and leave the existing record unchanged.
 - successful update MUST forward durability signal bytes to backend controller pending-byte tracking.
 
+`replaceById(id, payload)`:
+- MUST fully replace the payload of the record matching the given `_id`.
+- unlike `updateById` (shallow merge), `replaceById` treats the provided payload as the complete new document — existing fields not present in the new payload are removed.
+- MUST return `true` when record was found and replaced, `false` when `_id` does not match any record.
+- MUST NOT change the record's `key` or `_id`.
+- MUST enforce strict max-size boundary checks only when resulting encoded size increases.
+- MUST NOT trigger turnover eviction.
+- the new payload MUST satisfy all payload validation constraints (§7) before being stored; if the new payload violates any constraint, the operation MUST fail with `ValidationError` and leave the existing record unchanged.
+- successful replace MUST forward durability signal bytes to backend controller pending-byte tracking.
+- atomic — the record is never removed from the B+Tree; only its payload is swapped in-place (no TOCTOU window).
+
 `deleteById(id)`:
 - MUST return `true` when record was found and removed, `false` when `_id` does not match any record.
 - after deletion, the record MUST be inaccessible via both `getById(id)` and key-based operations.
@@ -263,15 +285,38 @@ Backend-limit sentinel (`capacity.maxSize = "backendLimit"`) rules are defined i
 
 ## 7. Payload Validation Contract
 
+### 7.1 Payload Limits Configuration (`config.payloadLimits`)
+
+`DatastoreConfig` accepts an optional `payloadLimits` field to override default validation thresholds:
+
+```typescript
+interface PayloadLimitsConfig {
+  maxDepth?: number;          // default: 64
+  maxKeyBytes?: number;       // default: 1024
+  maxStringBytes?: number;    // default: 65535
+  maxKeysPerObject?: number;  // default: 256
+  maxTotalKeys?: number;      // default: 4096
+  maxTotalBytes?: number;     // default: 1048576
+}
+```
+
+Configuration rules:
+- when `payloadLimits` is omitted or `undefined`, all limits MUST use their default values.
+- each field within `payloadLimits` is independently optional; omitted fields MUST use the default value.
+- each provided value MUST be a positive safe integer; otherwise construction MUST fail with `ConfigurationError`.
+- `payloadLimits` MUST be ignored when `skipPayloadValidation` is `true`.
+
+### 7.2 Payload Structural Rules
+
 Payload object keys:
 - MUST be non-empty strings.
 - MUST NOT be whitespace-only strings.
 - MUST NOT use reserved names: `__proto__`, `constructor`, `prototype`.
 
 Payload nesting:
-- Payload nesting depth MUST be at most 64 object levels.
+- Payload nesting depth MUST be at most `payloadLimits.maxDepth` (default 64) object levels.
 - top-level `payload` object is level 1.
-- level 64 is valid; level 65 MUST fail with `ValidationError`.
+- level equal to `maxDepth` is valid; level exceeding `maxDepth` MUST fail with `ValidationError`.
 
 ## 8. Close and Error Contract
 
@@ -293,7 +338,7 @@ Public error family:
 Within a single Datastore instance, all mutating operations MUST be serialized with respect to each other:
 
 Mutating operations (require exclusive access):
-- `put`, `putMany`, `delete`, `deleteMany`, `clear`, `updateById`, `deleteById`
+- `put`, `putMany`, `delete`, `deleteMany`, `deleteByIds`, `clear`, `updateById`, `replaceById`, `deleteById`
 
 Read operations (allow concurrent access):
 - `get`, `getFirst`, `getLast`, `getAll`, `getRange`, `getMany`, `count`, `keys`, `getById`, `has`
@@ -308,6 +353,8 @@ Serialization rules:
 
 | Version | Date | Summary |
 |---------|------|---------|
+| 0.12 | 2026-04-05 | Add `replaceById` (§5.1) and `deleteByIds` (§3.1) operations. |
+| 0.11 | 2026-04-05 | Add configurable payload limits (§7.1). Restructure §7 into §7.1/§7.2. |
 | 0.10 | 2026-04-04 | Clarify comparator clamping vs validation per P14 (§4.3). Remove frozen-payload contract per P3-C (§5.1). |
 | 0.9 | 2026-04-01 | Add `getLast(key)` as counterpart of `getFirst(key)` (§3). |
 | 0.8 | 2026-03-30 | Add concurrency model and write serialization (§9). |
