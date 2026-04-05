@@ -1,5 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdirSync, rmSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { Datastore, ConfigurationError } from '../../dist/index.js';
 import { importDistModule } from '../load-module.mjs';
 
@@ -179,6 +181,74 @@ describe('parseIndexConfig', () => {
   });
 });
 
+// --- RecordKeyIndexBTree.fromJSON patching ---
+
+describe('RecordKeyIndexBTree.fromJSON index config patching', () => {
+  it('restores with autoScale: true by default', async () => {
+    const { RecordKeyIndexBTree } = await loadAdapter();
+    const original = new RecordKeyIndexBTree({ ...numericConfig, autoScale: false });
+    original.put(1, 'a');
+    const json = original.toJSON();
+    assert.equal(json.config.autoScale, false);
+
+    const restored = RecordKeyIndexBTree.fromJSON(json, numericConfig);
+    const restoredJSON = restored.toJSON();
+    assert.equal(restoredJSON.config.autoScale, true);
+    assert.equal(restored.size(), 1);
+  });
+
+  it('patches autoScale: false with custom maxLeafEntries', async () => {
+    const { RecordKeyIndexBTree } = await loadAdapter();
+    const original = new RecordKeyIndexBTree(numericConfig);
+    original.put(1, 'a');
+    const json = original.toJSON();
+
+    const restored = RecordKeyIndexBTree.fromJSON(json, {
+      ...numericConfig,
+      autoScale: false,
+      maxLeafEntries: 128,
+    });
+    const restoredJSON = restored.toJSON();
+    assert.equal(restoredJSON.config.autoScale, false);
+    assert.equal(restoredJSON.config.maxLeafEntries, 128);
+    assert.equal(restored.size(), 1);
+  });
+
+  it('patches maxBranchChildren on restoration', async () => {
+    const { RecordKeyIndexBTree } = await loadAdapter();
+    const original = new RecordKeyIndexBTree({ ...numericConfig, autoScale: false });
+    original.put(1, 'a');
+    const json = original.toJSON();
+
+    const restored = RecordKeyIndexBTree.fromJSON(json, {
+      ...numericConfig,
+      autoScale: false,
+      maxBranchChildren: 256,
+    });
+    const restoredJSON = restored.toJSON();
+    assert.equal(restoredJSON.config.maxBranchChildren, 256);
+  });
+
+  it('preserves snapshot maxLeafEntries when config does not override', async () => {
+    const { RecordKeyIndexBTree } = await loadAdapter();
+    const original = new RecordKeyIndexBTree({
+      ...numericConfig,
+      autoScale: false,
+      maxLeafEntries: 32,
+    });
+    original.put(1, 'a');
+    const json = original.toJSON();
+    assert.equal(json.config.maxLeafEntries, 32);
+
+    const restored = RecordKeyIndexBTree.fromJSON(json, {
+      ...numericConfig,
+      autoScale: false,
+    });
+    const restoredJSON = restored.toJSON();
+    assert.equal(restoredJSON.config.maxLeafEntries, 32);
+  });
+});
+
 // --- Datastore integration ---
 
 describe('Datastore index config', () => {
@@ -230,5 +300,72 @@ describe('Datastore index config', () => {
       () => new Datastore({ index: { autoScale: false, maxLeafEntries: 0 } }),
       (err) => err instanceof ConfigurationError,
     );
+  });
+});
+
+// --- File driver reopen preserves index config ---
+
+const createSandboxDirectory = (name) => {
+  const baseDir = resolve(process.cwd(), 'tests/.tmp');
+  mkdirSync(baseDir, { recursive: true });
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const directory = join(baseDir, `${name}-${uniqueSuffix}`);
+  mkdirSync(directory, { recursive: true });
+  return directory;
+};
+
+describe('file backend reopen preserves index config', () => {
+  it('custom maxLeafEntries survives close and reopen', async () => {
+    const { fileDriver } = await importDistModule('drivers/file.js');
+    const sandbox = createSandboxDirectory('index-reopen');
+    const filePath = join(sandbox, 'test.db');
+
+    try {
+      const ds1 = new Datastore({
+        index: { autoScale: false, maxLeafEntries: 128 },
+        driver: fileDriver({ filePath }),
+      });
+      await ds1.put({ key: 'a', payload: { v: 1 } });
+      await ds1.commit();
+      await ds1.close();
+
+      const ds2 = new Datastore({
+        index: { autoScale: false, maxLeafEntries: 128 },
+        driver: fileDriver({ filePath }),
+      });
+      await ds2.put({ key: 'b', payload: { v: 2 } });
+      const all = await ds2.getAll();
+      assert.equal(all.length, 2);
+      await ds2.close();
+    } finally {
+      rmSync(sandbox, { recursive: true, force: true });
+    }
+  });
+
+  it('autoScale: true survives close and reopen', async () => {
+    const { fileDriver } = await importDistModule('drivers/file.js');
+    const sandbox = createSandboxDirectory('index-reopen-auto');
+    const filePath = join(sandbox, 'test.db');
+
+    try {
+      const ds1 = new Datastore({
+        index: { autoScale: true },
+        driver: fileDriver({ filePath }),
+      });
+      await ds1.put({ key: 'a', payload: { v: 1 } });
+      await ds1.commit();
+      await ds1.close();
+
+      const ds2 = new Datastore({
+        index: { autoScale: true },
+        driver: fileDriver({ filePath }),
+      });
+      await ds2.put({ key: 'b', payload: { v: 2 } });
+      const all = await ds2.getAll();
+      assert.equal(all.length, 2);
+      await ds2.close();
+    } finally {
+      rmSync(sandbox, { recursive: true, force: true });
+    }
   });
 });

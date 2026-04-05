@@ -29,14 +29,10 @@ const validateNodeCapacity = (value: unknown, field: string): void => {
 export const parseIndexConfig = (
   index?: IndexConfig,
 ): ResolvedIndexConfig => {
-  if (index === undefined) {
-    return { autoScale: true, maxLeafEntries: undefined, maxBranchChildren: undefined };
-  }
-
-  const autoScale = index.autoScale ?? true;
+  const autoScale = index?.autoScale ?? true;
 
   if (autoScale) {
-    if (index.maxLeafEntries !== undefined || index.maxBranchChildren !== undefined) {
+    if (index?.maxLeafEntries !== undefined || index?.maxBranchChildren !== undefined) {
       throw new ConfigurationError(
         'index.maxLeafEntries and index.maxBranchChildren cannot be set when index.autoScale is true.',
       );
@@ -44,17 +40,19 @@ export const parseIndexConfig = (
     return { autoScale: true, maxLeafEntries: undefined, maxBranchChildren: undefined };
   }
 
-  if (index.maxLeafEntries !== undefined) {
-    validateNodeCapacity(index.maxLeafEntries, 'maxLeafEntries');
+  // When autoScale is false, index is guaranteed to be defined:
+  // undefined?.autoScale ?? true === true, so the autoScale branch above would have returned.
+  if (index!.maxLeafEntries !== undefined) {
+    validateNodeCapacity(index!.maxLeafEntries, 'maxLeafEntries');
   }
-  if (index.maxBranchChildren !== undefined) {
-    validateNodeCapacity(index.maxBranchChildren, 'maxBranchChildren');
+  if (index!.maxBranchChildren !== undefined) {
+    validateNodeCapacity(index!.maxBranchChildren, 'maxBranchChildren');
   }
 
   return {
     autoScale: false,
-    maxLeafEntries: index.maxLeafEntries,
-    maxBranchChildren: index.maxBranchChildren,
+    maxLeafEntries: index!.maxLeafEntries,
+    maxBranchChildren: index!.maxBranchChildren,
   };
 };
 

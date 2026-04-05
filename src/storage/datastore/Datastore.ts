@@ -25,7 +25,7 @@ import { validateAndNormalizePayload, type ResolvedPayloadLimits } from '../../v
 import { enforceCapacityPolicy } from '../backend/capacity.js';
 import { resolveCapacityState } from '../backend/capacityResolver.js';
 import { estimateRecordSizeBytes } from '../backend/encoding.js';
-import { parseIndexConfig, parseDuplicateKeyConfig, parsePayloadLimitsConfig } from '../config/config.shared.js';
+import { parseIndexConfig, type ResolvedIndexConfig, parseDuplicateKeyConfig, parsePayloadLimitsConfig } from '../config/config.shared.js';
 import { DatastoreLifecycle } from './datastoreLifecycle.js';
 import {
   deleteRecordById,
@@ -53,6 +53,7 @@ export class Datastore {
   private keyIndex: RecordKeyIndexBTree<unknown, PersistedRecord>;
   private readonly keyDefinition: DatastoreKeyDefinition<unknown, unknown>;
   private readonly duplicateKeyPolicy: DuplicateKeyPolicy;
+  private readonly indexConfig: ResolvedIndexConfig;
   private readonly capacityState: CapacityState | null;
   private readonly skipPayloadValidation: boolean;
   private readonly payloadLimits: ResolvedPayloadLimits;
@@ -68,10 +69,11 @@ export class Datastore {
     this.keyDefinition = resolveKeyDefinition(config);
     const duplicateKeys = parseDuplicateKeyConfig(config.duplicateKeys);
     this.duplicateKeyPolicy = duplicateKeys;
+    this.indexConfig = parseIndexConfig(config.index);
     this.keyIndex = new RecordKeyIndexBTree<unknown, PersistedRecord>({
       compareKeys: (left: unknown, right: unknown): number => this.keyDefinition.compare(left, right),
       duplicateKeys,
-      ...parseIndexConfig(config.index),
+      ...this.indexConfig,
     });
     this.capacityState = resolveCapacityState(config);
     this.skipPayloadValidation = config.skipPayloadValidation === true;
@@ -689,6 +691,7 @@ export class Datastore {
             return this.keyDefinition.compare(left, right);
           },
           duplicateKeys: this.duplicateKeyPolicy,
+          ...this.indexConfig,
         },
       );
       this.backfillMissingSizeBytes();

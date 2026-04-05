@@ -128,6 +128,7 @@ Range and bulk:
 Serialization:
 - `toJSON()` MUST return `BTreeJSON` via btree's `toJSON`.
 - static `fromJSON(json, config)` MUST restore adapter from `BTreeJSON` via btree's `fromJSON`.
+- `fromJSON` MUST patch the snapshot's config with the provided `config` values (`duplicateKeys`, `autoScale`, `maxLeafEntries`, `maxBranchChildren`) so that constructor-time settings override whatever was persisted in the snapshot.
 
 Lifecycle:
 - `clear()` MUST call btree's `clear`.

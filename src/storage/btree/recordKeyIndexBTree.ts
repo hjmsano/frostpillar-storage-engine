@@ -146,9 +146,13 @@ export class RecordKeyIndexBTree<TKey = unknown, TValue = unknown> {
     const wrappedComparator = buildWrappedComparator(config.compareKeys);
     const adapter = Object.create(RecordKeyIndexBTree.prototype) as RecordKeyIndexBTree<TKey, TValue>;
     const resolvedPolicy = config.duplicateKeys ?? 'allow';
-    const patchedJSON: BTreeJSON<TKey, TValue> = resolvedPolicy !== json.config.duplicateKeys
-      ? { ...json, config: { ...json.config, duplicateKeys: resolvedPolicy } }
-      : json;
+    const resolvedAutoScale = config.autoScale ?? true;
+    const configPatch: BTreeJSON<TKey, TValue>['config'] = { ...json.config, duplicateKeys: resolvedPolicy, autoScale: resolvedAutoScale };
+    if (!resolvedAutoScale) {
+      if (config.maxLeafEntries !== undefined) configPatch.maxLeafEntries = config.maxLeafEntries;
+      if (config.maxBranchChildren !== undefined) configPatch.maxBranchChildren = config.maxBranchChildren;
+    }
+    const patchedJSON: BTreeJSON<TKey, TValue> = { ...json, config: configPatch };
     (adapter as unknown as { tree: InMemoryBTree<TKey, TValue> }).tree =
       InMemoryBTree.fromJSON<TKey, TValue>(patchedJSON, wrappedComparator);
     return adapter;
