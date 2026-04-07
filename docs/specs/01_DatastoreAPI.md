@@ -257,7 +257,7 @@ When `duplicateKeys` is `'replace'` and `put()` targets an existing key:
 `getById(id)`:
 - MUST return the `KeyedRecord` matching the given `_id`, or `null` if no record exists with that `_id`.
 - returned record MUST include `_id`, `key`, and `payload` fields.
-- returned payload is a shared reference to internal state. Callers MUST NOT mutate returned payloads. Payloads are defensively cloned on insert (not on read) for performance. The `KeyedRecord` fields are typed `readonly` at the TypeScript level.
+- returned payload is a shared reference to internal state. Callers MUST NOT mutate returned payloads. Payloads are defensively cloned on insert (not on read) for performance. When `skipPayloadValidation` is `true`, insert-time cloning is also skipped and the payload is stored by reference; the caller MUST NOT mutate the object after insertion. The `KeyedRecord` fields are typed `readonly` at the TypeScript level.
 - `_id` used with `getById` MUST be a value previously obtained from a record-returning API (`get`, `getFirst`, `getLast`, `getById`, `getRange`).
 - after `deleteById(id)` or `delete(key)` removes the record, `getById` MUST return `null` for that `_id`.
 

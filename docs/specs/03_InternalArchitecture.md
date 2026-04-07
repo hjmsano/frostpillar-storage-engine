@@ -137,7 +137,7 @@ Lifecycle:
 
 Required:
 - datastore internals MUST depend on `RecordKeyIndexBTree` adapter, not upstream package directly.
-- comparator safety: adapter MUST validate comparator result as finite integer and fail with `IndexCorruptionError` before mutating tree state on invalid output.
+- comparator safety: adapter MUST reject `NaN` comparator results with `IndexCorruptionError`. Non-integer and non-finite results (e.g. `0.5`, `Infinity`) are clamped to `-1`/`0`/`1` on the hot path for performance. Full validation via `normalizeComparatorResult` (which rejects non-finite and non-integer values) is applied at the `getRange` boundary check only; other Datastore APIs (`getMany`, `keys`) use lightweight clamping.
 - datastore modules MUST NOT import `ConcurrentInMemoryBTree` directly.
 
 Removed from adapter (superseded by btree native capabilities):

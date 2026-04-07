@@ -157,7 +157,7 @@ Each record has:
 | `payload` | JSON-compatible data object                     |
 | `_id`     | Ephemeral system-generated `EntryId`, read-only |
 
-> **Defensive cloning:** Payloads are defensively cloned at insertion time but are **not** frozen. Read APIs return internal references without cloning. Mutating a returned payload will **not** throw, but may corrupt internal state — treat returned payloads as read-only. If you need a mutable copy, clone it yourself (e.g. `structuredClone(record.payload)`).
+> **Defensive cloning:** Payloads are defensively cloned at insertion time but are **not** frozen. When `skipPayloadValidation` is `true`, cloning is also skipped and the payload is stored by reference — the caller must not mutate the object after insertion. Read APIs return internal references without cloning. Mutating a returned payload will **not** throw, but may corrupt internal state — treat returned payloads as read-only. If you need a mutable copy, clone it yourself (e.g. `structuredClone(record.payload)`).
 
 Records are ordered by `key` ascending (lexicographic by default), then by insertion order ascending for ties.
 
@@ -244,7 +244,7 @@ For trusted input where you control the shape, you can skip validation:
 const db = new Datastore({ skipPayloadValidation: true });
 ```
 
-> **Warning:** Skipping validation disables all payload safety checks and ignores `payloadLimits`. Only use this when you are certain the input is well-formed.
+> **Warning:** Skipping validation disables all payload safety checks, ignores `payloadLimits`, and skips defensive cloning (payloads are stored by reference). Only use this when you are certain the input is well-formed and you will not mutate the payload object after insertion.
 
 #### Index Configuration
 
@@ -513,14 +513,18 @@ Alternatively, use directory-based targeting via the `target` option:
 | `target.fileName` | `string` | Optional file name (default: auto-generated) |
 | `target.filePrefix` | `string` | Optional file name prefix |
 
+> **Path containment:** All resolved file paths (`filePath`, `target.directory`) must stay within `process.cwd()`. Paths that resolve outside the working directory (e.g. via `../` traversal or absolute paths pointing elsewhere) are rejected with `ConfigurationError`.
+
 **Lock file behavior:**
 
-`fileDriver` uses `${filePath}.lock` to enforce a single writer. If a process exits without calling `close()`, subsequent opens fail with `DatabaseLockedError`.
+`fileDriver` uses `${filePath}.lock` to enforce a single writer.
 
-Recovery steps:
+If a process exits without calling `close()`, the lock file becomes stale. On the next open attempt, `fileDriver` automatically detects the stale lock by checking whether the recorded PID is still alive. If the owning process is dead, the stale lock is removed and a new lock is acquired transparently — no manual intervention is required.
+
+If the owning process is still alive (or the lock file is malformed), the open fails with `DatabaseLockedError`. In that case:
 
 1. Verify no active writer process is using the same datastore file.
-2. Remove the stale lock file manually (`<resolved-data-file>.lock`).
+2. Remove the lock file manually (`<resolved-data-file>.lock`).
 3. Reopen the datastore.
 
 > **Note:** `fileDriver` is Node.js-only and is **not** included in the browser IIFE bundle. Import it from the subpath `@frostpillar/frostpillar-storage-engine/drivers/file`.
