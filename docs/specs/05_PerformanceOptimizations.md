@@ -356,11 +356,11 @@ Callers compute: `validationResult.sizeBytes + computeUtf8ByteLength(JSON.string
 
 ### 11.1 Solution
 
-`buildWrappedComparator` now uses `clampComparatorResult` (simple -1/0/1 clamping) instead of `normalizeComparatorResult` (which includes `isFinite`/`isInteger` guards). `normalizeComparatorResult` remains exported and unchanged for Datastore API boundary validation (`getRange`, `getMany`, `keys`).
+`buildWrappedComparator` now uses `clampComparatorResult` (simple -1/0/1 clamping with NaN rejection) instead of `normalizeComparatorResult` (which includes `isFinite`/`isInteger` guards). `normalizeComparatorResult` remains exported and unchanged for Datastore API boundary validation (`getRange` start/end check only).
 
 ### 11.2 Behavioral Change
 
-BTree operations no longer throw `IndexCorruptionError` for non-integer/non-finite comparator results. Invalid results are silently clamped. Datastore-level APIs still validate via `normalizeComparatorResult`.
+BTree operations no longer throw `IndexCorruptionError` for non-integer/non-finite comparator results. Non-NaN results are clamped; NaN throws `IndexCorruptionError`. `getRange` still validates its start/end comparison via `normalizeComparatorResult`; `getMany` and `keys` use the lightweight `clampComparatorResult`.
 
 ## 12. P3-C: Remove `deepFreezePayload` from Hot Path
 
@@ -915,26 +915,28 @@ The validation is defense-in-depth at the Datastore public API level. However, t
 
 ### 25.3 Solution
 
-Replace `normalizeComparatorResult` calls in `getRange`, `getMany`, and `keys` with the lightweight `clampComparatorResult`:
+Replace `normalizeComparatorResult` calls in `getMany` and `keys` with the lightweight `clampComparatorResult`. ✅ **Done** — both methods already use `clampComparatorResult`.
 
-- `getRange` (line 166): replace `normalizeComparatorResult(this.keyDefinition.compare(...))` with `clampComparatorResult(this.keyDefinition.compare(...))`
-- `getMany` (line 180, 185): same replacement
-- `keys` (line 251): same replacement
+`getRange` retains `normalizeComparatorResult` for its single start/end boundary check. This is not a loop comparison and the strict validation is appropriate for API-boundary input validation.
 
-Export `clampComparatorResult` from `recordKeyIndexBTree.ts` for use in `Datastore.ts`.
+- ~~`getMany` (line 189, 194): migrated to `clampComparatorResult`~~ ✅
+- ~~`keys` (line 297): migrated to `clampComparatorResult`~~ ✅
+- `getRange` (line 175): retains `normalizeComparatorResult` (single boundary check, not a loop)
+
+Export `clampComparatorResult` from `recordKeyIndexBTree.ts` for use in `Datastore.ts`. ✅ **Done.**
 
 ### 25.4 Invariants
 
-- `normalizeComparatorResult` remains exported and unchanged for boundary validation.
-- Internal comparisons within Datastore methods use the lightweight clamp.
+- `normalizeComparatorResult` remains exported and unchanged; used only in `getRange` boundary validation.
+- `getMany` and `keys` comparisons use the lightweight `clampComparatorResult`.
 - The comparator is still validated during B-tree construction (via `buildWrappedComparator`).
 
 ### 25.5 Affected Files
 
-| File                                       | Change                                                       |
-| ------------------------------------------ | ------------------------------------------------------------ |
-| `src/storage/btree/recordKeyIndexBTree.ts` | Export `clampComparatorResult`                               |
-| `src/storage/datastore/Datastore.ts`       | Use `clampComparatorResult` in `getRange`, `getMany`, `keys` |
+| File                                       | Change                                                              |
+| ------------------------------------------ | ------------------------------------------------------------------- |
+| `src/storage/btree/recordKeyIndexBTree.ts` | Export `clampComparatorResult` ✅                                   |
+| `src/storage/datastore/Datastore.ts`       | Use `clampComparatorResult` in `getMany`, `keys` ✅                |
 
 ## 26. P15: Skip JSON.stringify for String Keys in Batch Dedup
 

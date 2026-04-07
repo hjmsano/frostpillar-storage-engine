@@ -980,7 +980,7 @@ const db = new Datastore({
 | Callback                      | Description                                              |
 | ----------------------------- | -------------------------------------------------------- |
 | `normalize(value, fieldName)` | Validate and normalize input to your key type            |
-| `compare(left, right)`        | Return a finite integer for ordering (`< 0`, `0`, `> 0`) |
+| `compare(left, right)`        | Return a number for ordering (`< 0`, `0`, `> 0`)         |
 | `serialize(key)`              | Convert key to a string for storage                      |
 | `deserialize(serialized)`     | Restore key from stored string                           |
 
