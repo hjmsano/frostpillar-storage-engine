@@ -37,8 +37,13 @@ export const normalizeComparatorResult = (compared: number): number => {
   return compared < 0 ? -1 : 1;
 };
 
-// Lightweight clamper for hot-path comparator wrapping — no validation overhead.
+// Lightweight clamper for hot-path comparator wrapping — minimal validation overhead.
+// NaN check (x !== x) is the only validation: prevents silent index corruption
+// while keeping the hot path fast (no isFinite/isInteger calls).
 export const clampComparatorResult = (compared: number): number => {
+  if (compared !== compared) {
+    throw new IndexCorruptionError('key comparator must not return NaN.');
+  }
   if (compared === 0) return 0;
   return compared < 0 ? -1 : 1;
 };

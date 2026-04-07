@@ -124,9 +124,10 @@ test('clampComparatorResult(-0.5) returns -1 (non-integer negative)', async () =
   assert.equal(clampComparatorResult(-0.5), -1);
 });
 
-test('clampComparatorResult(NaN) returns 1 (NaN is not < 0 and not === 0)', async () => {
+test('clampComparatorResult(NaN) throws IndexCorruptionError', async () => {
   const { clampComparatorResult } = await loadBTreeAdapter();
-  assert.equal(clampComparatorResult(NaN), 1);
+  const { IndexCorruptionError } = await importDistModule('errors/index.js');
+  assert.throws(() => clampComparatorResult(NaN), IndexCorruptionError);
 });
 
 test('clampComparatorResult(Infinity) returns 1', async () => {

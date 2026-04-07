@@ -1,8 +1,8 @@
 # Spec: Datastore API (Core Baseline)
 
 Status: Active
-Version: 0.12
-Last Updated: 2026-04-05
+Version: 0.13
+Last Updated: 2026-04-07
 
 ## 1. Scope
 
@@ -153,8 +153,9 @@ All record-returning APIs (`get`, `getFirst`, `getLast`, `getById`, `getAll`, `g
 
 `putMany(records[])`:
 - each record follows `put` semantics (always appends, allows duplicate keys).
-- executes left-to-right by input order.
-- non-atomic: if an element fails, previously applied elements remain applied.
+- atomicity depends on capacity policy:
+  - `strict`: atomic batch — all records are validated before any insertion. If validation or capacity check fails, no records are inserted.
+  - `turnover` or no capacity configured: non-atomic, left-to-right. If an element fails, previously applied elements remain applied.
 
 `deleteMany(keys[])`:
 - each key follows `delete` semantics (removes all records with that key).
@@ -228,7 +229,7 @@ During durable backend initialization:
 Comparator safety contract:
 - `compare(left, right)` MUST return a finite integer.
 - non-integer values (for example `0.5`) and non-finite values (`NaN`, `Infinity`, `-Infinity`) are invalid.
-- the key-index adapter MUST reject `NaN` with `IndexCorruptionError` and clamp all other results to `-1`/`0`/`1`.
+- `NaN` MUST be rejected with `IndexCorruptionError` in all code paths — the key-index adapter wrapped comparator, lightweight clamping, and boundary validation.
 - boundary-validation APIs (`getRange`) MUST validate via `normalizeComparatorResult` and throw `IndexCorruptionError` for non-finite or non-integer results.
 - hot-path loop APIs (`getMany`, `keys`) use lightweight clamping (P14, ADR-0054) and do NOT throw `IndexCorruptionError` for non-integer or non-finite (non-NaN) results; these are silently clamped.
 
@@ -322,7 +323,7 @@ Configuration rules:
 - when `payloadLimits` is omitted or `undefined`, all limits MUST use their default values.
 - each field within `payloadLimits` is independently optional; omitted fields MUST use the default value.
 - each provided value MUST be a positive safe integer; otherwise construction MUST fail with `ConfigurationError`.
-- `payloadLimits` MUST be ignored when `skipPayloadValidation` is `true`.
+- when `skipPayloadValidation` is `true`, `payloadLimits` are still validated at construction time (invalid values throw `ConfigurationError`), but are not applied at runtime validation — all runtime payload checks are skipped.
 
 ### 7.2 Payload Structural Rules
 
@@ -371,6 +372,7 @@ Serialization rules:
 
 | Version | Date | Summary |
 |---------|------|---------|
+| 0.13 | 2026-04-07 | Clarify `putMany` atomicity by capacity policy (§3.1). Clarify `payloadLimits` with `skipPayloadValidation` (§7.1). Require NaN rejection in all comparator paths (§4.3). |
 | 0.12 | 2026-04-05 | Add `replaceById` (§5.1) and `deleteByIds` (§3.1) operations. |
 | 0.11 | 2026-04-05 | Add configurable payload limits (§7.1). Restructure §7 into §7.1/§7.2. |
 | 0.10 | 2026-04-04 | Clarify comparator clamping vs validation per P14 (§4.3). Remove frozen-payload contract per P3-C (§5.1). |

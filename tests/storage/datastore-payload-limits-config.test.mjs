@@ -199,7 +199,7 @@ describe('Datastore payloadLimits configuration', () => {
     });
   });
 
-  describe('payloadLimits ignored when skipPayloadValidation is true', () => {
+  describe('payloadLimits not applied at runtime when skipPayloadValidation is true', () => {
     let ds;
     before(() => {
       ds = new Datastore({
@@ -214,6 +214,27 @@ describe('Datastore payloadLimits configuration', () => {
       await ds.put({ key: 'k1', payload });
       const result = await ds.getFirst('k1');
       assert.equal(result.payload.a.b.c.d, 'deep');
+    });
+  });
+
+  describe('payloadLimits still validated at construction time with skipPayloadValidation', () => {
+    it('rejects invalid payloadLimits even when skipPayloadValidation is true', () => {
+      assert.throws(
+        () => new Datastore({
+          skipPayloadValidation: true,
+          payloadLimits: { maxDepth: -1 },
+        }),
+        (err) => err instanceof ConfigurationError,
+      );
+    });
+
+    it('accepts valid payloadLimits with skipPayloadValidation true', () => {
+      const ds = new Datastore({
+        skipPayloadValidation: true,
+        payloadLimits: { maxDepth: 10 },
+      });
+      assert.ok(ds);
+      ds.close();
     });
   });
 

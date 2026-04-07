@@ -244,7 +244,7 @@ For trusted input where you control the shape, you can skip validation:
 const db = new Datastore({ skipPayloadValidation: true });
 ```
 
-> **Warning:** Skipping validation disables all payload safety checks, ignores `payloadLimits`, and skips defensive cloning (payloads are stored by reference). Only use this when you are certain the input is well-formed and you will not mutate the payload object after insertion.
+> **Warning:** Skipping validation disables all runtime payload safety checks and skips defensive cloning (payloads are stored by reference). `payloadLimits` are still validated at construction time (invalid values throw `ConfigurationError`), but are not applied at runtime. Only use this when you are certain the input is well-formed and you will not mutate the payload object after insertion.
 
 #### Index Configuration
 
@@ -284,7 +284,7 @@ Setting `maxLeafEntries` or `maxBranchChildren` when `autoScale` is `true` throw
 await db.put({ key: 'k1', payload: { name: 'Alice' } });
 ```
 
-**`putMany(records)`** — insert multiple records (non-atomic, left-to-right).
+**`putMany(records)`** — insert multiple records. Atomicity depends on capacity policy: `strict` performs an atomic batch (all-or-nothing); `turnover` or no capacity executes non-atomic left-to-right.
 
 ```ts
 await db.putMany([
@@ -1189,7 +1189,7 @@ If both a deferred backend initialization failure and a backend close failure oc
 | `InputRecord` | Record shape accepted by `put()` and `putMany()` |
 | `KeyedRecord` | Record object with `key`, `payload`, and `_id` fields |
 | `PersistedRecord` | Internal record format with `payload` and `sizeBytes` |
-| `RecordPayload` | Payload value type (nested record of strings, numbers, booleans, nulls, and arrays) |
+| `RecordPayload` | Payload value type (nested record of strings, numbers, booleans, and nulls). Arrays are not supported and rejected at runtime. |
 | `EntryId` | Branded `number` identifying a specific record (ephemeral, re-issued on restore) |
 | `DuplicateKeyPolicy` | `'allow' \| 'reject' \| 'replace'` |
 | `IndexConfig` | Index configuration (`autoScale`, `maxLeafEntries`, `maxBranchChildren`) |

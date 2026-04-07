@@ -244,7 +244,7 @@ const db = new Datastore({
 const db = new Datastore({ skipPayloadValidation: true });
 ```
 
-> **警告:** バリデーションのスキップは、すべてのペイロード安全チェックを無効化し、`payloadLimits` も無視され、防御的クローンもスキップされます（ペイロードは参照のまま格納されます）。入力が正しい形式であり、挿入後にペイロードオブジェクトを変更しないことが確実な場合のみ使用してください。
+> **警告:** バリデーションのスキップは、すべてのランタイムペイロード安全チェックを無効化し、防御的クローンもスキップされます（ペイロードは参照のまま格納されます）。`payloadLimits` は構築時に検証されます（無効な値は `ConfigurationError` をスロー）が、ランタイムでは適用されません。入力が正しい形式であり、挿入後にペイロードオブジェクトを変更しないことが確実な場合のみ使用してください。
 
 #### インデックス設定
 
@@ -284,7 +284,7 @@ const db2 = new Datastore({
 await db.put({ key: 'k1', payload: { name: 'Alice' } });
 ```
 
-**`putMany(records)`** — 複数レコードを挿入します（非アトミック、左から右へ順次実行）。
+**`putMany(records)`** — 複数レコードを挿入します。アトミック性は容量ポリシーに依存します：`strict` はアトミックバッチ（全件成功または全件失敗）、`turnover` または容量未設定は非アトミック（左から右へ順次実行）。
 
 ```ts
 await db.putMany([
@@ -1189,7 +1189,7 @@ try {
 | `InputRecord` | `put()` および `putMany()` が受け付けるレコード形式 |
 | `KeyedRecord` | `key`、`payload`、`_id` フィールドを持つレコードオブジェクト |
 | `PersistedRecord` | `payload` と `sizeBytes` を持つ内部レコード形式 |
-| `RecordPayload` | ペイロードの値型（文字列、数値、真偽値、null、配列のネストされたレコード） |
+| `RecordPayload` | ペイロードの値型（文字列、数値、真偽値、null のネストされたレコード）。配列は未サポートでランタイムで拒否されます。 |
 | `EntryId` | レコードを識別するブランド付き `number`（エフェメラル、復元時に再発行） |
 | `DuplicateKeyPolicy` | `'allow' \| 'reject' \| 'replace'` |
 | `IndexConfig` | インデックス設定（`autoScale`、`maxLeafEntries`、`maxBranchChildren`） |
