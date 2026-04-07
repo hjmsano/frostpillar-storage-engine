@@ -950,7 +950,7 @@ const db = new Datastore({
 **Policies:**
 
 - **`strict`** (default) — rejects writes that exceed the limit with `QuotaExceededError`.
-- **`turnover`** — evicts the oldest records (by insertion order) until the new record fits.
+- **`turnover`** — evicts records with the smallest key first (ascending B+Tree key order) until the new record fits.
 
 **`backendLimit` sentinel:**
 
@@ -1045,7 +1045,7 @@ const db = new Datastore({
 | `serialize(key)`              | Convert key to a string for storage                      |
 | `deserialize(serialized)`     | Restore key from stored string                           |
 
-All four are required when `config.key` is provided. `compare` must return a finite integer — `NaN`, `Infinity`, or non-integer values fail with `IndexCorruptionError`.
+All four are required when `config.key` is provided. `compare` should return a negative integer, zero, or positive integer. In the hot path, non-NaN values (including floats like `0.5` and `Infinity`) are automatically clamped to `-1`, `0`, or `+1` — this is by design for performance. `NaN` is the only value that causes undefined behavior and throws `IndexCorruptionError`.
 
 ---
 

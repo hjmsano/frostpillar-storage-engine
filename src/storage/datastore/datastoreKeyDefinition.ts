@@ -71,6 +71,9 @@ export const resolveKeyDefinition = (
 export const readRawInsertKey = (
   rawRecord: Record<string, unknown>,
 ): { rawKey: unknown; keyFieldName: string } => {
+  if (rawRecord === null || typeof rawRecord !== 'object') {
+    throw new ValidationError('Record must be a non-null object');
+  }
   if (Object.prototype.hasOwnProperty.call(rawRecord, 'key')) {
     return {
       rawKey: rawRecord.key,

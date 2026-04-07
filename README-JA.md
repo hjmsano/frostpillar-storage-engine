@@ -950,7 +950,7 @@ const db = new Datastore({
 **ポリシー：**
 
 - **`strict`**（デフォルト）— 制限を超える書き込みを `QuotaExceededError` で拒否します。
-- **`turnover`** — 新しいレコードが収まるまで、最も古いレコード（挿入順）を退避します。
+- **`turnover`** — 新しいレコードが収まるまで、B+Tree のキー昇順で最小キーを持つレコードから順に退避します。
 
 **`backendLimit` センチネル：**
 
@@ -1045,7 +1045,7 @@ const db = new Datastore({
 | `serialize(key)`              | キーをストレージ用の文字列に変換                    |
 | `deserialize(serialized)`     | 格納された文字列からキーを復元                      |
 
-`config.key` を指定する場合、4 つすべてが必須です。`compare` は有限整数を返す必要があります。`NaN`、`Infinity`、非整数値は `IndexCorruptionError` で失敗します。
+`config.key` を指定する場合、4 つすべてが必須です。`compare` は負の整数・ゼロ・正の整数を返すことが推奨されます。ホットパスでは、NaN 以外の値（`0.5` などの小数や `Infinity`）は自動的に `-1`・`0`・`+1` にクランプされます。これはパフォーマンスのための設計です。`NaN` のみが未定義動作を引き起こし、`IndexCorruptionError` をスローします。
 
 ---
 
