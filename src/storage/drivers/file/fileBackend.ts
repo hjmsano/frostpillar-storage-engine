@@ -157,7 +157,7 @@ const cleanupFileTempArtifacts = (backend: FileBackendState): void => {
 export const createFileBackend = (config: FileBackendConfig): FileBackendState => {
   // Capture the canonical working directory exactly once at construction time
   // (spec §3.6). Later process.chdir() calls must not affect path containment.
-  const capturedCwd = realpathSync(resolve(process.cwd()));
+  const capturedCwd = realpathSync(process.cwd());
   const dataFilePath = resolveFileDataPath(config, capturedCwd);
   const directoryPath = dirname(dataFilePath);
   const baseFileName = basename(dataFilePath);
