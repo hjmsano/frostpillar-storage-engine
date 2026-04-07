@@ -506,9 +506,11 @@ When `skipPayloadValidation` is `true`:
 - For **in-memory no-capacity** (P5-A): `sizeBytes = 0`. No size computation.
 - For **capacity or durable backends**: compute `encodedBytes` via `estimateRecordSizeBytes(normalizedKey, payload)`.
 
-**`prepareBatchRecord()` behavior (P5-B strict batch):**
+**`putManyStrict()` behavior (P5-B strict batch):**
 
 - Same skip logic as `putSingle()`.
+
+> **Note:** The original spec referenced `prepareBatchRecord()`, which was superseded by the inline batch loop in `putMany()` and the private `putManyStrict()` helper during implementation.
 
 **`updateById()` behavior:**
 
@@ -529,7 +531,7 @@ When `skipPayloadValidation` is `true`:
 | File                                    | Change                                                                        |
 | --------------------------------------- | ----------------------------------------------------------------------------- |
 | `src/types.ts`                          | Add `skipPayloadValidation?: boolean` to `DatastoreCommonConfig`              |
-| `src/storage/datastore/Datastore.ts`    | Branch on `skipPayloadValidation` in `putSingle()` and `prepareBatchRecord()` |
+| `src/storage/datastore/Datastore.ts`    | Branch on `skipPayloadValidation` in `putSingle()` and `putManyStrict()` |
 | `src/storage/datastore/mutationById.ts` | Branch on `skipPayloadValidation` in `validateAndEstimateSize()`              |
 
 ### 17.6 Test Plan
@@ -938,34 +940,26 @@ Export `clampComparatorResult` from `recordKeyIndexBTree.ts` for use in `Datasto
 
 ### 26.1 Current Behavior
 
-`prepareBatchRecord()` (line 434) and `getMany()` (line 185) use `JSON.stringify(normalizedKey)` to create string keys for `Map` dedup and comparison.
+> **Superseded:** The original spec described `prepareBatchRecord()` using `JSON.stringify(normalizedKey)` for `Map`-based dedup. The implementation replaced this with `buildStrictBatchEntries()` inside `putManyStrict()`, which uses a sort-then-compare approach (via `clampComparatorResult`) rather than a `Map` keyed by stringified keys. The `keyToString()` helper was not introduced.
 
-### 26.2 Problem
+### 26.2 Problem (historical)
 
 For the default string key type, `JSON.stringify(key)` produces `'"key"'` — wrapping in quotes. This is unnecessary allocation when the key is already a string.
 
-### 26.3 Solution
+### 26.3 Solution (implemented)
 
-Add a key-to-string helper that bypasses stringify for strings:
-
-```typescript
-private keyToString(key: unknown): string {
-  return typeof key === 'string' ? key : JSON.stringify(key);
-}
-```
-
-Replace `JSON.stringify(normalizedKey)` calls in `prepareBatchRecord()` with `this.keyToString(normalizedKey)`.
+Batch dedup in `putManyStrict()` is handled by sorting the tagged records by `(normalizedKey, originalIndex)` and comparing adjacent entries using the configured comparator, eliminating the need for a string-keyed `Map` entirely.
 
 ### 26.4 Invariants
 
-- String keys: dedup uses the string directly (no collision with non-string keys since the type is fixed per Datastore instance).
-- Non-string keys: falls back to `JSON.stringify` (same as before).
+- String keys: dedup uses the comparator directly (no `JSON.stringify` allocation).
+- Non-string keys: same comparator-based approach applies.
 
 ### 26.5 Affected Files
 
-| File                                 | Change                                             |
-| ------------------------------------ | -------------------------------------------------- |
-| `src/storage/datastore/Datastore.ts` | Add `keyToString()`, use in `prepareBatchRecord()` |
+| File                                 | Change                                                           |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| `src/storage/datastore/Datastore.ts` | `putManyStrict()` + `buildStrictBatchEntries()` handle batch dedup without `JSON.stringify` |
 
 ## 27. P7-P15 Invariants
 
