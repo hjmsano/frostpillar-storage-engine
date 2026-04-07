@@ -531,21 +531,8 @@ If the owning process is still alive (or the lock file is malformed), the open f
 
 #### localStorage Driver
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { localStorageDriver } from '@frostpillar/frostpillar-storage-engine/drivers/localStorage';
-
-const db = new Datastore({
-  driver: localStorageDriver({
-    databaseKey: 'app-events',
-    keyPrefix: 'frostpillar',
-    maxChunkChars: 32768,
-    maxChunks: 64,
-  }),
-});
-```
+> **Browser / Extension environments only.** This driver is not available on Node.js.
+> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -587,21 +574,8 @@ const db = new Datastore({
 
 #### IndexedDB Driver
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { indexedDBDriver } from '@frostpillar/frostpillar-storage-engine/drivers/indexedDB';
-
-const db = new Datastore({
-  autoCommit: { frequency: 'immediate' },
-  driver: indexedDBDriver({
-    databaseName: 'frostpillar-demo',
-    objectStoreName: 'records',
-    version: 1,
-  }),
-});
-```
+> **Browser / Extension environments only.** This driver is not available on Node.js.
+> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -642,19 +616,8 @@ const db = new Datastore({
 
 #### OPFS Driver
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { opfsDriver } from '@frostpillar/frostpillar-storage-engine/drivers/opfs';
-
-const db = new Datastore({
-  autoCommit: { frequency: 'immediate' },
-  driver: opfsDriver({
-    directoryName: 'frostpillar-opfs',
-  }),
-});
-```
+> **Browser / Extension environments only.** This driver is not available on Node.js.
+> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -689,32 +652,8 @@ const db = new Datastore({
 
 #### Sync Storage Driver (Browser Extensions)
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { syncStorageDriver } from '@frostpillar/frostpillar-storage-engine/drivers/syncStorage';
-
-const db = new Datastore({
-  capacity: {
-    maxSize: 'backendLimit',
-    policy: 'strict',
-  },
-  autoCommit: {
-    frequency: '10s',
-    maxPendingBytes: 32768,
-  },
-  driver: syncStorageDriver({
-    databaseKey: 'extension-events',
-    keyPrefix: 'frostpillar-ext',
-    maxChunkChars: 6000,
-    maxChunks: 128,
-    maxItemBytes: 8192,
-    maxTotalBytes: 102400,
-    maxItems: 256,
-  }),
-});
-```
+> **Browser / Extension environments only.** This driver is not available on Node.js.
+> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
