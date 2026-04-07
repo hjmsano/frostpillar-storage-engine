@@ -1,15 +1,6 @@
-import { toErrorInstance } from '../../errors/index.js';
+import { createAggregateError, toErrorInstance } from '../../errors/index.js';
 import { DatastoreLifecycle } from './datastoreLifecycle.js';
 import type { DurableBackendController } from '../backend/types.js';
-
-type AggregateErrorConstructorLike = new (
-  errors: Iterable<unknown>,
-  message?: string,
-) => Error;
-
-interface ErrorWithErrors extends Error {
-  errors?: Error[];
-}
 
 export interface DatastoreCloseOptions {
   lifecycle: DatastoreLifecycle;
@@ -22,32 +13,6 @@ export interface DatastoreCloseOptions {
   ) => void;
   clearInMemoryState: () => void;
 }
-
-const readAggregateErrorConstructor = (): AggregateErrorConstructorLike | null => {
-  const candidate = (globalThis as { AggregateError?: unknown }).AggregateError;
-  if (typeof candidate !== 'function') {
-    return null;
-  }
-  return candidate as AggregateErrorConstructorLike;
-};
-
-const createCloseAggregateError = (
-  deferredError: Error,
-  closeError: Error,
-): Error => {
-  const aggregateErrorConstructor = readAggregateErrorConstructor();
-  if (aggregateErrorConstructor !== null) {
-    return new aggregateErrorConstructor(
-      [deferredError, closeError],
-      'Datastore close failed with multiple errors.',
-    );
-  }
-  const fallbackError: ErrorWithErrors = new Error(
-    'Datastore close failed with multiple errors.',
-  );
-  fallbackError.errors = [deferredError, closeError];
-  return fallbackError;
-};
 
 export const closeDatastore = async (
   options: DatastoreCloseOptions,
@@ -89,7 +54,10 @@ const performClose = async (options: DatastoreCloseOptions): Promise<void> => {
     if (deferredError === null) {
       deferredError = closeError;
     } else {
-      deferredError = createCloseAggregateError(deferredError, closeError);
+      deferredError = createAggregateError(
+        [deferredError, closeError],
+        'Datastore close failed with multiple errors.',
+      );
     }
   }
 

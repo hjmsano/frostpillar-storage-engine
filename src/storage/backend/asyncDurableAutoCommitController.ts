@@ -1,4 +1,4 @@
-import { toErrorInstance } from '../../errors/index.js';
+import { createAggregateError, toErrorInstance } from '../../errors/index.js';
 import type { FileAutoCommitState, IntervalTimerHandle } from './types.js';
 
 type CommitRequestType = 'foreground' | 'background';
@@ -88,7 +88,10 @@ export abstract class AsyncDurableAutoCommitController {
       );
     }
     if (flushError !== null && drainError !== null) {
-      throw createCloseAggregateError(flushError, drainError);
+      throw createAggregateError(
+        [flushError, drainError],
+        'Close failed: both final flush and drain produced errors.',
+      );
     }
     if (flushError !== null) {
       throw flushError;
@@ -214,38 +217,3 @@ export abstract class AsyncDurableAutoCommitController {
     void this.queueCommitRequest('background');
   }
 }
-
-type AggregateErrorConstructorLike = new (
-  errors: Iterable<unknown>,
-  message?: string,
-) => Error;
-
-interface ErrorWithErrors extends Error {
-  errors?: Error[];
-}
-
-const readAggregateErrorConstructor = (): AggregateErrorConstructorLike | null => {
-  const candidate = (globalThis as { AggregateError?: unknown }).AggregateError;
-  if (typeof candidate !== 'function') {
-    return null;
-  }
-  return candidate as AggregateErrorConstructorLike;
-};
-
-const createCloseAggregateError = (
-  flushError: Error,
-  drainError: Error,
-): Error => {
-  const aggregateErrorConstructor = readAggregateErrorConstructor();
-  if (aggregateErrorConstructor !== null) {
-    return new aggregateErrorConstructor(
-      [flushError, drainError],
-      'Close failed: both final flush and drain produced errors.',
-    );
-  }
-  const fallbackError: ErrorWithErrors = new Error(
-    'Close failed: both final flush and drain produced errors.',
-  );
-  fallbackError.errors = [flushError, drainError];
-  return fallbackError;
-};

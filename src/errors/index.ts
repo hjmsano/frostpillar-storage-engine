@@ -62,3 +62,33 @@ export const toErrorInstance = (
   }
   return new Error(fallbackMessage, { cause: error });
 };
+
+type AggregateErrorConstructorLike = new (
+  errors: Iterable<unknown>,
+  message?: string,
+) => Error;
+
+interface ErrorWithErrors extends Error {
+  errors?: Error[];
+}
+
+const readAggregateErrorConstructor = (): AggregateErrorConstructorLike | null => {
+  const candidate = (globalThis as { AggregateError?: unknown }).AggregateError;
+  if (typeof candidate !== 'function') {
+    return null;
+  }
+  return candidate as AggregateErrorConstructorLike;
+};
+
+export const createAggregateError = (
+  errors: Error[],
+  message: string,
+): Error => {
+  const aggregateErrorConstructor = readAggregateErrorConstructor();
+  if (aggregateErrorConstructor !== null) {
+    return new aggregateErrorConstructor(errors, message);
+  }
+  const fallbackError: ErrorWithErrors = new Error(message);
+  fallbackError.errors = errors;
+  return fallbackError;
+};
