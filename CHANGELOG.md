@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.2...v0.1.3) (2026-04-07)
+
+
+### Bug Fixes
+
+* doc-spec mismatches and extract duplicated AggregateError utility ([6fda3eb](https://github.com/hjmsano/frostpillar-storage-engine/commit/6fda3ebac4e6eb965253249065a3c16a2bd74a1c))
+
 ## [0.1.2](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.1...v0.1.2) (2026-04-05)
 
 
