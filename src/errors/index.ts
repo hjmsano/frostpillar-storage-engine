@@ -81,7 +81,7 @@ const readAggregateErrorConstructor = (): AggregateErrorConstructorLike | null =
 };
 
 export const createAggregateError = (
-  errors: [Error, Error],
+  errors: Error[],
   message: string,
 ): Error => {
   const aggregateErrorConstructor = readAggregateErrorConstructor();
