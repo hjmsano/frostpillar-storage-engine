@@ -5,10 +5,11 @@ import {
   openSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   unlinkSync,
   writeSync,
 } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import {
   DatabaseLockedError,
   toStorageEngineError,
@@ -154,7 +155,10 @@ const cleanupFileTempArtifacts = (backend: FileBackendState): void => {
 };
 
 export const createFileBackend = (config: FileBackendConfig): FileBackendState => {
-  const dataFilePath = resolveFileDataPath(config);
+  // Capture the canonical working directory exactly once at construction time
+  // (spec §3.6). Later process.chdir() calls must not affect path containment.
+  const capturedCwd = realpathSync(resolve(process.cwd()));
+  const dataFilePath = resolveFileDataPath(config, capturedCwd);
   const directoryPath = dirname(dataFilePath);
   const baseFileName = basename(dataFilePath);
   const sidecarPath = `${dataFilePath}.meta.json`;
@@ -163,6 +167,7 @@ export const createFileBackend = (config: FileBackendConfig): FileBackendState =
   ensureCanonicalPathWithinWorkingDirectory(
     dataFilePath,
     'resolvedDataFilePath',
+    capturedCwd,
   );
   mkdirSync(directoryPath, { recursive: true });
   acquireFileLock(lockPath);
