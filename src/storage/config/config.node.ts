@@ -55,7 +55,7 @@ export const ensureCanonicalPathWithinWorkingDirectory = (
   capturedCwd?: string,
 ): void => {
   const canonicalWorkingDirectory =
-    capturedCwd ?? realpathSync(resolve(process.cwd()));
+    capturedCwd ?? realpathSync(process.cwd());
   const canonicalTargetPath = resolveCanonicalPathForContainment(targetPath);
 
   if (!isPathWithinBaseDirectory(canonicalTargetPath, canonicalWorkingDirectory)) {
