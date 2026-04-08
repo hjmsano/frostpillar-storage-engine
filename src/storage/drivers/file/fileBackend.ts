@@ -9,7 +9,7 @@ import {
   unlinkSync,
   writeSync,
 } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import {
   DatabaseLockedError,
   toStorageEngineError,
@@ -68,7 +68,10 @@ const tryRecoverStaleLock = (lockPath: string): boolean => {
 const writeLockFile = (lockPath: string): void => {
   const descriptor = openSync(lockPath, 'wx');
   try {
-    const pidContent = JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() });
+    const pidContent = JSON.stringify({
+      pid: process.pid,
+      createdAt: new Date().toISOString(),
+    });
     writeSync(descriptor, pidContent, null, 'utf8');
   } finally {
     closeSync(descriptor);
@@ -120,15 +123,10 @@ const acquireFileLock = (lockPath: string): void => {
           );
         }
       }
-      throw new DatabaseLockedError(
-        'Datastore is locked by another process.',
-      );
+      throw new DatabaseLockedError('Datastore is locked by another process.');
     }
 
-    throw toStorageEngineError(
-      error,
-      'Failed to acquire file lock.',
-    );
+    throw toStorageEngineError(error, 'Failed to acquire file lock.');
   }
 };
 
@@ -154,7 +152,9 @@ const cleanupFileTempArtifacts = (backend: FileBackendState): void => {
   }
 };
 
-export const createFileBackend = (config: FileBackendConfig): FileBackendState => {
+export const createFileBackend = (
+  config: FileBackendConfig,
+): FileBackendState => {
   // Capture the canonical working directory exactly once at construction time
   // (spec §3.6). Later process.chdir() calls must not affect path containment.
   const capturedCwd = realpathSync(process.cwd());
@@ -193,7 +193,9 @@ export const createFileBackend = (config: FileBackendConfig): FileBackendState =
   return backend;
 };
 
-export const cleanupStaleGenerationFiles = (backend: FileBackendState): void => {
+export const cleanupStaleGenerationFiles = (
+  backend: FileBackendState,
+): void => {
   try {
     const entries = readdirSync(backend.directoryPath);
     const generationPrefix = `${backend.baseFileName}.g.`;
