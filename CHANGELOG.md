@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.4](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.3...v0.1.4) (2026-04-08)
+
+
+### Bug Fixes
+
+* align datastore contracts and harden comparator/file-backend edge cases ([8a2f6c0](https://github.com/hjmsano/frostpillar-storage-engine/commit/8a2f6c07f1e22576af9087081cadca9899fc7e70))
+* **W1-W3:** ValidationError for null records, eviction order docs, comparator contract alignment ([2ca07d1](https://github.com/hjmsano/frostpillar-storage-engine/commit/2ca07d1d8acfaf1c57e3270e45347196def8fe62))
+* **W4:** capture process.cwd() once at file backend creation time ([d4e6737](https://github.com/hjmsano/frostpillar-storage-engine/commit/d4e67373e28e8b334f1b72bcc8e7aeb3464e7388))
+
 ## [0.1.3](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.2...v0.1.3) (2026-04-07)
 
 
