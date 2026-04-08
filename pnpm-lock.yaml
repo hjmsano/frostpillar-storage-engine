@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@frostpillar/frostpillar-btree':
-        specifier: 0.2.6
-        version: 0.2.6
+        specifier: 0.2.7
+        version: 0.2.7
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -279,8 +279,8 @@ packages:
     resolution: {integrity: sha512-iH1B076HoAshH1mLpHMgwdGeTs0CYwL0SPMkGuSebZrwBp16v415e9NZXg2jtrqPVQjf6IANe2Vtlr5KswtcZQ==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  '@frostpillar/frostpillar-btree@0.2.6':
-    resolution: {integrity: sha512-X2f6evu/Ktmv1WDOEtbvi2TwCLQ2TbwfiKHrmPPlfTDlzwK4skAn69IvWAOW/TX+srPLNYXMakcT1fdfMhiyPA==}
+  '@frostpillar/frostpillar-btree@0.2.7':
+    resolution: {integrity: sha512-iC+b/apOSWbkjMotV0nidoblQ7ye41xGDQbsIInhRmbLbIUJJvpjsdFU0ELitChoF3R/wnrmfc11ohjLOkp/Dg==}
     engines: {node: '>=24.0.0', pnpm: '>=10.0.0'}
 
   '@hono/node-server@1.19.11':
@@ -2245,7 +2245,7 @@ snapshots:
       '@eslint/core': 1.1.1
       levn: 0.4.1
 
-  '@frostpillar/frostpillar-btree@0.2.6': {}
+  '@frostpillar/frostpillar-btree@0.2.7': {}
 
   '@hono/node-server@1.19.11(hono@4.12.9)':
     dependencies:
