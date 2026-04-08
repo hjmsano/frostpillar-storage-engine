@@ -1,6 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { Datastore, InvalidQueryRangeError } from '../../dist/index.js';
+import {
+  Datastore,
+  InvalidQueryRangeError,
+  ClosedDatastoreError,
+} from '../../dist/index.js';
 
 describe('Datastore.countRange', () => {
   it('countRange returns count of records in range', async () => {
@@ -74,6 +78,37 @@ describe('Datastore.countRange', () => {
     try {
       const result = await ds.countRange('a', 'z');
       assert.equal(result, 0);
+    } finally {
+      await ds.close();
+    }
+  });
+
+  it('countRange throws ClosedDatastoreError on closed datastore', async () => {
+    const ds = new Datastore({});
+    await ds.put({ key: 'a', payload: { v: 1 } });
+    await ds.close();
+    await assert.rejects(
+      () => ds.countRange('a', 'z'),
+      (err) => err instanceof ClosedDatastoreError,
+    );
+  });
+
+  it('countRange works with custom numeric key definition', async () => {
+    const ds = new Datastore({
+      key: {
+        normalize: (v) => Number(v),
+        compare: (a, b) => a - b,
+        serialize: (k) => String(k),
+        deserialize: (s) => Number(s),
+      },
+    });
+    try {
+      await ds.put({ key: 1, payload: { v: 'a' } });
+      await ds.put({ key: 2, payload: { v: 'b' } });
+      await ds.put({ key: 3, payload: { v: 'c' } });
+      await ds.put({ key: 10, payload: { v: 'd' } });
+      const result = await ds.countRange(1, 3);
+      assert.equal(result, 3);
     } finally {
       await ds.close();
     }

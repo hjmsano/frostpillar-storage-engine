@@ -20,3 +20,12 @@ test('public root type exports include PayloadLimitsConfig for custom payload li
 
   assert.match(indexSource, /PayloadLimitsConfig/);
 });
+
+test('public root type exports include DeleteRebalancePolicy for index config', async () => {
+  const indexSource = await readFile(
+    path.resolve(process.cwd(), 'src/index.ts'),
+    'utf8',
+  );
+
+  assert.match(indexSource, /DeleteRebalancePolicy/);
+});

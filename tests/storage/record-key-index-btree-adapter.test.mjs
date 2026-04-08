@@ -733,3 +733,13 @@ test('count returns 0 on empty tree', async () => {
   const tree = new RecordKeyIndexBTree(numericConfig);
   assert.equal(tree.count(1, 5), 0);
 });
+
+test('count works with string keys', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(stringConfig);
+  tree.put('apple', 1);
+  tree.put('banana', 2);
+  tree.put('cherry', 3);
+  tree.put('date', 4);
+  assert.equal(tree.count('banana', 'cherry'), 2);
+});
