@@ -1,8 +1,8 @@
 # Spec: Internal Architecture and Source Layout
 
 Status: Active
-Version: 0.5
-Last Updated: 2026-04-01
+Version: 0.6
+Last Updated: 2026-04-09
 
 ## 1. Scope
 
@@ -111,7 +111,7 @@ Key type:
 - adapter MUST use the plain user key `TKey` as btree key (not a composite key).
 - duplicate key handling MUST be delegated to the btree's native `DuplicateKeyPolicy`.
 - adapter constructor MUST accept `duplicateKeys: DuplicateKeyPolicy` and forward it to the btree config.
-- adapter constructor MUST accept `autoScale?: boolean`, `maxLeafEntries?: number`, and `maxBranchChildren?: number` and forward them to the btree config.
+- adapter constructor MUST accept `autoScale?: boolean`, `maxLeafEntries?: number`, `maxBranchChildren?: number`, and `deleteRebalancePolicy?: 'standard' | 'lazy'` and forward them to the btree config.
 - adapter MUST default `autoScale` to `true` when not explicitly provided.
 - adapter MUST enable `enableEntryIdLookup: true` in btree config.
 
@@ -123,6 +123,9 @@ Mutation:
 Read (non-destructive):
 
 - `peekLast()` MUST return the rightmost entry or `null` via btree's `peekLast`.
+- `popLast()` MUST return the rightmost entry and remove it, or `null`, via btree's `popLast`.
+- `findFirst(key)` MUST return the first entry matching key or `null` via btree's `findFirst`.
+- `findLast(key)` MUST return the last entry matching key or `null` via btree's `findLast`.
 
 ID-based operations:
 
@@ -133,18 +136,22 @@ ID-based operations:
 Range and bulk:
 
 - `rangeQuery(start, end)` MUST return entries in range via btree's `range`.
+- `forEachRange(start, end, callback)` MUST iterate entries in range via btree's `forEachRange`.
+- `count(start, end)` MUST return the number of entries in range via btree's `count`.
 - `deleteRange(start, end)` MUST return count of deleted entries via btree's `deleteRange`.
 - `snapshot()` MUST return all entries via btree's `snapshot`.
 - `popFirst()` MUST return oldest entry or null via btree's `popFirst`.
 - `size()` MUST return entry count via btree's `size`.
 - `hasKey(key)` MUST return boolean via btree's `hasKey`.
 - `keys()` MUST return key iterator via btree's `keys`.
+- `entries()` MUST return forward entry iterator via btree's `entries`.
+- `entriesReversed()` MUST return reverse entry iterator via btree's `entriesReversed`.
 
 Serialization:
 
 - `toJSON()` MUST return `BTreeJSON` via btree's `toJSON`.
 - static `fromJSON(json, config)` MUST restore adapter from `BTreeJSON` via btree's `fromJSON`.
-- `fromJSON` MUST patch the snapshot's config with the provided `config` values (`duplicateKeys`, `autoScale`, `maxLeafEntries`, `maxBranchChildren`) so that constructor-time settings override whatever was persisted in the snapshot.
+- `fromJSON` MUST patch the snapshot's config with the provided `config` values (`duplicateKeys`, `autoScale`, `maxLeafEntries`, `maxBranchChildren`, `deleteRebalancePolicy`) so that constructor-time settings override whatever was persisted in the snapshot. When a config value is not provided (`undefined`), `fromJSON` MUST preserve the value from the persisted snapshot rather than substituting a default.
 
 Lifecycle:
 
@@ -155,7 +162,7 @@ Lifecycle:
 Required:
 
 - datastore internals MUST depend on `RecordKeyIndexBTree` adapter, not upstream package directly.
-- comparator safety: adapter MUST reject `NaN` comparator results with `IndexCorruptionError`. Non-integer and non-finite results (e.g. `0.5`, `Infinity`) are clamped to `-1`/`0`/`1` on the hot path for performance. Full validation via `normalizeComparatorResult` (which rejects non-finite and non-integer values) is applied at the `getRange` boundary check only; other Datastore APIs (`getMany`, `keys`) use lightweight clamping.
+- comparator safety: adapter MUST reject `NaN` comparator results with `IndexCorruptionError`. Non-integer and non-finite results (e.g. `0.5`, `Infinity`) are clamped to `-1`/`0`/`1` on the hot path for performance. Full validation via `normalizeComparatorResult` (which rejects non-finite and non-integer values) is applied at the `getRange` and `countRange` boundary checks; other Datastore APIs (`getMany`, `keys`) use lightweight clamping.
 - datastore modules MUST NOT import `ConcurrentInMemoryBTree` directly.
 
 Removed from adapter (superseded by btree native capabilities):
@@ -183,10 +190,11 @@ Required:
 
 ## Revision History
 
-| Version | Date       | Summary                                                                                       |
-| ------- | ---------- | --------------------------------------------------------------------------------------------- |
-| 0.5     | 2026-04-01 | Rename adapter insert→put, add putMany/peekLast to adapter API (§6.1).                        |
-| 0.4     | 2026-03-30 | Add deferred init single-flight semantics (§3.1), autoCommit timer unref requirement (§2.1).  |
-| 0.3     | 2026-03-25 | Rewrite B-Tree adapter boundary for plain key + EntryId API (§6), remove composite key types. |
-| 0.2     | 2026-03-21 | Add storage source layout by responsibility (§5), build output cleanup safety (§8).           |
-| 0.1     | 2026-03-20 | Initial specification.                                                                        |
+| Version | Date       | Summary                                                                                                                                                                                                                          |
+| ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.6     | 2026-04-09 | Add missing adapter members (forEachRange, count, popLast, entries, entriesReversed, findFirst, findLast, deleteRebalancePolicy) and fromJSON snapshot-fallback rule to §6.1. Add countRange to comparator safety scope in §6.2. |
+| 0.5     | 2026-04-01 | Rename adapter insert→put, add putMany/peekLast to adapter API (§6.1).                                                                                                                                                           |
+| 0.4     | 2026-03-30 | Add deferred init single-flight semantics (§3.1), autoCommit timer unref requirement (§2.1).                                                                                                                                     |
+| 0.3     | 2026-03-25 | Rewrite B-Tree adapter boundary for plain key + EntryId API (§6), remove composite key types.                                                                                                                                    |
+| 0.2     | 2026-03-21 | Add storage source layout by responsibility (§5), build output cleanup safety (§8).                                                                                                                                              |
+| 0.1     | 2026-03-20 | Initial specification.                                                                                                                                                                                                           |

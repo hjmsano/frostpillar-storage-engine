@@ -90,18 +90,18 @@ describe('RecordKeyIndexBTree index config', () => {
 // --- parseIndexConfig ---
 
 describe('parseIndexConfig', () => {
-  it('defaults to autoScale: true when index is undefined', async () => {
+  it('leaves autoScale undefined when index is undefined', async () => {
     const { parseIndexConfig } = await loadConfigParser();
     const result = parseIndexConfig(undefined);
-    assert.equal(result.autoScale, true);
+    assert.equal(result.autoScale, undefined);
     assert.equal(result.maxLeafEntries, undefined);
     assert.equal(result.maxBranchChildren, undefined);
   });
 
-  it('defaults to autoScale: true when index is empty', async () => {
+  it('leaves autoScale undefined when index is empty', async () => {
     const { parseIndexConfig } = await loadConfigParser();
     const result = parseIndexConfig({});
-    assert.equal(result.autoScale, true);
+    assert.equal(result.autoScale, undefined);
   });
 
   it('accepts autoScale: false with no capacity', async () => {
@@ -199,10 +199,10 @@ describe('parseIndexConfig', () => {
     assert.equal(result.maxLeafEntries, 16384);
   });
 
-  it('defaults deleteRebalancePolicy to standard when not specified', async () => {
+  it('leaves deleteRebalancePolicy undefined when not specified', async () => {
     const { parseIndexConfig } = await loadConfigParser();
     const result = parseIndexConfig(undefined);
-    assert.equal(result.deleteRebalancePolicy, 'standard');
+    assert.equal(result.deleteRebalancePolicy, undefined);
   });
 
   it('accepts deleteRebalancePolicy: standard', async () => {
@@ -229,7 +229,7 @@ describe('parseIndexConfig', () => {
 // --- RecordKeyIndexBTree.fromJSON patching ---
 
 describe('RecordKeyIndexBTree.fromJSON index config patching', () => {
-  it('restores with autoScale: true by default', async () => {
+  it('preserves snapshot autoScale when config does not override', async () => {
     const { RecordKeyIndexBTree } = await loadAdapter();
     const original = new RecordKeyIndexBTree({
       ...numericConfig,
@@ -241,7 +241,7 @@ describe('RecordKeyIndexBTree.fromJSON index config patching', () => {
 
     const restored = RecordKeyIndexBTree.fromJSON(json, numericConfig);
     const restoredJSON = restored.toJSON();
-    assert.equal(restoredJSON.config.autoScale, true);
+    assert.equal(restoredJSON.config.autoScale, false);
     assert.equal(restored.size(), 1);
   });
 
@@ -309,6 +309,20 @@ describe('RecordKeyIndexBTree.fromJSON index config patching', () => {
         restoredJSON.config.deleteRebalancePolicy === undefined,
     );
     assert.equal(restored.size(), 1);
+  });
+
+  it('preserves snapshot deleteRebalancePolicy when config does not override', async () => {
+    const { RecordKeyIndexBTree } = await loadAdapter();
+    const original = new RecordKeyIndexBTree({
+      ...numericConfig,
+      deleteRebalancePolicy: 'lazy',
+    });
+    original.put(1, 'a');
+    const json = original.toJSON();
+
+    const restored = RecordKeyIndexBTree.fromJSON(json, { ...numericConfig });
+    const restoredJSON = restored.toJSON();
+    assert.equal(restoredJSON.config.deleteRebalancePolicy, 'lazy');
   });
 
   it('preserves snapshot maxLeafEntries when config does not override', async () => {
@@ -466,6 +480,33 @@ describe('file backend reopen preserves index config', () => {
     }
   });
 
+  it('deleteRebalancePolicy: lazy is preserved from snapshot when omitted on reopen', async () => {
+    const { fileDriver } = await importDistModule('drivers/file.js');
+    const sandbox = createSandboxDirectory('index-reopen-lazy-omit');
+    const filePath = join(sandbox, 'test.db');
+
+    try {
+      const ds1 = new Datastore({
+        index: { deleteRebalancePolicy: 'lazy' },
+        driver: fileDriver({ filePath }),
+      });
+      await ds1.put({ key: 'a', payload: { v: 1 } });
+      await ds1.commit();
+      await ds1.close();
+
+      const ds2 = new Datastore({
+        index: {},
+        driver: fileDriver({ filePath }),
+      });
+      await ds2.put({ key: 'b', payload: { v: 2 } });
+      const all = await ds2.getAll();
+      assert.equal(all.length, 2);
+      await ds2.close();
+    } finally {
+      rmSync(sandbox, { recursive: true, force: true });
+    }
+  });
+
   it('autoScale: true survives close and reopen', async () => {
     const { fileDriver } = await importDistModule('drivers/file.js');
     const sandbox = createSandboxDirectory('index-reopen-auto');
@@ -482,6 +523,33 @@ describe('file backend reopen preserves index config', () => {
 
       const ds2 = new Datastore({
         index: { autoScale: true },
+        driver: fileDriver({ filePath }),
+      });
+      await ds2.put({ key: 'b', payload: { v: 2 } });
+      const all = await ds2.getAll();
+      assert.equal(all.length, 2);
+      await ds2.close();
+    } finally {
+      rmSync(sandbox, { recursive: true, force: true });
+    }
+  });
+
+  it('autoScale: false is preserved from snapshot when omitted on reopen', async () => {
+    const { fileDriver } = await importDistModule('drivers/file.js');
+    const sandbox = createSandboxDirectory('index-reopen-auto-omit');
+    const filePath = join(sandbox, 'test.db');
+
+    try {
+      const ds1 = new Datastore({
+        index: { autoScale: false, maxLeafEntries: 128 },
+        driver: fileDriver({ filePath }),
+      });
+      await ds1.put({ key: 'a', payload: { v: 1 } });
+      await ds1.commit();
+      await ds1.close();
+
+      const ds2 = new Datastore({
+        index: {},
         driver: fileDriver({ filePath }),
       });
       await ds2.put({ key: 'b', payload: { v: 2 } });

@@ -13,10 +13,10 @@ import {
 } from '../../validation/payload.js';
 
 export interface ResolvedIndexConfig {
-  autoScale: boolean;
+  autoScale?: boolean;
   maxLeafEntries: number | undefined;
   maxBranchChildren: number | undefined;
-  deleteRebalancePolicy: 'standard' | 'lazy';
+  deleteRebalancePolicy?: 'standard' | 'lazy';
 }
 
 const validateNodeCapacity = (value: unknown, field: string): void => {
@@ -32,18 +32,20 @@ const validateNodeCapacity = (value: unknown, field: string): void => {
 };
 
 export const parseIndexConfig = (index?: IndexConfig): ResolvedIndexConfig => {
-  const autoScale = index?.autoScale ?? true;
-  const deleteRebalancePolicy = index?.deleteRebalancePolicy ?? 'standard';
+  const rawAutoScale = index?.autoScale;
+  const effectiveAutoScale = rawAutoScale ?? true;
+  const rawDeleteRebalancePolicy = index?.deleteRebalancePolicy;
   if (
-    deleteRebalancePolicy !== 'standard' &&
-    deleteRebalancePolicy !== 'lazy'
+    rawDeleteRebalancePolicy !== undefined &&
+    rawDeleteRebalancePolicy !== 'standard' &&
+    rawDeleteRebalancePolicy !== 'lazy'
   ) {
     throw new ConfigurationError(
       'index.deleteRebalancePolicy must be "standard" or "lazy".',
     );
   }
 
-  if (autoScale) {
+  if (effectiveAutoScale) {
     if (
       index?.maxLeafEntries !== undefined ||
       index?.maxBranchChildren !== undefined
@@ -53,15 +55,15 @@ export const parseIndexConfig = (index?: IndexConfig): ResolvedIndexConfig => {
       );
     }
     return {
-      autoScale: true,
+      autoScale: rawAutoScale,
       maxLeafEntries: undefined,
       maxBranchChildren: undefined,
-      deleteRebalancePolicy,
+      deleteRebalancePolicy: rawDeleteRebalancePolicy,
     };
   }
 
-  // When autoScale is false, index is guaranteed to be defined:
-  // undefined?.autoScale ?? true === true, so the autoScale branch above would have returned.
+  // When effectiveAutoScale is false, index is guaranteed to be defined:
+  // undefined?.autoScale ?? true === true, so the branch above would have returned.
   if (index!.maxLeafEntries !== undefined) {
     validateNodeCapacity(index!.maxLeafEntries, 'maxLeafEntries');
   }
@@ -70,10 +72,10 @@ export const parseIndexConfig = (index?: IndexConfig): ResolvedIndexConfig => {
   }
 
   return {
-    autoScale: false,
+    autoScale: rawAutoScale,
     maxLeafEntries: index!.maxLeafEntries,
     maxBranchChildren: index!.maxBranchChildren,
-    deleteRebalancePolicy,
+    deleteRebalancePolicy: rawDeleteRebalancePolicy,
   };
 };
 

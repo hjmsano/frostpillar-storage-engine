@@ -178,9 +178,11 @@ export class RecordKeyIndexBTree<TKey = unknown, TValue = unknown> {
       RecordKeyIndexBTree.prototype,
     ) as RecordKeyIndexBTree<TKey, TValue>;
     const resolvedPolicy = config.duplicateKeys ?? 'allow';
-    const resolvedAutoScale = config.autoScale ?? true;
+    const resolvedAutoScale = config.autoScale ?? json.config.autoScale ?? true;
     const resolvedDeleteRebalancePolicy =
-      config.deleteRebalancePolicy ?? 'standard';
+      config.deleteRebalancePolicy ??
+      json.config.deleteRebalancePolicy ??
+      'standard';
     const configPatch: BTreeJSON<TKey, TValue>['config'] = {
       ...json.config,
       duplicateKeys: resolvedPolicy,
