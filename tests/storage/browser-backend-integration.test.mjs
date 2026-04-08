@@ -70,7 +70,8 @@ const createMockIDBFactory = () => {
                   throw new Error(`Object store "${name}" not found.`);
                 }
                 return {
-                  get: (key) => createSuccessfulIdbRequest(store.get(key) ?? undefined),
+                  get: (key) =>
+                    createSuccessfulIdbRequest(store.get(key) ?? undefined),
                   getAll: () => createSuccessfulIdbRequest([...store.values()]),
                   put: (value, key) => {
                     store.set(key, value);
@@ -157,11 +158,12 @@ const createMockSyncStorageArea = () => {
   const store = new Map();
   return {
     get: async (keys) => {
-      const normalizedKeys = keys === null
-        ? Array.from(store.keys())
-        : Array.isArray(keys)
-          ? keys
-          : [keys];
+      const normalizedKeys =
+        keys === null
+          ? Array.from(store.keys())
+          : Array.isArray(keys)
+            ? keys
+            : [keys];
       const result = {};
       for (const key of normalizedKeys) {
         if (store.has(key)) {
@@ -190,7 +192,13 @@ const makeRecord = (key, payload) => {
 
 const makeTreeJSON = (...records) => ({
   version: 1,
-  config: { maxLeafEntries: 32, maxBranchChildren: 33, duplicateKeys: 'allow', enableEntryIdLookup: true, autoScale: false },
+  config: {
+    maxLeafEntries: 32,
+    maxBranchChildren: 33,
+    duplicateKeys: 'allow',
+    enableEntryIdLookup: true,
+    autoScale: false,
+  },
   entries: records.map((r) => [r.key, r]),
 });
 
@@ -289,9 +297,13 @@ describe('browser backend integration', () => {
       assert.ok(second.initialTreeJSON !== null);
       assert.equal(second.initialTreeJSON.entries.length, 2);
       assert.equal(second.initialTreeJSON.entries[0][1].key, 'alpha');
-      assert.deepStrictEqual(second.initialTreeJSON.entries[0][1].payload, { value: 'one' });
+      assert.deepStrictEqual(second.initialTreeJSON.entries[0][1].payload, {
+        value: 'one',
+      });
       assert.equal(second.initialTreeJSON.entries[1][1].key, 'beta');
-      assert.deepStrictEqual(second.initialTreeJSON.entries[1][1].payload, { value: 'two' });
+      assert.deepStrictEqual(second.initialTreeJSON.entries[1][1].payload, {
+        value: 'two',
+      });
       assert.ok(second.initialCurrentSizeBytes > 0);
 
       await second.controller.close();
@@ -316,7 +328,10 @@ describe('browser backend integration', () => {
 
     const mockDir = createMockOpfsDirectory({});
     const mockStorageRoot = createMockOpfsStorageRoot(mockDir);
-    const originalNavigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const originalNavigatorDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      'navigator',
+    );
     Object.defineProperty(globalThis, 'navigator', {
       value: { storage: mockStorageRoot },
       configurable: true,
@@ -341,7 +356,11 @@ describe('browser backend integration', () => {
       await controller.close();
     } finally {
       if (originalNavigatorDescriptor !== undefined) {
-        Object.defineProperty(globalThis, 'navigator', originalNavigatorDescriptor);
+        Object.defineProperty(
+          globalThis,
+          'navigator',
+          originalNavigatorDescriptor,
+        );
       } else {
         delete globalThis.navigator;
       }
@@ -363,7 +382,10 @@ describe('browser backend integration', () => {
       }),
     };
 
-    const originalNavigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const originalNavigatorDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      'navigator',
+    );
     Object.defineProperty(globalThis, 'navigator', {
       value: { storage: mockStorageRoot },
       configurable: true,
@@ -401,7 +423,9 @@ describe('browser backend integration', () => {
       assert.ok(second.initialTreeJSON !== null);
       assert.equal(second.initialTreeJSON.entries.length, 2);
       // Entries are stored in BTree order (by key): delta < gamma
-      const entryMap = Object.fromEntries(second.initialTreeJSON.entries.map(([k, v]) => [k, v]));
+      const entryMap = Object.fromEntries(
+        second.initialTreeJSON.entries.map(([k, v]) => [k, v]),
+      );
       assert.deepStrictEqual(entryMap['gamma'].payload, { n: 1 });
       assert.deepStrictEqual(entryMap['delta'].payload, { n: 2 });
       assert.ok(second.initialCurrentSizeBytes > 0);
@@ -409,7 +433,11 @@ describe('browser backend integration', () => {
       await second.controller.close();
     } finally {
       if (originalNavigatorDescriptor !== undefined) {
-        Object.defineProperty(globalThis, 'navigator', originalNavigatorDescriptor);
+        Object.defineProperty(
+          globalThis,
+          'navigator',
+          originalNavigatorDescriptor,
+        );
       } else {
         delete globalThis.navigator;
       }
@@ -522,7 +550,9 @@ describe('browser backend integration', () => {
 
       assert.ok(second.initialTreeJSON !== null);
       assert.equal(second.initialTreeJSON.entries.length, 2);
-      const entryMap = Object.fromEntries(second.initialTreeJSON.entries.map(([k, v]) => [k, v]));
+      const entryMap = Object.fromEntries(
+        second.initialTreeJSON.entries.map(([k, v]) => [k, v]),
+      );
       assert.deepStrictEqual(entryMap['epsilon'].payload, { msg: 'hello' });
       assert.deepStrictEqual(entryMap['zeta'].payload, { msg: 'world' });
       assert.ok(second.initialCurrentSizeBytes > 0);
@@ -582,7 +612,8 @@ describe('browser backend integration', () => {
                 onerror: null,
                 objectStore: (name) => {
                   return {
-                    get: (key) => createFailedIdbRequest('Simulated read error'),
+                    get: (key) =>
+                      createFailedIdbRequest('Simulated read error'),
                     getAll: () => createSuccessfulIdbRequest([]),
                     put: (value, key) => createSuccessfulIdbRequest(undefined),
                     clear: () => createSuccessfulIdbRequest(undefined),
@@ -599,7 +630,8 @@ describe('browser backend integration', () => {
             close: () => {},
           };
 
-          const needsUpgrade = !databases.has(databaseName) || dbEntry.version < version;
+          const needsUpgrade =
+            !databases.has(databaseName) || dbEntry.version < version;
           if (needsUpgrade) {
             dbEntry.version = version;
             request.result = db;

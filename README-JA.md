@@ -209,14 +209,14 @@ const db = new Datastore({
 
 ペイロードは `put()`、`putMany()`、`updateById()`、`replaceById()` の呼び出しごとにバリデーションされます。以下のデフォルト制限が適用されます：
 
-| 制約 | デフォルト | 設定キー |
-|------|-----------|----------|
-| ペイロード合計バイト数 | 1,048,576（1 MB） | `maxTotalBytes` |
-| 最大ネスト深度 | 64 オブジェクトレベル | `maxDepth` |
-| キー合計数 | 4,096 | `maxTotalKeys` |
-| オブジェクトあたりの最大キー数 | 256 | `maxKeysPerObject` |
-| キーの最大サイズ | 1,024 バイト（UTF-8） | `maxKeyBytes` |
-| 文字列値の最大サイズ | 65,535 バイト（UTF-8） | `maxStringBytes` |
+| 制約                           | デフォルト             | 設定キー           |
+| ------------------------------ | ---------------------- | ------------------ |
+| ペイロード合計バイト数         | 1,048,576（1 MB）      | `maxTotalBytes`    |
+| 最大ネスト深度                 | 64 オブジェクトレベル  | `maxDepth`         |
+| キー合計数                     | 4,096                  | `maxTotalKeys`     |
+| オブジェクトあたりの最大キー数 | 256                    | `maxKeysPerObject` |
+| キーの最大サイズ               | 1,024 バイト（UTF-8）  | `maxKeyBytes`      |
+| 文字列値の最大サイズ           | 65,535 バイト（UTF-8） | `maxStringBytes`   |
 
 これらの制限は `payloadLimits` でデータストアごとにカスタマイズできます：
 
@@ -232,6 +232,7 @@ const db = new Datastore({
 各フィールドは独立してオプションです。省略されたフィールドはデフォルト値を使用します。各値は正の安全な整数である必要があり、そうでない場合は `ConfigurationError` で構築が失敗します。
 
 追加ルール：
+
 - ペイロードはプレーンオブジェクトである必要があります（トップレベルで配列、関数、`BigInt` は不可）。
 - キーは空でなく、空白のみの文字列は不可。
 - 予約キー（`__proto__`、`constructor`、`prototype`）は禁止。
@@ -264,11 +265,12 @@ const db2 = new Datastore({
 });
 ```
 
-| フィールド | 型 | デフォルト | 説明 |
-|-----------|------|-----------|------|
-| `index.autoScale` | `boolean` | `true` | データ増加に応じてノード容量を自動スケーリング |
-| `index.maxLeafEntries` | `number` | btree デフォルト (64) | リーフノードの最大エントリ数（3〜16384、`autoScale: false` 時のみ） |
-| `index.maxBranchChildren` | `number` | btree デフォルト (64) | ブランチノードの最大子ノード数（3〜16384、`autoScale: false` 時のみ） |
+| フィールド                    | 型                       | デフォルト            | 説明                                                                            |
+| ----------------------------- | ------------------------ | --------------------- | ------------------------------------------------------------------------------- |
+| `index.autoScale`             | `boolean`                | `true`                | データ増加に応じてノード容量を自動スケーリング                                  |
+| `index.maxLeafEntries`        | `number`                 | btree デフォルト (64) | リーフノードの最大エントリ数（3〜16384、`autoScale: false` 時のみ）             |
+| `index.maxBranchChildren`     | `number`                 | btree デフォルト (64) | ブランチノードの最大子ノード数（3〜16384、`autoScale: false` 時のみ）           |
+| `index.deleteRebalancePolicy` | `'standard'` \| `'lazy'` | `'standard'`          | 削除時のリバランス戦略。`'lazy'` はバルク削除のパフォーマンス向上のためスキップ |
 
 `autoScale` が `true` の状態で `maxLeafEntries` や `maxBranchChildren` を設定すると `ConfigurationError` がスローされます。
 
@@ -331,6 +333,12 @@ const all = await db.getAll();
 
 ```ts
 const range = await db.getRange('a', 'f');
+```
+
+**`countRange(start, end)`** — キー範囲内のレコード数をレコードを実体化せずにカウントします。
+
+```ts
+const n = await db.countRange('a', 'f');
 ```
 
 **`getMany(keys)`** — 複数キーのレコードをまとめて取得します。
@@ -500,18 +508,18 @@ await db.commit();
 await db.close();
 ```
 
-| オプション | 型 | 説明 |
-|------------|------|------|
+| オプション | 型       | 説明                                                     |
+| ---------- | -------- | -------------------------------------------------------- |
 | `filePath` | `string` | データファイルへの直接パス（例: `'./data/events.fpdb'`） |
 
 ディレクトリベースのターゲティングも `target` オプションで利用できます：
 
-| オプション | 型 | 説明 |
-|------------|------|------|
-| `target.kind` | `'directory'` | ディレクトリベースのファイル解決を使用 |
-| `target.directory` | `string` | データファイルを含むディレクトリ |
-| `target.fileName` | `string` | オプションのファイル名（デフォルト: 自動生成） |
-| `target.filePrefix` | `string` | オプションのファイル名プレフィックス |
+| オプション          | 型            | 説明                                           |
+| ------------------- | ------------- | ---------------------------------------------- |
+| `target.kind`       | `'directory'` | ディレクトリベースのファイル解決を使用         |
+| `target.directory`  | `string`      | データファイルを含むディレクトリ               |
+| `target.fileName`   | `string`      | オプションのファイル名（デフォルト: 自動生成） |
+| `target.filePrefix` | `string`      | オプションのファイル名プレフィックス           |
 
 > **パス制約:** すべての解決済みファイルパス（`filePath`、`target.directory`）は `process.cwd()` 内に収まる必要があります。`../` トラバーサルや外部を指す絶対パスなど、作業ディレクトリの外に解決されるパスは `ConfigurationError` で拒否されます。
 
@@ -977,12 +985,12 @@ const db = new Datastore({
 });
 ```
 
-| コールバック                  | 説明                                                |
-| ----------------------------- | --------------------------------------------------- |
-| `normalize(value, fieldName)` | 入力をキー型にバリデーション・正規化                |
-| `compare(left, right)`        | 順序付けのための数値を返す（`< 0`、`0`、`> 0`）     |
-| `serialize(key)`              | キーをストレージ用の文字列に変換                    |
-| `deserialize(serialized)`     | 格納された文字列からキーを復元                      |
+| コールバック                  | 説明                                            |
+| ----------------------------- | ----------------------------------------------- |
+| `normalize(value, fieldName)` | 入力をキー型にバリデーション・正規化            |
+| `compare(left, right)`        | 順序付けのための数値を返す（`< 0`、`0`、`> 0`） |
+| `serialize(key)`              | キーをストレージ用の文字列に変換                |
+| `deserialize(serialized)`     | 格納された文字列からキーを復元                  |
 
 `config.key` を指定する場合、4 つすべてが必須です。`compare` は負の整数・ゼロ・正の整数を返すことが推奨されます。ホットパスでは、NaN 以外の値（`0.5` などの小数や `Infinity`）は自動的に `-1`・`0`・`+1` にクランプされます。これはパフォーマンスのための設計です。`NaN` のみが未定義動作を引き起こし、`IndexCorruptionError` をスローします。
 
@@ -1084,24 +1092,25 @@ try {
 
 ### ID ベース操作
 
-| メソッド                       | パラメータ                | 戻り値                         | 説明                   |
-| ------------------------------ | ------------------------- | ------------------------------ | ---------------------- |
-| `getById(id)`                  | `EntryId`                 | `Promise<KeyedRecord \| null>` | レコード ID で取得     |
-| `updateById(id, patch)`        | `EntryId`、payload パッチ | `Promise<boolean>`             | shallow merge で更新   |
-| `replaceById(id, payload)`     | `EntryId`、完全な payload | `Promise<boolean>`             | payload を完全置換     |
-| `deleteById(id)`               | `EntryId`                 | `Promise<boolean>`             | レコード ID で削除     |
+| メソッド                   | パラメータ                | 戻り値                         | 説明                 |
+| -------------------------- | ------------------------- | ------------------------------ | -------------------- |
+| `getById(id)`              | `EntryId`                 | `Promise<KeyedRecord \| null>` | レコード ID で取得   |
+| `updateById(id, patch)`    | `EntryId`、payload パッチ | `Promise<boolean>`             | shallow merge で更新 |
+| `replaceById(id, payload)` | `EntryId`、完全な payload | `Promise<boolean>`             | payload を完全置換   |
+| `deleteById(id)`           | `EntryId`                 | `Promise<boolean>`             | レコード ID で削除   |
 
 ### バルク操作
 
-| メソッド               | パラメータ         | 戻り値                   | 説明                     |
-| ---------------------- | ------------------ | ------------------------ | ------------------------ |
-| `getAll()`             | —                  | `Promise<KeyedRecord[]>` | 全レコード               |
-| `getRange(start, end)` | 開始キー、終了キー | `Promise<KeyedRecord[]>` | 両端含む範囲クエリ       |
-| `getMany(keys)`        | キー配列           | `Promise<KeyedRecord[]>` | 複数キーのレコード       |
-| `putMany(records)`     | レコード配列       | `Promise<void>`          | 複数レコードを挿入       |
-| `deleteMany(keys)`     | キー配列           | `Promise<number>`        | 複数キーのレコードを削除 |
-| `deleteByIds(ids)`     | `EntryId` 配列     | `Promise<number>`        | レコード ID 群で削除     |
-| `clear()`              | —                  | `Promise<void>`          | 全レコードを削除         |
+| メソッド                 | パラメータ         | 戻り値                   | 説明                     |
+| ------------------------ | ------------------ | ------------------------ | ------------------------ |
+| `getAll()`               | —                  | `Promise<KeyedRecord[]>` | 全レコード               |
+| `getRange(start, end)`   | 開始キー、終了キー | `Promise<KeyedRecord[]>` | 両端含む範囲クエリ       |
+| `countRange(start, end)` | 開始キー、終了キー | `Promise<number>`        | 範囲内のレコード数       |
+| `getMany(keys)`          | キー配列           | `Promise<KeyedRecord[]>` | 複数キーのレコード       |
+| `putMany(records)`       | レコード配列       | `Promise<void>`          | 複数レコードを挿入       |
+| `deleteMany(keys)`       | キー配列           | `Promise<number>`        | 複数キーのレコードを削除 |
+| `deleteByIds(ids)`       | `EntryId` 配列     | `Promise<number>`        | レコード ID 群で削除     |
+| `clear()`                | —                  | `Promise<void>`          | 全レコードを削除         |
 
 ### メタデータ
 
@@ -1112,50 +1121,51 @@ try {
 
 ### ライフサイクル
 
-| メソッド                 | 戻り値                   | 説明                                               |
-| ------------------------ | ------------------------ | -------------------------------------------------- |
+| メソッド                 | 戻り値                   | 説明                                                         |
+| ------------------------ | ------------------------ | ------------------------------------------------------------ |
 | `commit()`               | `Promise<void>`          | 永続ストレージにフラッシュ（ドライバなしの場合は何もしない） |
-| `close()`                | `Promise<void>`          | リソースとロックを解放                             |
-| `on('error', listener)`  | `() => void`（購読解除） | 非同期エラーを監視                                 |
-| `off('error', listener)` | `void`                   | エラーリスナーを削除                               |
+| `close()`                | `Promise<void>`          | リソースとロックを解放                                       |
+| `on('error', listener)`  | `() => void`（購読解除） | 非同期エラーを監視                                           |
+| `off('error', listener)` | `void`                   | エラーリスナーを削除                                         |
 
 ### エクスポートされた型
 
-| 型 | 説明 |
-|----|------|
-| `DatastoreConfig` | コンストラクタ設定オブジェクト |
-| `DatastoreKeyDefinition` | カスタムキーの normalize/compare/serialize/deserialize コールバック |
-| `InputRecord` | `put()` および `putMany()` が受け付けるレコード形式 |
-| `KeyedRecord` | `key`、`payload`、`_id` フィールドを持つレコードオブジェクト |
-| `PersistedRecord` | `payload` と `sizeBytes` を持つ内部レコード形式 |
-| `RecordPayload` | ペイロードの値型（文字列、数値、真偽値、null のネストされたレコード）。配列は未サポートでランタイムで拒否されます。 |
-| `EntryId` | レコードを識別するブランド付き `number`（エフェメラル、復元時に再発行） |
-| `DuplicateKeyPolicy` | `'allow' \| 'reject' \| 'replace'` |
-| `IndexConfig` | インデックス設定（`autoScale`、`maxLeafEntries`、`maxBranchChildren`） |
-| `CapacityConfig` | 容量制御設定（`maxSize` + `policy`） |
-| `CapacityPolicy` | `'strict' \| 'turnover'` |
-| `AutoCommitConfig` | 自動コミット設定（`frequency` + `maxPendingBytes`） |
-| `AutoCommitFrequencyInput` | 頻度値（`'immediate'` \| 数値 \| 時間文字列） |
-| `DatastoreDriver` | プラガブルバックエンドのドライバインターフェース |
-| `DatastoreDriverController` | ドライバコントローラのライフサイクルインターフェース |
-| `DatastoreDriverInitContext` | 初期化時にドライバに渡されるコンテキスト |
-| `DatastoreDriverInitResult` | ドライバ初期化の戻り値 |
-| `DatastoreDriverSnapshot` | 永続化用のスナップショットペイロード |
-| `DatastoreErrorEvent` | `on('error')` で送出されるエラーイベントの形状 |
-| `DatastoreErrorListener` | エラーイベント用のリスナーコールバック型 |
-| `FileBackendConfig` | File ドライバ設定 |
-| `FileTargetConfig` | ファイルターゲット（パスまたはディレクトリ）のユニオン型 |
-| `FileTargetByPathConfig` | 直接 `filePath` を指定するファイルターゲット |
-| `FileTargetByDirectoryConfig` | ディレクトリベースのファイル解決ターゲット |
-| `IndexedDBConfig` | IndexedDB ドライバ設定 |
-| `LocalStorageConfig` | localStorage ドライバ設定 |
-| `OpfsConfig` | OPFS ドライバ設定 |
-| `SyncStorageConfig` | Sync Storage ドライバ設定 |
-| `FrostpillarError` | すべての Frostpillar エラーのルートクラス |
-| `ValidationError` | 不正な入力エラー |
-| `ConfigurationError` | 不正な設定エラー |
-| `QuotaExceededError` | 容量超過エラー |
-| `StorageEngineError` | ストレージ層エラー |
+| 型                            | 説明                                                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `DatastoreConfig`             | コンストラクタ設定オブジェクト                                                                                      |
+| `DatastoreKeyDefinition`      | カスタムキーの normalize/compare/serialize/deserialize コールバック                                                 |
+| `InputRecord`                 | `put()` および `putMany()` が受け付けるレコード形式                                                                 |
+| `KeyedRecord`                 | `key`、`payload`、`_id` フィールドを持つレコードオブジェクト                                                        |
+| `PersistedRecord`             | `payload` と `sizeBytes` を持つ内部レコード形式                                                                     |
+| `RecordPayload`               | ペイロードの値型（文字列、数値、真偽値、null のネストされたレコード）。配列は未サポートでランタイムで拒否されます。 |
+| `EntryId`                     | レコードを識別するブランド付き `number`（エフェメラル、復元時に再発行）                                             |
+| `DuplicateKeyPolicy`          | `'allow' \| 'reject' \| 'replace'`                                                                                  |
+| `DeleteRebalancePolicy`       | `'standard'` \| `'lazy'`                                                                                            |
+| `IndexConfig`                 | インデックス設定（`autoScale`、`maxLeafEntries`、`maxBranchChildren`、`deleteRebalancePolicy`）                     |
+| `CapacityConfig`              | 容量制御設定（`maxSize` + `policy`）                                                                                |
+| `CapacityPolicy`              | `'strict' \| 'turnover'`                                                                                            |
+| `AutoCommitConfig`            | 自動コミット設定（`frequency` + `maxPendingBytes`）                                                                 |
+| `AutoCommitFrequencyInput`    | 頻度値（`'immediate'` \| 数値 \| 時間文字列）                                                                       |
+| `DatastoreDriver`             | プラガブルバックエンドのドライバインターフェース                                                                    |
+| `DatastoreDriverController`   | ドライバコントローラのライフサイクルインターフェース                                                                |
+| `DatastoreDriverInitContext`  | 初期化時にドライバに渡されるコンテキスト                                                                            |
+| `DatastoreDriverInitResult`   | ドライバ初期化の戻り値                                                                                              |
+| `DatastoreDriverSnapshot`     | 永続化用のスナップショットペイロード                                                                                |
+| `DatastoreErrorEvent`         | `on('error')` で送出されるエラーイベントの形状                                                                      |
+| `DatastoreErrorListener`      | エラーイベント用のリスナーコールバック型                                                                            |
+| `FileBackendConfig`           | File ドライバ設定                                                                                                   |
+| `FileTargetConfig`            | ファイルターゲット（パスまたはディレクトリ）のユニオン型                                                            |
+| `FileTargetByPathConfig`      | 直接 `filePath` を指定するファイルターゲット                                                                        |
+| `FileTargetByDirectoryConfig` | ディレクトリベースのファイル解決ターゲット                                                                          |
+| `IndexedDBConfig`             | IndexedDB ドライバ設定                                                                                              |
+| `LocalStorageConfig`          | localStorage ドライバ設定                                                                                           |
+| `OpfsConfig`                  | OPFS ドライバ設定                                                                                                   |
+| `SyncStorageConfig`           | Sync Storage ドライバ設定                                                                                           |
+| `FrostpillarError`            | すべての Frostpillar エラーのルートクラス                                                                           |
+| `ValidationError`             | 不正な入力エラー                                                                                                    |
+| `ConfigurationError`          | 不正な設定エラー                                                                                                    |
+| `QuotaExceededError`          | 容量超過エラー                                                                                                      |
+| `StorageEngineError`          | ストレージ層エラー                                                                                                  |
 
 詳細な動作仕様は [Datastore API spec](docs/specs/01_DatastoreAPI.md) および [Durable Backends spec](docs/specs/02_DurableBackends.md) を参照してください。
 

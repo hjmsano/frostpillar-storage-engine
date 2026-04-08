@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Frostpillar Storage Engine previously used a discouraged pattern for bundler-based environments: it accepted a configuration object (`{ location: 'browser', browserStorage: 'localStorage' }`) and internally aggregated `DurableBackendController` factories. 
+Frostpillar Storage Engine previously used a discouraged pattern for bundler-based environments: it accepted a configuration object (`{ location: 'browser', browserStorage: 'localStorage' }`) and internally aggregated `DurableBackendController` factories.
 Because these controller classes (such as `IndexedDBBackendController`, `FileBackendController`, `OpfsBackendController`, and `SyncStorageBackendController`) were statically imported by the library's internal bootstrap mechanism (`bootstrapDatastoreBackend`), bundlers like Vite, Webpack, esbuild, and Rollup could not determine which controllers were actually used at runtime. As a result, they bypassed dead-code elimination (tree-shaking) for unused storage engines, forcing developers to deliver an unnecessarily large bundle over the network even if they only needed a single backend like `localStorage`.
 
 Furthermore, adding new backend technologies in the future would disproportionately increase the base bundle size for all runtime environments.
@@ -33,8 +33,8 @@ const db = new Datastore({
   // Only localStorage bridging code is imported into the bundler tree.
   driver: localStorageDriver({
     keyPrefix: 'prefix',
-    maxChunkChars: 1000000
-  })
+    maxChunkChars: 1000000,
+  }),
 });
 ```
 

@@ -24,11 +24,13 @@ Add a forward-progress guard in turnover enforcement:
 ## Consequences
 
 Positive:
+
 - prevents infinite turnover loops caused by corrupted eviction accounting
 - fails fast with an explicit corruption signal
 - keeps normal turnover behavior unchanged for valid eviction flows
 
 Trade-offs:
+
 - corruption is surfaced earlier as a hard failure during insert
 
 ## References

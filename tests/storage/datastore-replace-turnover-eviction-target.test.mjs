@@ -4,8 +4,10 @@ import { loadStorageModule } from '../load-module.mjs';
 
 const createStringKeyDefinition = () => ({
   normalize: (value, fieldName) => {
-    if (typeof value !== 'string') throw new TypeError(`${fieldName} must be string.`);
-    if (value.length === 0) throw new TypeError(`${fieldName} must not be empty.`);
+    if (typeof value !== 'string')
+      throw new TypeError(`${fieldName} must be string.`);
+    if (value.length === 0)
+      throw new TypeError(`${fieldName} must not be empty.`);
     return value;
   },
   compare: (left, right) => (left < right ? -1 : left > right ? 1 : 0),
@@ -33,7 +35,7 @@ const createStringKeyDefinition = () => ({
 // FIX: after turnover, detect 'a' is gone → effectiveDelta = 106 (full size).
 //   currentSizeBytes = 66 + 106 = 172  (accurate)
 
-describe("replace+turnover: target key evicted during capacity enforcement", () => {
+describe('replace+turnover: target key evicted during capacity enforcement', () => {
   test('target key evicted during turnover does not undercount currentSizeBytes', async () => {
     const { Datastore } = await loadStorageModule();
     const datastore = new Datastore({
@@ -48,7 +50,11 @@ describe("replace+turnover: target key evicted during capacity enforcement", () 
       await datastore.put({ key: 'b', payload: { v: 'b'.repeat(40) } });
       await datastore.put({ key: 'c', payload: { v: 'c'.repeat(40) } });
 
-      assert.equal(await datastore.count(), 3, 'precondition: 3 records inserted');
+      assert.equal(
+        await datastore.count(),
+        3,
+        'precondition: 3 records inserted',
+      );
 
       // Replace 'a' with large payload (106 bytes).
       // Turnover must evict 'a' (smallest key) and 'b' to make room.
@@ -56,10 +62,22 @@ describe("replace+turnover: target key evicted during capacity enforcement", () 
       await datastore.put({ key: 'a', payload: { v: 'A'.repeat(80) } });
 
       // After the replace: 'a' should exist (re-inserted as new), 'b' should be gone
-      assert.equal(await datastore.has('a'), true, "key 'a' must exist after replace");
-      assert.equal(await datastore.has('b'), false, "key 'b' must have been evicted by turnover");
+      assert.equal(
+        await datastore.has('a'),
+        true,
+        "key 'a' must exist after replace",
+      );
+      assert.equal(
+        await datastore.has('b'),
+        false,
+        "key 'b' must have been evicted by turnover",
+      );
       assert.equal(await datastore.has('c'), true, "key 'c' must still exist");
-      assert.equal(await datastore.count(), 2, "store must contain exactly a and c");
+      assert.equal(
+        await datastore.count(),
+        2,
+        'store must contain exactly a and c',
+      );
 
       // Verify correct data
       const aRecords = await datastore.get('a');
@@ -103,7 +121,7 @@ describe("replace+turnover: target key evicted during capacity enforcement", () 
       assert.equal(
         hasA || hasC,
         true,
-        "at least one of a/c must survive after inserting d (store is not empty)",
+        'at least one of a/c must survive after inserting d (store is not empty)',
       );
     } finally {
       await datastore.close();
@@ -124,17 +142,33 @@ describe("replace+turnover: target key evicted during capacity enforcement", () 
       await datastore.put({ key: 'b', payload: { v: 'b'.repeat(40) } });
       await datastore.put({ key: 'z', payload: { v: 'z'.repeat(40) } });
 
-      assert.equal(await datastore.count(), 3, 'precondition: 3 records inserted');
+      assert.equal(
+        await datastore.count(),
+        3,
+        'precondition: 3 records inserted',
+      );
 
       // Replace 'z' (last key, won't be evicted by turnover since 'a' comes first).
       // Delta = (new z size) - 51. With maxSize=500 this comfortably fits without eviction.
       await datastore.put({ key: 'z', payload: { v: 'Z'.repeat(80) } });
 
       // All keys must survive — no eviction needed
-      assert.equal(await datastore.has('a'), true, "key 'a' must not be evicted");
-      assert.equal(await datastore.has('b'), true, "key 'b' must not be evicted");
-      assert.equal(await datastore.has('z'), true, "key 'z' must exist with updated payload");
-      assert.equal(await datastore.count(), 3, "all 3 records must be present");
+      assert.equal(
+        await datastore.has('a'),
+        true,
+        "key 'a' must not be evicted",
+      );
+      assert.equal(
+        await datastore.has('b'),
+        true,
+        "key 'b' must not be evicted",
+      );
+      assert.equal(
+        await datastore.has('z'),
+        true,
+        "key 'z' must exist with updated payload",
+      );
+      assert.equal(await datastore.count(), 3, 'all 3 records must be present');
 
       // Verify correct data for replaced key
       const zRecords = await datastore.get('z');
@@ -148,8 +182,12 @@ describe("replace+turnover: target key evicted during capacity enforcement", () 
       // 199 + 226 = 425 <= 500 → must succeed
       await datastore.put({ key: 'e', payload: { v: 'e'.repeat(200) } });
 
-      assert.equal(await datastore.has('e'), true, "key 'e' must be inserted successfully");
-      assert.equal(await datastore.count(), 4, "all 4 records must be present");
+      assert.equal(
+        await datastore.has('e'),
+        true,
+        "key 'e' must be inserted successfully",
+      );
+      assert.equal(await datastore.count(), 4, 'all 4 records must be present');
     } finally {
       await datastore.close();
     }

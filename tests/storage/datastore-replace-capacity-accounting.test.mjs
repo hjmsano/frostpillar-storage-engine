@@ -4,8 +4,10 @@ import { importDistModule, loadStorageModule } from '../load-module.mjs';
 
 const createStringKeyDefinition = () => ({
   normalize: (value, fieldName) => {
-    if (typeof value !== 'string') throw new TypeError(`${fieldName} must be string.`);
-    if (value.length === 0) throw new TypeError(`${fieldName} must not be empty.`);
+    if (typeof value !== 'string')
+      throw new TypeError(`${fieldName} must be string.`);
+    if (value.length === 0)
+      throw new TypeError(`${fieldName} must not be empty.`);
     return value;
   },
   compare: (left, right) => (left < right ? -1 : left > right ? 1 : 0),

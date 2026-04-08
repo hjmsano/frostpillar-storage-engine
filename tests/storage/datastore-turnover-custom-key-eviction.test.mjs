@@ -26,7 +26,8 @@ const createStringKeyDefinition = () => {
 };
 
 const computeRecordBytes = (key, payload) => {
-  return new TextEncoder().encode(JSON.stringify([key, { payload }])).byteLength;
+  return new TextEncoder().encode(JSON.stringify([key, { payload }]))
+    .byteLength;
 };
 
 test('turnover capacity eviction with custom string keys evicts by btree key order (lowest key first)', async () => {
@@ -69,7 +70,11 @@ test('turnover capacity eviction with custom string keys evicts by btree key ord
 
   // 'a-key' is the lowest key — it gets evicted first by btree popFirst()
   const aKeyRange = await datastore.getRange('a-key', 'a-key');
-  assert.equal(aKeyRange.length, 0, 'a-key (lowest key) should be evicted by turnover');
+  assert.equal(
+    aKeyRange.length,
+    0,
+    'a-key (lowest key) should be evicted by turnover',
+  );
 
   // 'z-key' was inserted first but has a higher key — it survives
   const zKeyRange = await datastore.getRange('z-key', 'z-key');

@@ -32,7 +32,8 @@ const computeUtf8ByteLengthJs = (value: string): number => {
   return bytes;
 };
 
-const hasBuffer = typeof Buffer !== 'undefined' && typeof Buffer.byteLength === 'function';
+const hasBuffer =
+  typeof Buffer !== 'undefined' && typeof Buffer.byteLength === 'function';
 
 export const computeUtf8ByteLength: (value: string) => number = hasBuffer
   ? (value: string): number => Buffer.byteLength(value, 'utf8')
@@ -59,7 +60,13 @@ export const estimateJsonStringBytes = (value: string): number => {
     } else if (code <= 0x1f) {
       // Control characters: \b(8), \t(9), \n(10), \f(12), \r(13) → 2 bytes each
       // Others → \uXXXX → 6 bytes each
-      if (code === 0x08 || code === 0x09 || code === 0x0a || code === 0x0c || code === 0x0d) {
+      if (
+        code === 0x08 ||
+        code === 0x09 ||
+        code === 0x0a ||
+        code === 0x0c ||
+        code === 0x0d
+      ) {
         bytes += 2;
       } else {
         bytes += 6;
@@ -143,7 +150,11 @@ export const estimateRecordSizeBytes = (
   key: unknown,
   payload: RecordPayload,
 ): number => {
-  return estimateObjectSizeBytes(key) + estimateObjectSizeBytes(payload) + JSON_ROOT_WRAPPER_OVERHEAD;
+  return (
+    estimateObjectSizeBytes(key) +
+    estimateObjectSizeBytes(payload) +
+    JSON_ROOT_WRAPPER_OVERHEAD
+  );
 };
 
 // ---------------------------------------------------------------------------

@@ -1,10 +1,5 @@
-import {
-  IndexedDBBackendController,
-} from '../storage/drivers/IndexedDB/indexedDBBackendController.js';
-import type {
-  DatastoreDriver,
-  IndexedDBConfig,
-} from '../types.js';
+import { IndexedDBBackendController } from '../storage/drivers/IndexedDB/indexedDBBackendController.js';
+import type { DatastoreDriver, IndexedDBConfig } from '../types.js';
 
 export type IndexedDBDriverOptions = IndexedDBConfig;
 

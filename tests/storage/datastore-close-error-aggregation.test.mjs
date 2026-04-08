@@ -17,16 +17,13 @@ test('close aggregates deferred init and backend close failures', async () => {
     },
   };
 
-  await assert.rejects(
-    datastore.close(),
-    (error) => {
-      assert.ok(error instanceof AggregateError);
-      assert.equal(error.errors.length, 2);
-      assert.equal(error.errors[0], initFailure);
-      assert.equal(error.errors[1], closeFailure);
-      return true;
-    },
-  );
+  await assert.rejects(datastore.close(), (error) => {
+    assert.ok(error instanceof AggregateError);
+    assert.equal(error.errors.length, 2);
+    assert.equal(error.errors[0], initFailure);
+    assert.equal(error.errors[1], closeFailure);
+    return true;
+  });
   assert.equal(closeCallCount, 1);
 
   await assert.doesNotReject(async () => {

@@ -60,9 +60,14 @@ interface LoadedFileSnapshot {
   treeJSON: BTreeJSON<unknown, unknown>;
 }
 
-const ensureNonNegativeSafeInteger = (value: unknown, field: string): number => {
+const ensureNonNegativeSafeInteger = (
+  value: unknown,
+  field: string,
+): number => {
   if (!Number.isSafeInteger(value) || typeof value !== 'number' || value < 0) {
-    throw new PageCorruptionError(`${field} must be a non-negative safe integer, got ${String(value)}.`);
+    throw new PageCorruptionError(
+      `${field} must be a non-negative safe integer, got ${String(value)}.`,
+    );
   }
 
   return value;
@@ -101,9 +106,7 @@ const validateActiveDataFileName = (
   return value;
 };
 
-export const writeInitialFileSnapshot = (
-  backend: FileBackendState,
-): void => {
+export const writeInitialFileSnapshot = (backend: FileBackendState): void => {
   const generation: FileGenerationSnapshot = {
     magic: GENERATION_MAGIC,
     version: FORMAT_VERSION,
@@ -121,7 +124,10 @@ export const writeInitialFileSnapshot = (
     writeFsync(activeDataPath, JSON.stringify(generation));
     writeFsync(backend.sidecarPath, JSON.stringify(sidecar, null, 2));
   } catch (error) {
-    throw toStorageEngineError(error, 'Failed to initialize file backend snapshot');
+    throw toStorageEngineError(
+      error,
+      'Failed to initialize file backend snapshot',
+    );
   }
 };
 
@@ -162,7 +168,9 @@ const loadAndValidateGenerationFile = (
   }
 
   const generationSource = readFileSync(activeDataPath, 'utf8');
-  const parsedGeneration = JSON.parse(generationSource) as FileGenerationSnapshot;
+  const parsedGeneration = JSON.parse(
+    generationSource,
+  ) as FileGenerationSnapshot;
   if (
     parsedGeneration.magic !== GENERATION_MAGIC ||
     parsedGeneration.version !== FORMAT_VERSION
@@ -170,20 +178,30 @@ const loadAndValidateGenerationFile = (
     throw new PageCorruptionError('Invalid generation magic/version.');
   }
 
-  const treeJsonSizeBytes = computeUtf8ByteLength(JSON.stringify(parsedGeneration.treeJSON));
+  const treeJsonSizeBytes = computeUtf8ByteLength(
+    JSON.stringify(parsedGeneration.treeJSON),
+  );
 
   return { generation: parsedGeneration, treeJsonSizeBytes };
 };
 
-export const loadFileSnapshot = (backend: FileBackendState): LoadedFileSnapshot => {
+export const loadFileSnapshot = (
+  backend: FileBackendState,
+): LoadedFileSnapshot => {
   try {
     const sidecarSource = readFileSync(backend.sidecarPath, 'utf8');
     const parsedSidecar = JSON.parse(sidecarSource) as FileSidecarSnapshot;
     applySidecarToBackend(backend, parsedSidecar);
     const validatedGeneration = loadAndValidateGenerationFile(backend);
     const treeJSON = validatedGeneration.generation.treeJSON;
-    if (typeof treeJSON !== 'object' || treeJSON === null || Array.isArray(treeJSON)) {
-      throw new PageCorruptionError('treeJSON must be a non-null plain object.');
+    if (
+      typeof treeJSON !== 'object' ||
+      treeJSON === null ||
+      Array.isArray(treeJSON)
+    ) {
+      throw new PageCorruptionError(
+        'treeJSON must be a non-null plain object.',
+      );
     }
     const currentSizeBytes = validatedGeneration.treeJsonSizeBytes;
 
@@ -200,7 +218,9 @@ export const commitFileBackendSnapshot = (
   treeJSON: BTreeJSON<unknown, unknown>,
 ): void => {
   if (backend.commitId >= Number.MAX_SAFE_INTEGER) {
-    throw new StorageEngineError('File backend commitId has reached Number.MAX_SAFE_INTEGER.');
+    throw new StorageEngineError(
+      'File backend commitId has reached Number.MAX_SAFE_INTEGER.',
+    );
   }
   const nextCommitId = backend.commitId + 1;
   const nextActiveDataFile = `${backend.baseFileName}.g.${nextCommitId}`;

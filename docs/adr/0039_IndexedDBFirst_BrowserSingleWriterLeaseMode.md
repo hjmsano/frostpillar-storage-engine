@@ -42,4 +42,3 @@ Project direction prioritizes:
   more complex tests.
 - **Trade-off:** Strict guarantees remain backend-dependent; documentation must
   explicitly state support levels.
-

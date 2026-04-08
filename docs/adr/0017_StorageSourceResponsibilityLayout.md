@@ -10,6 +10,7 @@ driver implementations, B-Tree internals, query engine helpers, and
 storage-scoped record helpers in a mostly flat structure.
 
 This made it harder to:
+
 - identify module ownership quickly,
 - isolate impact for backend- or query-specific changes,
 - prepare for planned replacement of the current in-repo B-Tree
@@ -31,6 +32,7 @@ Adopt a responsibility-based `src/storage` layout:
 - `src/storage/record/*`: storage-scoped record ordering and record-id helpers
 
 Additional rules:
+
 - move storage-only record helpers from `src/records/*` to
   `src/storage/record/*`.
 - keep public package exports unchanged (`src/index.ts` still exports only
@@ -40,11 +42,13 @@ Additional rules:
 ## Consequences
 
 Positive:
+
 - clear mapping from concern to directory.
 - easier targeted refactors (especially upcoming B-Tree replacement).
 - less cross-concern coupling in navigation and code review.
 
 Trade-offs:
+
 - many relative import paths become deeper and require coordinated updates.
 - historical ADR references may point to pre-relocation paths.
 

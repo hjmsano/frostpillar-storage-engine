@@ -121,7 +121,11 @@ const loadLocalStorageChunks = (
   } catch {
     throw new StorageEngineError('localStorage chunk data JSON is malformed.');
   }
-  if (typeof parsedTreeJSON !== 'object' || parsedTreeJSON === null || Array.isArray(parsedTreeJSON)) {
+  if (
+    typeof parsedTreeJSON !== 'object' ||
+    parsedTreeJSON === null ||
+    Array.isArray(parsedTreeJSON)
+  ) {
     throw new PageCorruptionError('treeJSON must be a non-null plain object.');
   }
   return {
@@ -157,7 +161,11 @@ export const loadLocalStorageSnapshot = (
     'localStorage',
   );
 
-  const { treeJSON, rawJsonLength } = loadLocalStorageChunks(state, activeGeneration, chunkCount);
+  const { treeJSON, rawJsonLength } = loadLocalStorageChunks(
+    state,
+    activeGeneration,
+    chunkCount,
+  );
   const currentSizeBytes = rawJsonLength;
 
   state.activeGeneration = activeGeneration;
@@ -284,9 +292,5 @@ export const commitLocalStorageSnapshot = (
   state.activeChunkCount = preparedCommit.chunks.length;
 
   // Clean up old generation chunks after manifest switch (best-effort)
-  cleanupGenerationChunks(
-    state,
-    previousGeneration,
-    previousChunkCount,
-  );
+  cleanupGenerationChunks(state, previousGeneration, previousChunkCount);
 };

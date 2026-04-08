@@ -14,26 +14,32 @@ We need a deterministic way to bind `capacity.maxSize` to backend constraints wi
 ## Decision
 
 1. Add sentinel mode:
+
 - `capacity.maxSize: "backendLimit"`
 
 2. Scope in this baseline:
+
 - Supported only for selected browser backend `localStorage`.
 - Resolved value is `localStorage.maxChunkChars * localStorage.maxChunks`.
 
 3. Unsupported backends:
+
 - `memory`, `file`, `indexedDB`, `opfs` reject `"backendLimit"` with `ConfigurationError`.
 
 4. Policy behavior:
+
 - After resolving to bytes, existing `strict`/`turnover` logic is reused unchanged.
 
 ## Consequences
 
 Positive:
+
 - Enables backend-aware capacity binding for localStorage with deterministic config.
 - Prevents ambiguous "very large explicit maxSize" configs for localStorage usage.
 - Keeps implementation simple and testable.
 
 Trade-off:
+
 - `indexedDB` and `opfs` remain explicit-capacity-only in this baseline.
 - The resolved localStorage bound is an internal deterministic envelope, not a browser-wide quota oracle.
 

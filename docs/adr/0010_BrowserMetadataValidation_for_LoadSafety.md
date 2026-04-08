@@ -7,6 +7,7 @@ Date: 2026-03-10
 
 Browser durable backend loaders restore internal counters from persisted
 metadata:
+
 - localStorage manifest `activeGeneration` and `commitId`
 - IndexedDB meta `commitId`
 - OPFS meta `commitId`
@@ -33,12 +34,14 @@ equivalent guardrails on load.
 ## Consequences
 
 Positive:
+
 - Corrupted browser metadata is detected deterministically at open/load time.
 - Internal counter state remains type-safe and range-safe before commit/chunk
   key calculations.
 - Validation behavior is aligned across browser durable backends.
 
 Trade-off:
+
 - Some previously tolerated corrupted persisted states now fail fast during
   initialization.
 

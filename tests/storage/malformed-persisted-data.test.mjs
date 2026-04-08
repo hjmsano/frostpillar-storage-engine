@@ -62,7 +62,8 @@ const createMockIDBFactoryWithPreloadedMeta = (metaRecord) => {
                   throw new Error(`Object store "${name}" not found.`);
                 }
                 return {
-                  get: (key) => createSuccessfulIdbRequest(store.get(key) ?? undefined),
+                  get: (key) =>
+                    createSuccessfulIdbRequest(store.get(key) ?? undefined),
                   getAll: () => createSuccessfulIdbRequest([...store.values()]),
                   put: (value, key) => {
                     store.set(key, value);
@@ -104,8 +105,12 @@ const createMockLocalStorage = (initialData = {}) => {
   const store = new Map(Object.entries(initialData));
   return {
     getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => { store.set(key, String(value)); },
-    removeItem: (key) => { store.delete(key); },
+    setItem: (key, value) => {
+      store.set(key, String(value));
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
   };
 };
 
@@ -156,12 +161,15 @@ describe('malformed persisted data – localStorage', () => {
 
     try {
       assert.throws(
-        () => LocalStorageBackendController.create({
-          config: {},
-          autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
-          onAutoCommitError: () => {},
-        }),
+        () =>
+          LocalStorageBackendController.create({
+            config: {},
+            autoCommit: { frequency: 'immediate' },
+            getSnapshot: () => ({
+              treeJSON: { version: 1, config: {}, entries: [] },
+            }),
+            onAutoCommitError: () => {},
+          }),
         (error) => {
           assert.ok(error instanceof StorageEngineError);
           assert.ok(error.message.includes('malformed'));
@@ -200,12 +208,15 @@ describe('malformed persisted data – localStorage', () => {
 
     try {
       assert.throws(
-        () => LocalStorageBackendController.create({
-          config: {},
-          autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
-          onAutoCommitError: () => {},
-        }),
+        () =>
+          LocalStorageBackendController.create({
+            config: {},
+            autoCommit: { frequency: 'immediate' },
+            getSnapshot: () => ({
+              treeJSON: { version: 1, config: {}, entries: [] },
+            }),
+            onAutoCommitError: () => {},
+          }),
         (error) => {
           assert.ok(error instanceof StorageEngineError);
           assert.ok(error.message.includes('magic/version'));
@@ -245,12 +256,15 @@ describe('malformed persisted data – localStorage', () => {
 
     try {
       assert.throws(
-        () => LocalStorageBackendController.create({
-          config: {},
-          autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
-          onAutoCommitError: () => {},
-        }),
+        () =>
+          LocalStorageBackendController.create({
+            config: {},
+            autoCommit: { frequency: 'immediate' },
+            getSnapshot: () => ({
+              treeJSON: { version: 1, config: {}, entries: [] },
+            }),
+            onAutoCommitError: () => {},
+          }),
         (error) => {
           assert.ok(error instanceof StorageEngineError);
           assert.ok(error.message.includes('chunk data JSON is malformed'));
@@ -265,7 +279,6 @@ describe('malformed persisted data – localStorage', () => {
       }
     }
   });
-
 });
 
 // ---------------------------------------------------------------------------
@@ -291,7 +304,9 @@ describe('malformed persisted data – syncStorage', () => {
         SyncStorageBackendController.create({
           config: {},
           autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
+          getSnapshot: () => ({
+            treeJSON: { version: 1, config: {}, entries: [] },
+          }),
           onAutoCommitError: () => {},
         }),
         (error) => {
@@ -336,7 +351,9 @@ describe('malformed persisted data – syncStorage', () => {
         SyncStorageBackendController.create({
           config: {},
           autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
+          getSnapshot: () => ({
+            treeJSON: { version: 1, config: {}, entries: [] },
+          }),
           onAutoCommitError: () => {},
         }),
         (error) => {
@@ -384,7 +401,9 @@ describe('malformed persisted data – IndexedDB', () => {
             version: 1,
           },
           autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
+          getSnapshot: () => ({
+            treeJSON: { version: 1, config: {}, entries: [] },
+          }),
           onAutoCommitError: () => {},
         }),
         (error) => {

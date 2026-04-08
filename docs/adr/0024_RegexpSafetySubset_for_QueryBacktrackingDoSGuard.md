@@ -8,6 +8,7 @@ Date: 2026-03-11
 `queryNative` allowed user-provided regular expressions for `where.operator = "regexp"`.
 
 Existing safeguards already rejected:
+
 - backreferences
 - look-around assertions
 - nested quantifier groups
@@ -30,11 +31,13 @@ This guard is enforced before runtime `RegExp` evaluation.
 ## Consequences
 
 Positive:
+
 - blocks an uncovered catastrophic-backtracking class in user-supplied regex
 - keeps query execution availability-focused and deterministic under adversarial input
 - preserves current error surface (`QueryValidationError`) without new public error types
 
 Trade-offs:
+
 - some advanced regex patterns are intentionally rejected as unsafe
 - the guard is heuristic and favors conservative rejection over permissive acceptance
 

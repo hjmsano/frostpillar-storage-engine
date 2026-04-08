@@ -76,7 +76,10 @@ test('handleCleared queues background commit even when pending bytes is zero', a
   await controller.handleCleared();
   // handleCleared queues a background commit immediately, so await settlement
   await new Promise((resolve) => setTimeout(resolve, 50));
-  assert.ok(commitCount >= 1, 'handleCleared must trigger a commit even with 0 pending bytes');
+  assert.ok(
+    commitCount >= 1,
+    'handleCleared must trigger a commit even with 0 pending bytes',
+  );
 
   await controller.close();
 });
@@ -113,7 +116,11 @@ test('handleCleared during in-flight commit is not lost', async () => {
   // Wait for the commit loop to settle
   await new Promise((resolve) => setTimeout(resolve, 50));
 
-  assert.equal(commitCount, 2, 'second handleCleared during in-flight commit must trigger another commit');
+  assert.equal(
+    commitCount,
+    2,
+    'second handleCleared during in-flight commit must trigger another commit',
+  );
 
   await controller.close();
 });
@@ -244,7 +251,10 @@ test('async orchestration source avoids Promise.resolve wrapper chains', async (
     'utf8',
   );
   const autoCommitSource = await readFile(
-    path.resolve(process.cwd(), 'src/storage/backend/asyncDurableAutoCommitController.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/backend/asyncDurableAutoCommitController.ts',
+    ),
     'utf8',
   );
 
@@ -280,8 +290,14 @@ test('driver source does not reconstruct legacy datastore location config', asyn
   assert.doesNotMatch(opfsDriverSource, /location:\s*'browser'/);
   assert.doesNotMatch(fileDriverSource, /location:\s*'file'/);
 
-  assert.match(localStorageDriverSource, /from '\.\.\/storage\/drivers\/localStorage\/localStorageConfig\.js'/);
-  assert.match(syncStorageDriverSource, /from '\.\.\/storage\/drivers\/syncStorage\/syncStorageConfig\.js'/);
+  assert.match(
+    localStorageDriverSource,
+    /from '\.\.\/storage\/drivers\/localStorage\/localStorageConfig\.js'/,
+  );
+  assert.match(
+    syncStorageDriverSource,
+    /from '\.\.\/storage\/drivers\/syncStorage\/syncStorageConfig\.js'/,
+  );
   assert.doesNotMatch(localStorageDriverSource, /from '\.\/validation\.js'/);
   assert.doesNotMatch(syncStorageDriverSource, /from '\.\/validation\.js'/);
   assert.doesNotMatch(localStorageDriverSource, /\b32768\b/);
@@ -307,46 +323,94 @@ test('capacity resolver imports shared config parser directly', async () => {
 
 test('durable backend controller create options require config objects', async () => {
   const fileControllerSource = await readFile(
-    path.resolve(process.cwd(), 'src/storage/drivers/file/fileBackendController.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/drivers/file/fileBackendController.ts',
+    ),
     'utf8',
   );
   const localStorageControllerSource = await readFile(
-    path.resolve(process.cwd(), 'src/storage/drivers/localStorage/localStorageBackendController.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/drivers/localStorage/localStorageBackendController.ts',
+    ),
     'utf8',
   );
   const syncStorageControllerSource = await readFile(
-    path.resolve(process.cwd(), 'src/storage/drivers/syncStorage/syncStorageBackendController.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/drivers/syncStorage/syncStorageBackendController.ts',
+    ),
     'utf8',
   );
   const indexedDBControllerSource = await readFile(
-    path.resolve(process.cwd(), 'src/storage/drivers/IndexedDB/indexedDBBackendController.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/drivers/IndexedDB/indexedDBBackendController.ts',
+    ),
     'utf8',
   );
   const opfsControllerSource = await readFile(
-    path.resolve(process.cwd(), 'src/storage/drivers/opfs/opfsBackendController.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/drivers/opfs/opfsBackendController.ts',
+    ),
     'utf8',
   );
 
-  assert.match(fileControllerSource, /interface FileBackendControllerCreateOptions[\s\S]*config: FileBackendConfig;/);
-  assert.match(localStorageControllerSource, /interface LocalStorageBackendControllerCreateOptions[\s\S]*config: LocalStorageConfig;/);
-  assert.match(syncStorageControllerSource, /interface SyncStorageBackendControllerCreateOptions[\s\S]*config: SyncStorageConfig;/);
-  assert.match(indexedDBControllerSource, /interface IndexedDBBackendControllerCreateOptions[\s\S]*config: IndexedDBConfig;/);
-  assert.match(opfsControllerSource, /interface OpfsBackendControllerCreateOptions[\s\S]*config: OpfsConfig;/);
-  assert.doesNotMatch(localStorageControllerSource, /config\?: LocalStorageConfig;/);
-  assert.doesNotMatch(syncStorageControllerSource, /config\?: SyncStorageConfig;/);
+  assert.match(
+    fileControllerSource,
+    /interface FileBackendControllerCreateOptions[\s\S]*config: FileBackendConfig;/,
+  );
+  assert.match(
+    localStorageControllerSource,
+    /interface LocalStorageBackendControllerCreateOptions[\s\S]*config: LocalStorageConfig;/,
+  );
+  assert.match(
+    syncStorageControllerSource,
+    /interface SyncStorageBackendControllerCreateOptions[\s\S]*config: SyncStorageConfig;/,
+  );
+  assert.match(
+    indexedDBControllerSource,
+    /interface IndexedDBBackendControllerCreateOptions[\s\S]*config: IndexedDBConfig;/,
+  );
+  assert.match(
+    opfsControllerSource,
+    /interface OpfsBackendControllerCreateOptions[\s\S]*config: OpfsConfig;/,
+  );
+  assert.doesNotMatch(
+    localStorageControllerSource,
+    /config\?: LocalStorageConfig;/,
+  );
+  assert.doesNotMatch(
+    syncStorageControllerSource,
+    /config\?: SyncStorageConfig;/,
+  );
   assert.doesNotMatch(indexedDBControllerSource, /config\?: IndexedDBConfig;/);
   assert.doesNotMatch(opfsControllerSource, /config\?: OpfsConfig;/);
 });
 
 test('indexedDB controller does not double-default values already parsed by shared config', async () => {
   const indexedDBControllerSource = await readFile(
-    path.resolve(process.cwd(), 'src/storage/drivers/IndexedDB/indexedDBBackendController.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/drivers/IndexedDB/indexedDBBackendController.ts',
+    ),
     'utf8',
   );
 
-  assert.match(indexedDBControllerSource, /const idbConfig = parseIndexedDBConfig\(options\.config\);/);
-  assert.doesNotMatch(indexedDBControllerSource, /idbConfig\.databaseName\s*\?\?/);
-  assert.doesNotMatch(indexedDBControllerSource, /idbConfig\.objectStoreName\s*\?\?/);
+  assert.match(
+    indexedDBControllerSource,
+    /const idbConfig = parseIndexedDBConfig\(options\.config\);/,
+  );
+  assert.doesNotMatch(
+    indexedDBControllerSource,
+    /idbConfig\.databaseName\s*\?\?/,
+  );
+  assert.doesNotMatch(
+    indexedDBControllerSource,
+    /idbConfig\.objectStoreName\s*\?\?/,
+  );
   assert.doesNotMatch(indexedDBControllerSource, /idbConfig\.version\s*\?\?/);
 });
 
@@ -357,17 +421,26 @@ test('opfs metadata parsing reuses shared non-negative-safe-integer validator', 
   );
 
   assert.match(opfsBackendSource, /parseNonNegativeSafeInteger/);
-  assert.match(opfsBackendSource, /parseNonNegativeSafeInteger\(\s*manifest\.commitId,/);
+  assert.match(
+    opfsBackendSource,
+    /parseNonNegativeSafeInteger\(\s*manifest\.commitId,/,
+  );
   assert.doesNotMatch(opfsBackendSource, /typeof commitId !== 'number'/);
 });
 
 test('indexedDB and opfs controllers do not advance commitId before durable write', async () => {
   const indexedDBControllerSource = await readFile(
-    path.resolve(process.cwd(), 'src/storage/drivers/IndexedDB/indexedDBBackendController.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/drivers/IndexedDB/indexedDBBackendController.ts',
+    ),
     'utf8',
   );
   const opfsControllerSource = await readFile(
-    path.resolve(process.cwd(), 'src/storage/drivers/opfs/opfsBackendController.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/drivers/opfs/opfsBackendController.ts',
+    ),
     'utf8',
   );
 
@@ -376,8 +449,14 @@ test('indexedDB and opfs controllers do not advance commitId before durable writ
   assert.doesNotMatch(opfsControllerSource, /this\.commitId \+= 1/);
 
   // Must stage into a local variable and assign only after success
-  assert.match(indexedDBControllerSource, /const nextCommitId = this\.commitId \+ 1/);
-  assert.match(opfsControllerSource, /const nextCommitId = this\.commitId \+ 1/);
+  assert.match(
+    indexedDBControllerSource,
+    /const nextCommitId = this\.commitId \+ 1/,
+  );
+  assert.match(
+    opfsControllerSource,
+    /const nextCommitId = this\.commitId \+ 1/,
+  );
   assert.match(indexedDBControllerSource, /this\.commitId = nextCommitId/);
   assert.match(opfsControllerSource, /this\.commitId = nextCommitId/);
 });

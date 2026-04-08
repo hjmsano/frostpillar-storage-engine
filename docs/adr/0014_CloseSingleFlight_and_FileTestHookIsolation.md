@@ -31,11 +31,13 @@ Two reliability gaps were identified:
 ## Consequences
 
 Positive:
+
 - Close behavior is deterministic under concurrency.
 - New operations cannot mutate datastore state once close starts.
 - File backend test hooks are explicit and type-safe.
 
 Trade-off:
+
 - Tests that used `config.__testHooks` must move to explicit `testHooks`
   option wiring.
 

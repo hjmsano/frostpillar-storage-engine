@@ -15,7 +15,9 @@ import { importDistModule, loadStorageModule } from '../load-module.mjs';
 // ---------------------------------------------------------------------------
 
 const createNotFoundError = () => {
-  const error = new Error('The requested file or directory could not be found.');
+  const error = new Error(
+    'The requested file or directory could not be found.',
+  );
   error.name = 'NotFoundError';
   return error;
 };
@@ -45,12 +47,16 @@ const createMockOpfsDirectory = (fileStore) => ({
         text: async () => fileStore.get(name),
       }),
       createWritable: async () => ({
-        write: async (data) => { fileStore.set(name, String(data)); },
+        write: async (data) => {
+          fileStore.set(name, String(data));
+        },
         close: async () => {},
       }),
     };
   },
-  removeEntry: async (name) => { fileStore.delete(name); },
+  removeEntry: async (name) => {
+    fileStore.delete(name);
+  },
 });
 
 /**
@@ -71,7 +77,10 @@ const injectMockOpfsStorage = (fileStore) => {
     }),
   };
 
-  const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const originalDescriptor = Object.getOwnPropertyDescriptor(
+    globalThis,
+    'navigator',
+  );
   Object.defineProperty(globalThis, 'navigator', {
     value: { storage: mockStorageArea },
     configurable: true,
@@ -93,7 +102,9 @@ const injectMockOpfsStorage = (fileStore) => {
 
 test('opfs driver: fresh open returns empty datastore', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { opfsDriver } = await importDistModule('drivers/opfs.js');
 
   const fileStore = new Map();
@@ -113,7 +124,9 @@ test('opfs driver: fresh open returns empty datastore', async () => {
 
 test('opfs driver: inserted records survive close and reopen', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { opfsDriver } = await importDistModule('drivers/opfs.js');
 
   const fileStore = new Map();
@@ -121,8 +134,14 @@ test('opfs driver: inserted records survive close and reopen', async () => {
   try {
     // First instance: write
     const first = new Datastore({ driver: opfsDriver() });
-    await first.put({ key: '2025-06-01T00:00:00.000Z', payload: { id: 'alpha', value: 42 } });
-    await first.put({ key: '2025-06-02T00:00:00.000Z', payload: { id: 'beta', value: 99 } });
+    await first.put({
+      key: '2025-06-01T00:00:00.000Z',
+      payload: { id: 'alpha', value: 42 },
+    });
+    await first.put({
+      key: '2025-06-02T00:00:00.000Z',
+      payload: { id: 'beta', value: 99 },
+    });
     // autoCommit is 'immediate' by default, so records are already committed.
     await first.close();
 
@@ -145,7 +164,9 @@ test('opfs driver: inserted records survive close and reopen', async () => {
 
 test('opfs driver: explicit commit() flushes records before close', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { opfsDriver } = await importDistModule('drivers/opfs.js');
 
   const fileStore = new Map();
@@ -156,7 +177,10 @@ test('opfs driver: explicit commit() flushes records before close', async () => 
     // an explicit frequency to test the explicit commit() path specifically.
     // 'immediate' still auto-commits on each insert; calling commit() again is idempotent.
     const first = new Datastore({ driver: opfsDriver() });
-    await first.put({ key: '2025-07-01T00:00:00.000Z', payload: { id: 'gamma' } });
+    await first.put({
+      key: '2025-07-01T00:00:00.000Z',
+      payload: { id: 'gamma' },
+    });
     await first.commit();
     await first.close();
 
@@ -175,17 +199,28 @@ test('opfs driver: explicit commit() flushes records before close', async () => 
 
 test('opfs driver: deletion is reflected after reopen', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { opfsDriver } = await importDistModule('drivers/opfs.js');
 
   const fileStore = new Map();
   const restore = injectMockOpfsStorage(fileStore);
   try {
     const first = new Datastore({ driver: opfsDriver() });
-    await first.put({ key: '2025-08-01T00:00:00.000Z', payload: { id: 'to-delete' } });
-    await first.put({ key: '2025-08-02T00:00:00.000Z', payload: { id: 'to-keep' } });
+    await first.put({
+      key: '2025-08-01T00:00:00.000Z',
+      payload: { id: 'to-delete' },
+    });
+    await first.put({
+      key: '2025-08-02T00:00:00.000Z',
+      payload: { id: 'to-keep' },
+    });
 
-    const toDeleteRecords = await first.getRange('2025-08-01T00:00:00.000Z', '2025-08-01T00:00:00.000Z');
+    const toDeleteRecords = await first.getRange(
+      '2025-08-01T00:00:00.000Z',
+      '2025-08-01T00:00:00.000Z',
+    );
     assert.equal(toDeleteRecords.length, 1);
     await first.deleteById(toDeleteRecords[0]._id);
     await first.close();
@@ -205,7 +240,9 @@ test('opfs driver: deletion is reflected after reopen', async () => {
 
 test('opfs driver: ping-pong commit alternates activeData between a and b', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { opfsDriver } = await importDistModule('drivers/opfs.js');
 
   const fileStore = new Map();
@@ -213,15 +250,23 @@ test('opfs driver: ping-pong commit alternates activeData between a and b', asyn
   try {
     // First open: should write data-b.json (alternating from initial 'a')
     const first = new Datastore({ driver: opfsDriver() });
-    await first.put({ key: '2025-09-01T00:00:00.000Z', payload: { id: 'first-commit' } });
+    await first.put({
+      key: '2025-09-01T00:00:00.000Z',
+      payload: { id: 'first-commit' },
+    });
     await first.close();
 
     const metaAfterFirst = JSON.parse(fileStore.get('meta.json'));
-    assert.ok(metaAfterFirst.activeData === 'a' || metaAfterFirst.activeData === 'b');
+    assert.ok(
+      metaAfterFirst.activeData === 'a' || metaAfterFirst.activeData === 'b',
+    );
 
     // Second open: should toggle activeData
     const second = new Datastore({ driver: opfsDriver() });
-    await second.put({ key: '2025-09-02T00:00:00.000Z', payload: { id: 'second-commit' } });
+    await second.put({
+      key: '2025-09-02T00:00:00.000Z',
+      payload: { id: 'second-commit' },
+    });
     await second.close();
 
     const metaAfterSecond = JSON.parse(fileStore.get('meta.json'));
@@ -233,10 +278,15 @@ test('opfs driver: ping-pong commit alternates activeData between a and b', asyn
 
 test('opfs driver: throws UnsupportedBackendError when OPFS is not available', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { opfsDriver } = await importDistModule('drivers/opfs.js');
 
-  const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const originalDescriptor = Object.getOwnPropertyDescriptor(
+    globalThis,
+    'navigator',
+  );
   // Remove navigator.storage so detectGlobalOpfs() returns null
   Object.defineProperty(globalThis, 'navigator', {
     value: {},
@@ -247,8 +297,12 @@ test('opfs driver: throws UnsupportedBackendError when OPFS is not available', a
     const datastore = new Datastore({ driver: opfsDriver() });
 
     await assert.rejects(
-      datastore.put({ key: '2025-01-01T00:00:00.000Z', payload: { id: 'fail' } }),
-      (error) => error instanceof Error && error.name === 'UnsupportedBackendError',
+      datastore.put({
+        key: '2025-01-01T00:00:00.000Z',
+        payload: { id: 'fail' },
+      }),
+      (error) =>
+        error instanceof Error && error.name === 'UnsupportedBackendError',
     );
 
     await datastore.close().catch(() => undefined);

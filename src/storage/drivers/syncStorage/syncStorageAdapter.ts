@@ -57,7 +57,10 @@ const callChromeCallbackGet = (
       });
     } catch (error: unknown) {
       reject(
-        toErrorInstance(error, 'chrome.storage.sync.get failed with a non-Error value.'),
+        toErrorInstance(
+          error,
+          'chrome.storage.sync.get failed with a non-Error value.',
+        ),
       );
     }
   });
@@ -80,7 +83,10 @@ const callChromeCallbackSet = (
       });
     } catch (error: unknown) {
       reject(
-        toErrorInstance(error, 'chrome.storage.sync.set failed with a non-Error value.'),
+        toErrorInstance(
+          error,
+          'chrome.storage.sync.set failed with a non-Error value.',
+        ),
       );
     }
   });

@@ -27,6 +27,7 @@ easier for validation behavior to diverge accidentally.
 ## Consequences
 
 Positive:
+
 - One source of truth for non-negative safe integer metadata parsing in browser
   durable backends.
 - Lower risk of drift when changing validation behavior in the future.
@@ -34,6 +35,7 @@ Positive:
   prefixes.
 
 Trade-off:
+
 - Call sites now pass an explicit `backendName` argument to preserve message
   context.
 

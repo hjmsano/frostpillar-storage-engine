@@ -28,11 +28,13 @@ Two documentation/contract mismatches were identified:
 ## Consequences
 
 Positive:
+
 - Runtime behavior now matches documented payload depth boundary.
 - Client expectations are clearer because depth counting semantics are explicit.
 - Architecture documentation no longer understates implemented browser scope.
 
 Trade-off:
+
 - Payload shapes that previously depended on 65 object levels are now rejected.
 
 ## References

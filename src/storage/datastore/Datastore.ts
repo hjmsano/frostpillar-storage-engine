@@ -21,11 +21,19 @@ import type {
 } from '../../types.js';
 import { emitAutoCommitErrorToListeners } from '../backend/autoCommit.js';
 import { AsyncMutex } from '../backend/asyncMutex.js';
-import { validateAndNormalizePayload, type ResolvedPayloadLimits } from '../../validation/payload.js';
+import {
+  validateAndNormalizePayload,
+  type ResolvedPayloadLimits,
+} from '../../validation/payload.js';
 import { enforceCapacityPolicy } from '../backend/capacity.js';
 import { resolveCapacityState } from '../backend/capacityResolver.js';
 import { estimateRecordSizeBytes } from '../backend/encoding.js';
-import { parseIndexConfig, type ResolvedIndexConfig, parseDuplicateKeyConfig, parsePayloadLimitsConfig } from '../config/config.shared.js';
+import {
+  parseIndexConfig,
+  type ResolvedIndexConfig,
+  parseDuplicateKeyConfig,
+  parsePayloadLimitsConfig,
+} from '../config/config.shared.js';
 import { DatastoreLifecycle } from './datastoreLifecycle.js';
 import {
   deleteRecordById,
@@ -36,13 +44,19 @@ import {
   validateAndEstimateSize,
 } from './mutationById.js';
 import { closeDatastore } from './datastoreClose.js';
-import type { CapacityState, DurableBackendController } from '../backend/types.js';
+import type {
+  CapacityState,
+  DurableBackendController,
+} from '../backend/types.js';
 import {
   RecordKeyIndexBTree,
   clampComparatorResult,
   normalizeComparatorResult,
 } from '../btree/recordKeyIndexBTree.js';
-import type { BTreeJSON, DuplicateKeyPolicy } from '../btree/recordKeyIndexBTree.js';
+import type {
+  BTreeJSON,
+  DuplicateKeyPolicy,
+} from '../btree/recordKeyIndexBTree.js';
 import {
   readRawInsertKey,
   resolveKeyDefinition,
@@ -71,7 +85,8 @@ export class Datastore {
     this.duplicateKeyPolicy = duplicateKeys;
     this.indexConfig = parseIndexConfig(config.index);
     this.keyIndex = new RecordKeyIndexBTree<unknown, PersistedRecord>({
-      compareKeys: (left: unknown, right: unknown): number => this.keyDefinition.compare(left, right),
+      compareKeys: (left: unknown, right: unknown): number =>
+        this.keyDefinition.compare(left, right),
       duplicateKeys,
       ...this.indexConfig,
     });
@@ -87,9 +102,7 @@ export class Datastore {
 
     if (config.driver === undefined) {
       if (config.autoCommit !== undefined) {
-        throw new ConfigurationError(
-          'autoCommit requires a durable driver.',
-        );
+        throw new ConfigurationError('autoCommit requires a durable driver.');
       }
       return;
     }
@@ -109,23 +122,32 @@ export class Datastore {
     }
 
     this.pendingInit = Promise.resolve(backendInit)
-      .then((result): void => { this.applyBackendInitResult(result); })
+      .then((result): void => {
+        this.applyBackendInitResult(result);
+      })
       .catch((error: unknown): void => {
-        this.pendingInitError = toErrorInstance(error, 'Datastore backend initialization failed with a non-Error value.');
+        this.pendingInitError = toErrorInstance(
+          error,
+          'Datastore backend initialization failed with a non-Error value.',
+        );
       })
       .finally((): void => {
-        this.pendingInit = null;  // clear atomically after init settles (single-flight)
+        this.pendingInit = null; // clear atomically after init settles (single-flight)
       });
   }
 
   public put(record: InputRecord<unknown>): Promise<void> {
-    return this.runWithOpenExclusive((): Promise<void> => this.putSingle(record));
+    return this.runWithOpenExclusive(
+      (): Promise<void> => this.putSingle(record),
+    );
   }
 
   public get(key: unknown): Promise<KeyedRecord<unknown>[]> {
     return this.runWithOpen((): KeyedRecord<unknown>[] => {
       const normalizedKey = this.keyDefinition.normalize(key, 'key');
-      return this.keyIndex.rangeQuery(normalizedKey, normalizedKey).map((e) => toPublicRecord(e.entryId, e.key, e.value));
+      return this.keyIndex
+        .rangeQuery(normalizedKey, normalizedKey)
+        .map((e) => toPublicRecord(e.entryId, e.key, e.value));
     });
   }
 
@@ -152,7 +174,9 @@ export class Datastore {
   }
 
   public delete(key: unknown): Promise<number> {
-    return this.runWithOpenExclusive((): Promise<number> => this.deleteSingle(key));
+    return this.runWithOpenExclusive(
+      (): Promise<number> => this.deleteSingle(key),
+    );
   }
 
   public has(key: unknown): Promise<boolean> {
@@ -164,18 +188,44 @@ export class Datastore {
 
   public getAll(): Promise<KeyedRecord<unknown>[]> {
     return this.runWithOpen((): KeyedRecord<unknown>[] => {
-      return this.keyIndex.snapshot().map((e) => toPublicRecord(e.entryId, e.key, e.value));
+      return this.keyIndex
+        .snapshot()
+        .map((e) => toPublicRecord(e.entryId, e.key, e.value));
     });
   }
 
-  public getRange(start: unknown, end: unknown): Promise<KeyedRecord<unknown>[]> {
+  public getRange(
+    start: unknown,
+    end: unknown,
+  ): Promise<KeyedRecord<unknown>[]> {
     return this.runWithOpen((): KeyedRecord<unknown>[] => {
       const normalizedStart = this.keyDefinition.normalize(start, 'start');
       const normalizedEnd = this.keyDefinition.normalize(end, 'end');
-      if (normalizeComparatorResult(this.keyDefinition.compare(normalizedStart, normalizedEnd)) > 0) {
+      if (
+        normalizeComparatorResult(
+          this.keyDefinition.compare(normalizedStart, normalizedEnd),
+        ) > 0
+      ) {
         throw new InvalidQueryRangeError('start must be <= end.');
       }
-      return this.keyIndex.rangeQuery(normalizedStart, normalizedEnd).map((e) => toPublicRecord(e.entryId, e.key, e.value));
+      return this.keyIndex
+        .rangeQuery(normalizedStart, normalizedEnd)
+        .map((e) => toPublicRecord(e.entryId, e.key, e.value));
+    });
+  }
+
+  public countRange(start: unknown, end: unknown): Promise<number> {
+    return this.runWithOpen((): number => {
+      const normalizedStart = this.keyDefinition.normalize(start, 'start');
+      const normalizedEnd = this.keyDefinition.normalize(end, 'end');
+      if (
+        normalizeComparatorResult(
+          this.keyDefinition.compare(normalizedStart, normalizedEnd),
+        ) > 0
+      ) {
+        throw new InvalidQueryRangeError('start must be <= end.');
+      }
+      return this.keyIndex.count(normalizedStart, normalizedEnd);
     });
   }
 
@@ -191,11 +241,19 @@ export class Datastore {
       const results: KeyedRecord<unknown>[] = [];
       let lastKey: unknown = undefined;
       for (let i = 0; i < normalizedKeys.length; i += 1) {
-        if (i > 0 && clampComparatorResult(this.keyDefinition.compare(normalizedKeys[i], lastKey)) === 0) {
+        if (
+          i > 0 &&
+          clampComparatorResult(
+            this.keyDefinition.compare(normalizedKeys[i], lastKey),
+          ) === 0
+        ) {
           continue;
         }
         lastKey = normalizedKeys[i];
-        const entries = this.keyIndex.rangeQuery(normalizedKeys[i], normalizedKeys[i]);
+        const entries = this.keyIndex.rangeQuery(
+          normalizedKeys[i],
+          normalizedKeys[i],
+        );
         for (const entry of entries) {
           results.push(toPublicRecord(entry.entryId, entry.key, entry.value));
         }
@@ -209,15 +267,29 @@ export class Datastore {
       // P12: Pure in-memory sync loop — no capacity, no backend, no microtask overhead
       if (this.capacityState === null && this.backendController === null) {
         for (const record of records) {
-          const { rawKey, keyFieldName } = readRawInsertKey(record as unknown as Record<string, unknown>);
-          const normalizedKey = this.keyDefinition.normalize(rawKey, keyFieldName);
-          if (this.duplicateKeyPolicy === 'reject' && this.keyIndex.findFirst(normalizedKey) !== null) {
-            throw new ValidationError('Duplicate key rejected: a record with this key already exists.');
+          const { rawKey, keyFieldName } = readRawInsertKey(
+            record as unknown as Record<string, unknown>,
+          );
+          const normalizedKey = this.keyDefinition.normalize(
+            rawKey,
+            keyFieldName,
+          );
+          if (
+            this.duplicateKeyPolicy === 'reject' &&
+            this.keyIndex.findFirst(normalizedKey) !== null
+          ) {
+            throw new ValidationError(
+              'Duplicate key rejected: a record with this key already exists.',
+            );
           }
           const normalizedPayload = this.skipPayloadValidation
             ? record.payload
-            : validateAndNormalizePayload(record.payload, this.payloadLimits).payload;
-          this.keyIndex.put(normalizedKey, { payload: normalizedPayload, sizeBytes: 0 });
+            : validateAndNormalizePayload(record.payload, this.payloadLimits)
+                .payload;
+          this.keyIndex.put(normalizedKey, {
+            payload: normalizedPayload,
+            sizeBytes: 0,
+          });
         }
         return;
       }
@@ -250,19 +322,25 @@ export class Datastore {
         let totalRemoved = 0;
         for (const key of keys) {
           const normalizedKey = this.keyDefinition.normalize(key, 'key');
-          const entries = this.keyIndex.rangeQuery(normalizedKey, normalizedKey);
-          if (entries.length === 0) {
+          let freedBytes = 0;
+          this.keyIndex.forEachRange(normalizedKey, normalizedKey, (entry) => {
+            freedBytes += entry.value.sizeBytes;
+          });
+          const removed = this.keyIndex.deleteRange(
+            normalizedKey,
+            normalizedKey,
+          );
+          if (removed === 0) {
             continue;
           }
-          let freedBytes = 0;
-          for (const entry of entries) {
-            freedBytes += entry.value.sizeBytes;
-          }
-          totalRemoved += this.keyIndex.deleteRange(normalizedKey, normalizedKey);
+          totalRemoved += removed;
           // Underflow is not possible here: freedBytes is the sum of sizeBytes values
           // that were accumulated into currentSizeBytes on insertion. Math.max is
           // purely defensive against any future estimation inconsistency.
-          this.currentSizeBytes = Math.max(0, this.currentSizeBytes - freedBytes);
+          this.currentSizeBytes = Math.max(
+            0,
+            this.currentSizeBytes - freedBytes,
+          );
         }
         return totalRemoved;
       }
@@ -294,7 +372,10 @@ export class Datastore {
       let lastKey: unknown = undefined;
       let isFirst = true;
       for (const key of this.keyIndex.keys()) {
-        if (isFirst || clampComparatorResult(this.keyDefinition.compare(key, lastKey)) !== 0) {
+        if (
+          isFirst ||
+          clampComparatorResult(this.keyDefinition.compare(key, lastKey)) !== 0
+        ) {
           distinctKeys.push(key);
           lastKey = key;
           isFirst = false;
@@ -336,10 +417,7 @@ export class Datastore {
     });
   }
 
-  public replaceById(
-    id: EntryId,
-    payload: RecordPayload,
-  ): Promise<boolean> {
+  public replaceById(id: EntryId, payload: RecordPayload): Promise<boolean> {
     return this.runWithOpenExclusive(async (): Promise<boolean> => {
       const result = replaceRecordById({
         keyIndex: this.keyIndex,
@@ -417,7 +495,9 @@ export class Datastore {
       throw new ValidationError('Only "error" event is supported.');
     }
     this.errorListeners.add(listener);
-    return (): void => { this.off(event, listener); };
+    return (): void => {
+      this.off(event, listener);
+    };
   }
 
   public off(event: 'error', listener: DatastoreErrorListener): void;
@@ -447,17 +527,30 @@ export class Datastore {
     });
   }
 
-  private resolvePayload(record: InputRecord<unknown>, normalizedKey: unknown): { payload: RecordPayload; encodedBytes: number } {
-    const result = validateAndEstimateSize(record.payload, normalizedKey, this.skipPayloadValidation, this.payloadLimits);
+  private resolvePayload(
+    record: InputRecord<unknown>,
+    normalizedKey: unknown,
+  ): { payload: RecordPayload; encodedBytes: number } {
+    const result = validateAndEstimateSize(
+      record.payload,
+      normalizedKey,
+      this.skipPayloadValidation,
+      this.payloadLimits,
+    );
     return { payload: result.payload, encodedBytes: result.sizeBytes };
   }
 
   private async putSingle(record: InputRecord<unknown>): Promise<void> {
-    const { rawKey, keyFieldName } = readRawInsertKey(record as unknown as Record<string, unknown>);
+    const { rawKey, keyFieldName } = readRawInsertKey(
+      record as unknown as Record<string, unknown>,
+    );
     const normalizedKey = this.keyDefinition.normalize(rawKey, keyFieldName);
 
     // Fast-reject before expensive validation/serialization
-    if (this.duplicateKeyPolicy === 'reject' && this.keyIndex.findFirst(normalizedKey) !== null) {
+    if (
+      this.duplicateKeyPolicy === 'reject' &&
+      this.keyIndex.findFirst(normalizedKey) !== null
+    ) {
       throw new ValidationError(
         'Duplicate key rejected: a record with this key already exists.',
       );
@@ -467,26 +560,41 @@ export class Datastore {
     if (this.capacityState === null && this.backendController === null) {
       const normalizedPayload = this.skipPayloadValidation
         ? record.payload
-        : validateAndNormalizePayload(record.payload, this.payloadLimits).payload;
-      this.keyIndex.put(normalizedKey, { payload: normalizedPayload, sizeBytes: 0 });
+        : validateAndNormalizePayload(record.payload, this.payloadLimits)
+            .payload;
+      this.keyIndex.put(normalizedKey, {
+        payload: normalizedPayload,
+        sizeBytes: 0,
+      });
       return;
     }
 
     // Size computation needed (capacity or durable backend)
-    const { payload: normalizedPayload, encodedBytes } = this.resolvePayload(record, normalizedKey);
+    const { payload: normalizedPayload, encodedBytes } = this.resolvePayload(
+      record,
+      normalizedKey,
+    );
 
     if (this.capacityState === null) {
       // Durable but no capacity: bytes for backend signal only
-      this.keyIndex.put(normalizedKey, { payload: normalizedPayload, sizeBytes: encodedBytes });
+      this.keyIndex.put(normalizedKey, {
+        payload: normalizedPayload,
+        sizeBytes: encodedBytes,
+      });
       await this.backendController!.handleRecordAppended(encodedBytes);
       return;
     }
 
     // Full enforcement path (capacity configured)
-    const persistedRecord: PersistedRecord = { payload: normalizedPayload, sizeBytes: encodedBytes };
+    const persistedRecord: PersistedRecord = {
+      payload: normalizedPayload,
+      sizeBytes: encodedBytes,
+    };
 
     if (encodedBytes > this.capacityState.maxSizeBytes) {
-      throw new QuotaExceededError('Record exceeds configured capacity.maxSize boundary.');
+      throw new QuotaExceededError(
+        'Record exceeds configured capacity.maxSize boundary.',
+      );
     }
 
     // For replace policy: remove the existing record before capacity enforcement
@@ -498,7 +606,10 @@ export class Datastore {
         // Underflow is not possible here: existing.value.sizeBytes was added to
         // currentSizeBytes on insert and has not been modified since. Math.max is
         // purely defensive against any future estimation inconsistency.
-        this.currentSizeBytes = Math.max(0, this.currentSizeBytes - existing.value.sizeBytes);
+        this.currentSizeBytes = Math.max(
+          0,
+          this.currentSizeBytes - existing.value.sizeBytes,
+        );
         this.keyIndex.removeById(existing.entryId);
       }
     }
@@ -511,7 +622,9 @@ export class Datastore {
       (): number => {
         const evicted = this.keyIndex.popFirst();
         if (evicted === null) {
-          throw new IndexCorruptionError('Record buffer reported empty state during turnover eviction.');
+          throw new IndexCorruptionError(
+            'Record buffer reported empty state during turnover eviction.',
+          );
         }
         return evicted.value.sizeBytes;
       },
@@ -530,31 +643,57 @@ export class Datastore {
     const compare = this.keyDefinition.compare;
 
     // Phase 1: Normalize all records and tag with original index — O(M)
-    const tagged: { idx: number; normalizedKey: unknown; record: InputRecord<unknown> }[] = [];
+    const tagged: {
+      idx: number;
+      normalizedKey: unknown;
+      record: InputRecord<unknown>;
+    }[] = [];
     for (let i = 0; i < records.length; i += 1) {
-      const { rawKey, keyFieldName } = readRawInsertKey(records[i] as unknown as Record<string, unknown>);
-      tagged.push({ idx: i, normalizedKey: this.keyDefinition.normalize(rawKey, keyFieldName), record: records[i] });
+      const { rawKey, keyFieldName } = readRawInsertKey(
+        records[i] as unknown as Record<string, unknown>,
+      );
+      tagged.push({
+        idx: i,
+        normalizedKey: this.keyDefinition.normalize(rawKey, keyFieldName),
+        record: records[i],
+      });
     }
 
     // Phase 2: Sort by (key, originalIndex) — O(M log M)
     tagged.sort((a, b) => {
-      const cmp = clampComparatorResult(compare(a.normalizedKey, b.normalizedKey));
+      const cmp = clampComparatorResult(
+        compare(a.normalizedKey, b.normalizedKey),
+      );
       return cmp !== 0 ? cmp : a.idx - b.idx;
     });
 
     // Phase 3: Detect duplicates and build the deduplicated insertion list — O(M)
-    const { prepared, totalBatchDelta } = this.buildStrictBatchEntries(tagged, compare, capacityState.maxSizeBytes);
+    const { prepared, totalBatchDelta } = this.buildStrictBatchEntries(
+      tagged,
+      compare,
+      capacityState.maxSizeBytes,
+    );
 
     // Phase 4: Budget check — all-or-nothing
     if (this.currentSizeBytes + totalBatchDelta > capacityState.maxSizeBytes) {
-      throw new QuotaExceededError('Insert exceeds configured capacity.maxSize under strict policy.');
+      throw new QuotaExceededError(
+        'Insert exceeds configured capacity.maxSize under strict policy.',
+      );
     }
 
     // Phase 5: Insert — safe to mutate
     let effectiveTotalDelta = 0;
     let totalEncodedBytes = 0;
-    for (const { normalizedKey, persistedRecord, encodedBytes, replacedBytes } of prepared) {
-      const actualReplaced = replacedBytes > 0 && this.keyIndex.findFirst(normalizedKey) === null ? 0 : replacedBytes;
+    for (const {
+      normalizedKey,
+      persistedRecord,
+      encodedBytes,
+      replacedBytes,
+    } of prepared) {
+      const actualReplaced =
+        replacedBytes > 0 && this.keyIndex.findFirst(normalizedKey) === null
+          ? 0
+          : replacedBytes;
       effectiveTotalDelta += encodedBytes - actualReplaced;
       totalEncodedBytes += encodedBytes;
       this.keyIndex.put(normalizedKey, persistedRecord);
@@ -564,12 +703,19 @@ export class Datastore {
     // cannot bring currentSizeBytes below 0 because actualReplaced is bounded
     // by the bytes already present in currentSizeBytes. Math.max is purely
     // defensive against any future estimation inconsistency.
-    this.currentSizeBytes = Math.max(0, this.currentSizeBytes + effectiveTotalDelta);
+    this.currentSizeBytes = Math.max(
+      0,
+      this.currentSizeBytes + effectiveTotalDelta,
+    );
     await this.backendController?.handleRecordAppended(totalEncodedBytes);
   }
 
   private buildStrictBatchEntries(
-    tagged: { idx: number; normalizedKey: unknown; record: InputRecord<unknown> }[],
+    tagged: {
+      idx: number;
+      normalizedKey: unknown;
+      record: InputRecord<unknown>;
+    }[],
     compare: (left: unknown, right: unknown) => number,
     maxSizeBytes: number,
   ): { prepared: StrictBatchEntry[]; totalBatchDelta: number } {
@@ -579,18 +725,31 @@ export class Datastore {
     for (let i = 0; i < tagged.length; i += 1) {
       const { normalizedKey, record } = tagged[i];
       const isIntraBatchDuplicate =
-        i > 0 && clampComparatorResult(compare(tagged[i - 1].normalizedKey, normalizedKey)) === 0;
+        i > 0 &&
+        clampComparatorResult(
+          compare(tagged[i - 1].normalizedKey, normalizedKey),
+        ) === 0;
 
       if (this.duplicateKeyPolicy === 'reject') {
-        if (isIntraBatchDuplicate || this.keyIndex.findFirst(normalizedKey) !== null) {
-          throw new ValidationError('Duplicate key rejected: a record with this key already exists.');
+        if (
+          isIntraBatchDuplicate ||
+          this.keyIndex.findFirst(normalizedKey) !== null
+        ) {
+          throw new ValidationError(
+            'Duplicate key rejected: a record with this key already exists.',
+          );
         }
       }
 
-      const { payload: normalizedPayload, encodedBytes } = this.resolvePayload(record, normalizedKey);
+      const { payload: normalizedPayload, encodedBytes } = this.resolvePayload(
+        record,
+        normalizedKey,
+      );
 
       if (encodedBytes > maxSizeBytes) {
-        throw new QuotaExceededError('Record exceeds configured capacity.maxSize boundary.');
+        throw new QuotaExceededError(
+          'Record exceeds configured capacity.maxSize boundary.',
+        );
       }
 
       let replacedBytes = 0;
@@ -604,9 +763,17 @@ export class Datastore {
         replacedBytes = existing !== null ? existing.value.sizeBytes : 0;
       }
 
-      const persistedRecord: PersistedRecord = { payload: normalizedPayload, sizeBytes: encodedBytes };
+      const persistedRecord: PersistedRecord = {
+        payload: normalizedPayload,
+        sizeBytes: encodedBytes,
+      };
       totalBatchDelta += encodedBytes - replacedBytes;
-      prepared.push({ normalizedKey, persistedRecord, encodedBytes, replacedBytes });
+      prepared.push({
+        normalizedKey,
+        persistedRecord,
+        encodedBytes,
+        replacedBytes,
+      });
     }
 
     return { prepared, totalBatchDelta };
@@ -614,17 +781,19 @@ export class Datastore {
 
   private async deleteSingle(key: unknown): Promise<number> {
     const normalizedKey = this.keyDefinition.normalize(key, 'key');
-    const entries = this.keyIndex.rangeQuery(normalizedKey, normalizedKey);
-    if (entries.length === 0) {
-      return 0;
-    }
 
     let freedBytes = 0;
-    for (const entry of entries) {
+    this.keyIndex.forEachRange(normalizedKey, normalizedKey, (entry) => {
       freedBytes += entry.value.sizeBytes;
-    }
+    });
 
-    const removedCount = this.keyIndex.deleteRange(normalizedKey, normalizedKey);
+    const removedCount = this.keyIndex.deleteRange(
+      normalizedKey,
+      normalizedKey,
+    );
+    if (removedCount === 0) {
+      return 0;
+    }
 
     // Underflow is not possible here: freedBytes is the sum of sizeBytes values
     // that were accumulated into currentSizeBytes on insertion. Math.max is
@@ -651,18 +820,28 @@ export class Datastore {
     try {
       return Promise.resolve(this.executeWithLifecycle(operation));
     } catch (error: unknown) {
-      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+      return Promise.reject(
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   }
 
-  private executeWithLifecycle<T>(operation: () => T | Promise<T>): T | Promise<T> {
+  private executeWithLifecycle<T>(
+    operation: () => T | Promise<T>,
+  ): T | Promise<T> {
     this.lifecycle.beginOperation();
     try {
       const result = operation();
       if (isPromiseLike(result)) {
         return Promise.resolve(result).then(
-          (value: T): T => { this.lifecycle.endOperation(); return value; },
-          (error: unknown): never => { this.lifecycle.endOperation(); throw error; },
+          (value: T): T => {
+            this.lifecycle.endOperation();
+            return value;
+          },
+          (error: unknown): never => {
+            this.lifecycle.endOperation();
+            throw error;
+          },
         );
       }
       this.lifecycle.endOperation();
@@ -673,7 +852,9 @@ export class Datastore {
     }
   }
 
-  private async runWithOpenExclusive<T>(operation: () => Promise<T> | T): Promise<T> {
+  private async runWithOpenExclusive<T>(
+    operation: () => Promise<T> | T,
+  ): Promise<T> {
     const release = await this.writeMutex.acquire();
     try {
       return await this.runWithOpen(operation);
@@ -701,7 +882,7 @@ export class Datastore {
   }
 
   private backfillMissingSizeBytes(): void {
-    for (const entry of this.keyIndex.snapshot()) {
+    for (const entry of this.keyIndex.entries()) {
       if (typeof entry.value.sizeBytes !== 'number') {
         const patched: PersistedRecord = {
           payload: entry.value.payload,

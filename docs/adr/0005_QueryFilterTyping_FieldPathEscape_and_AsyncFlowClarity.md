@@ -17,14 +17,17 @@ The project principles require deterministic behavior, typed contracts, and main
 ## Decision
 
 1. Make native filter typing operator-discriminated (**superseded** — see note below)
+
 - Encode operator-specific required properties in `NativeFilterExpression`.
 - Keep recursive logical nodes (`and` / `or` / `not`) unchanged.
 
 2. Reject trailing unescaped backslash in field paths (**superseded** — see note below)
+
 - Treat trailing `\` in query field paths as invalid.
 - Fail with `ValidationError` to make malformed path input explicit.
 
 3. Simplify async orchestration paths (**active**)
+
 - Replace redundant wrapper chains with direct `async` function flow in:
   - `Datastore.close`
   - `Datastore.runWithOpen`
@@ -32,17 +35,20 @@ The project principles require deterministic behavior, typed contracts, and main
   - `AsyncDurableAutoCommitController` commit-loop execution path
 
 4. Guard by spec and tests (**active**)
+
 - Update datastore and backend architecture specs.
 - Add tests for architecture constraints.
 
 ## Consequences
 
 Positive:
+
 - Stronger compile-time guarantees for query filter construction.
 - Clearer runtime behavior for malformed escaped field paths.
 - More readable async orchestration with no behavior change in commit semantics.
 
 Trade-off:
+
 - Slightly stricter runtime validation may fail previously accepted malformed queries.
 - Type signatures become more verbose.
 

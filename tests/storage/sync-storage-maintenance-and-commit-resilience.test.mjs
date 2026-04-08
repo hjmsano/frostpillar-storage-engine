@@ -62,9 +62,8 @@ test('syncStorage unknown-generation cleanup probes and removes in batches', asy
 });
 
 test('syncStorage commit keeps write path when next-generation pre-cleanup fails', async () => {
-  const { commitSyncStorageSnapshot, createSyncStorageBackendState } = await importDistModule(
-    'storage/drivers/syncStorage/syncStorageBackend.js',
-  );
+  const { commitSyncStorageSnapshot, createSyncStorageBackendState } =
+    await importDistModule('storage/drivers/syncStorage/syncStorageBackend.js');
 
   const cleanupFailure = new Error('cleanup transient failure');
   let setItemsCallCount = 0;
@@ -95,10 +94,7 @@ test('syncStorage commit keeps write path when next-generation pre-cleanup fails
     512,
   );
 
-  await commitSyncStorageSnapshot(
-    state,
-    createSampleTreeJSON(),
-  );
+  await commitSyncStorageSnapshot(state, createSampleTreeJSON());
 
   assert.equal(setItemsCallCount, 1);
   assert.equal(state.commitId, 1);
@@ -106,9 +102,8 @@ test('syncStorage commit keeps write path when next-generation pre-cleanup fails
 });
 
 test('syncStorage commit write failure preserves original cause', async () => {
-  const { commitSyncStorageSnapshot, createSyncStorageBackendState } = await importDistModule(
-    'storage/drivers/syncStorage/syncStorageBackend.js',
-  );
+  const { commitSyncStorageSnapshot, createSyncStorageBackendState } =
+    await importDistModule('storage/drivers/syncStorage/syncStorageBackend.js');
 
   const originalWriteError = new Error('adapter write failed');
   const state = createSyncStorageBackendState(
@@ -119,8 +114,7 @@ test('syncStorage commit write failure preserves original cause', async () => {
       setItems: async () => {
         throw originalWriteError;
       },
-      removeItems: async () => {
-      },
+      removeItems: async () => {},
     },
     'frostpillar',
     'commit-cause',
@@ -143,9 +137,8 @@ test('syncStorage commit write failure preserves original cause', async () => {
 });
 
 test('syncStorage commit with empty records writes exactly one chunk', async () => {
-  const { commitSyncStorageSnapshot, createSyncStorageBackendState } = await importDistModule(
-    'storage/drivers/syncStorage/syncStorageBackend.js',
-  );
+  const { commitSyncStorageSnapshot, createSyncStorageBackendState } =
+    await importDistModule('storage/drivers/syncStorage/syncStorageBackend.js');
 
   let writtenItems = null;
   const state = createSyncStorageBackendState(
@@ -156,8 +149,7 @@ test('syncStorage commit with empty records writes exactly one chunk', async () 
       setItems: async (items) => {
         writtenItems = items;
       },
-      removeItems: async () => {
-      },
+      removeItems: async () => {},
     },
     'frostpillar',
     'empty-snapshot',

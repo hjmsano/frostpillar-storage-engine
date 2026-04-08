@@ -11,21 +11,22 @@ describe('datastoreKeyDefinition', async () => {
 
   describe('DEFAULT_STRING_KEY_DEFINITION', () => {
     test('normalize returns valid non-empty string', () => {
-      assert.equal(DEFAULT_STRING_KEY_DEFINITION.normalize('hello', 'key'), 'hello');
+      assert.equal(
+        DEFAULT_STRING_KEY_DEFINITION.normalize('hello', 'key'),
+        'hello',
+      );
     });
 
     test('normalize throws ValidationError for non-string', () => {
-      assert.throws(
-        () => DEFAULT_STRING_KEY_DEFINITION.normalize(123, 'key'),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => DEFAULT_STRING_KEY_DEFINITION.normalize(123, 'key'), {
+        name: 'ValidationError',
+      });
     });
 
     test('normalize throws ValidationError for empty string', () => {
-      assert.throws(
-        () => DEFAULT_STRING_KEY_DEFINITION.normalize('', 'key'),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => DEFAULT_STRING_KEY_DEFINITION.normalize('', 'key'), {
+        name: 'ValidationError',
+      });
     });
 
     test('serialize returns valid non-empty string', () => {
@@ -33,17 +34,15 @@ describe('datastoreKeyDefinition', async () => {
     });
 
     test('serialize throws ValidationError for empty string', () => {
-      assert.throws(
-        () => DEFAULT_STRING_KEY_DEFINITION.serialize(''),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => DEFAULT_STRING_KEY_DEFINITION.serialize(''), {
+        name: 'ValidationError',
+      });
     });
 
     test('serialize throws ValidationError for non-string', () => {
-      assert.throws(
-        () => DEFAULT_STRING_KEY_DEFINITION.serialize(42),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => DEFAULT_STRING_KEY_DEFINITION.serialize(42), {
+        name: 'ValidationError',
+      });
     });
 
     test('deserialize returns valid non-empty string', () => {
@@ -51,17 +50,15 @@ describe('datastoreKeyDefinition', async () => {
     });
 
     test('deserialize throws ValidationError for empty string', () => {
-      assert.throws(
-        () => DEFAULT_STRING_KEY_DEFINITION.deserialize(''),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => DEFAULT_STRING_KEY_DEFINITION.deserialize(''), {
+        name: 'ValidationError',
+      });
     });
 
     test('deserialize throws ValidationError for non-string', () => {
-      assert.throws(
-        () => DEFAULT_STRING_KEY_DEFINITION.deserialize(null),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => DEFAULT_STRING_KEY_DEFINITION.deserialize(null), {
+        name: 'ValidationError',
+      });
     });
   });
 
@@ -87,28 +84,60 @@ describe('datastoreKeyDefinition', async () => {
 
     test('throws ConfigurationError when normalize is not a function', () => {
       assert.throws(
-        () => resolveKeyDefinition({ key: { normalize: 'notfn', compare: () => 0, serialize: () => '', deserialize: () => '' } }),
+        () =>
+          resolveKeyDefinition({
+            key: {
+              normalize: 'notfn',
+              compare: () => 0,
+              serialize: () => '',
+              deserialize: () => '',
+            },
+          }),
         { name: 'ConfigurationError' },
       );
     });
 
     test('throws ConfigurationError when compare is not a function', () => {
       assert.throws(
-        () => resolveKeyDefinition({ key: { normalize: () => '', compare: 42, serialize: () => '', deserialize: () => '' } }),
+        () =>
+          resolveKeyDefinition({
+            key: {
+              normalize: () => '',
+              compare: 42,
+              serialize: () => '',
+              deserialize: () => '',
+            },
+          }),
         { name: 'ConfigurationError' },
       );
     });
 
     test('throws ConfigurationError when serialize is not a function', () => {
       assert.throws(
-        () => resolveKeyDefinition({ key: { normalize: () => '', compare: () => 0, serialize: null, deserialize: () => '' } }),
+        () =>
+          resolveKeyDefinition({
+            key: {
+              normalize: () => '',
+              compare: () => 0,
+              serialize: null,
+              deserialize: () => '',
+            },
+          }),
         { name: 'ConfigurationError' },
       );
     });
 
     test('throws ConfigurationError when deserialize is not a function', () => {
       assert.throws(
-        () => resolveKeyDefinition({ key: { normalize: () => '', compare: () => 0, serialize: () => '', deserialize: undefined } }),
+        () =>
+          resolveKeyDefinition({
+            key: {
+              normalize: () => '',
+              compare: () => 0,
+              serialize: () => '',
+              deserialize: undefined,
+            },
+          }),
         { name: 'ConfigurationError' },
       );
     });
@@ -126,17 +155,13 @@ describe('datastoreKeyDefinition', async () => {
     });
 
     test('throws ValidationError when record has no "key" field', () => {
-      assert.throws(
-        () => readRawInsertKey({ id: 'abc', payload: {} }),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => readRawInsertKey({ id: 'abc', payload: {} }), {
+        name: 'ValidationError',
+      });
     });
 
     test('throws ValidationError for empty record', () => {
-      assert.throws(
-        () => readRawInsertKey({}),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => readRawInsertKey({}), { name: 'ValidationError' });
     });
   });
 });

@@ -3,8 +3,11 @@ import { describe, test } from 'node:test';
 import { importDistModule } from '../load-module.mjs';
 
 describe('config.shared parsing', async () => {
-  const { parseCapacityConfig, parseAutoCommitConfig, parseDuplicateKeyConfig } =
-    await importDistModule('storage/config/config.shared.js');
+  const {
+    parseCapacityConfig,
+    parseAutoCommitConfig,
+    parseDuplicateKeyConfig,
+  } = await importDistModule('storage/config/config.shared.js');
 
   describe('parseCapacityConfig', () => {
     test('returns null for undefined capacity', () => {
@@ -12,10 +15,13 @@ describe('config.shared parsing', async () => {
     });
 
     test('parses numeric maxSize with strict policy', () => {
-      assert.deepEqual(parseCapacityConfig({ maxSize: 1024, policy: 'strict' }), {
-        maxSizeBytes: 1024,
-        policy: 'strict',
-      });
+      assert.deepEqual(
+        parseCapacityConfig({ maxSize: 1024, policy: 'strict' }),
+        {
+          maxSizeBytes: 1024,
+          policy: 'strict',
+        },
+      );
     });
 
     test('parses string maxSize "100B"', () => {
@@ -57,38 +63,33 @@ describe('config.shared parsing', async () => {
     });
 
     test('throws for backendLimit string', () => {
-      assert.throws(
-        () => parseCapacityConfig({ maxSize: 'backendLimit' }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseCapacityConfig({ maxSize: 'backendLimit' }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for invalid string format', () => {
-      assert.throws(
-        () => parseCapacityConfig({ maxSize: 'foobar' }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseCapacityConfig({ maxSize: 'foobar' }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for negative numeric maxSize', () => {
-      assert.throws(
-        () => parseCapacityConfig({ maxSize: -10 }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseCapacityConfig({ maxSize: -10 }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for zero numeric maxSize', () => {
-      assert.throws(
-        () => parseCapacityConfig({ maxSize: 0 }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseCapacityConfig({ maxSize: 0 }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for non-integer numeric maxSize', () => {
-      assert.throws(
-        () => parseCapacityConfig({ maxSize: 1.5 }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseCapacityConfig({ maxSize: 1.5 }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for invalid policy', () => {
@@ -165,7 +166,10 @@ describe('config.shared parsing', async () => {
 
     test('includes maxPendingBytes when provided', () => {
       assert.deepEqual(
-        parseAutoCommitConfig({ frequency: 'immediate', maxPendingBytes: 4096 }),
+        parseAutoCommitConfig({
+          frequency: 'immediate',
+          maxPendingBytes: 4096,
+        }),
         {
           frequency: 'immediate',
           intervalMs: null,
@@ -175,52 +179,45 @@ describe('config.shared parsing', async () => {
     });
 
     test('throws for invalid frequency string', () => {
-      assert.throws(
-        () => parseAutoCommitConfig({ frequency: 'invalid' }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseAutoCommitConfig({ frequency: 'invalid' }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for negative numeric frequency', () => {
-      assert.throws(
-        () => parseAutoCommitConfig({ frequency: -100 }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseAutoCommitConfig({ frequency: -100 }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for zero numeric frequency', () => {
-      assert.throws(
-        () => parseAutoCommitConfig({ frequency: 0 }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseAutoCommitConfig({ frequency: 0 }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for non-integer numeric frequency', () => {
-      assert.throws(
-        () => parseAutoCommitConfig({ frequency: 1.5 }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseAutoCommitConfig({ frequency: 1.5 }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for negative maxPendingBytes', () => {
-      assert.throws(
-        () => parseAutoCommitConfig({ maxPendingBytes: -1 }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseAutoCommitConfig({ maxPendingBytes: -1 }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for zero maxPendingBytes', () => {
-      assert.throws(
-        () => parseAutoCommitConfig({ maxPendingBytes: 0 }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseAutoCommitConfig({ maxPendingBytes: 0 }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for frequency string with zero amount', () => {
-      assert.throws(
-        () => parseAutoCommitConfig({ frequency: '0ms' }),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseAutoCommitConfig({ frequency: '0ms' }), {
+        name: 'ConfigurationError',
+      });
     });
 
     test('throws for frequency string exceeding safe integer range', () => {
@@ -249,10 +246,9 @@ describe('config.shared parsing', async () => {
     });
 
     test('throws for invalid value', () => {
-      assert.throws(
-        () => parseDuplicateKeyConfig('invalid'),
-        { name: 'ConfigurationError' },
-      );
+      assert.throws(() => parseDuplicateKeyConfig('invalid'), {
+        name: 'ConfigurationError',
+      });
     });
   });
 });

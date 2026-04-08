@@ -16,28 +16,48 @@ export interface ResolvedIndexConfig {
   autoScale: boolean;
   maxLeafEntries: number | undefined;
   maxBranchChildren: number | undefined;
+  deleteRebalancePolicy: 'standard' | 'lazy';
 }
 
 const validateNodeCapacity = (value: unknown, field: string): void => {
-  if (!Number.isSafeInteger(value) || (value as number) < 3 || (value as number) > 16384) {
+  if (
+    !Number.isSafeInteger(value) ||
+    (value as number) < 3 ||
+    (value as number) > 16384
+  ) {
     throw new ConfigurationError(
       `index.${field} must be an integer between 3 and 16384.`,
     );
   }
 };
 
-export const parseIndexConfig = (
-  index?: IndexConfig,
-): ResolvedIndexConfig => {
+export const parseIndexConfig = (index?: IndexConfig): ResolvedIndexConfig => {
   const autoScale = index?.autoScale ?? true;
+  const deleteRebalancePolicy = index?.deleteRebalancePolicy ?? 'standard';
+  if (
+    deleteRebalancePolicy !== 'standard' &&
+    deleteRebalancePolicy !== 'lazy'
+  ) {
+    throw new ConfigurationError(
+      'index.deleteRebalancePolicy must be "standard" or "lazy".',
+    );
+  }
 
   if (autoScale) {
-    if (index?.maxLeafEntries !== undefined || index?.maxBranchChildren !== undefined) {
+    if (
+      index?.maxLeafEntries !== undefined ||
+      index?.maxBranchChildren !== undefined
+    ) {
       throw new ConfigurationError(
         'index.maxLeafEntries and index.maxBranchChildren cannot be set when index.autoScale is true.',
       );
     }
-    return { autoScale: true, maxLeafEntries: undefined, maxBranchChildren: undefined };
+    return {
+      autoScale: true,
+      maxLeafEntries: undefined,
+      maxBranchChildren: undefined,
+      deleteRebalancePolicy,
+    };
   }
 
   // When autoScale is false, index is guaranteed to be defined:
@@ -53,6 +73,7 @@ export const parseIndexConfig = (
     autoScale: false,
     maxLeafEntries: index!.maxLeafEntries,
     maxBranchChildren: index!.maxBranchChildren,
+    deleteRebalancePolicy,
   };
 };
 
@@ -108,7 +129,9 @@ const normalizeByteSizeInput = (value: CapacityConfig['maxSize']): number => {
   const total = amount * multiplier;
 
   if (!Number.isSafeInteger(total) || total <= 0) {
-    throw new ConfigurationError('capacity.maxSize exceeds safe integer range.');
+    throw new ConfigurationError(
+      'capacity.maxSize exceeds safe integer range.',
+    );
   }
 
   return total;
@@ -124,7 +147,9 @@ export const parseCapacityConfig = (
   const maxSizeBytes = normalizeByteSizeInput(capacity.maxSize);
   const policy = capacity.policy ?? 'strict';
   if (policy !== 'strict' && policy !== 'turnover') {
-    throw new ConfigurationError('capacity.policy must be "strict" or "turnover".');
+    throw new ConfigurationError(
+      'capacity.policy must be "strict" or "turnover".',
+    );
   }
 
   return { maxSizeBytes, policy };
@@ -243,4 +268,3 @@ export const parsePayloadLimitsConfig = (
 
   return resolved;
 };
-

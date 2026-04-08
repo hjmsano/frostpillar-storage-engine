@@ -81,7 +81,9 @@ const parseSyncManifest = (
     manifest.magic !== SYNC_STORAGE_MAGIC ||
     manifest.version !== SYNC_STORAGE_VERSION
   ) {
-    throw new StorageEngineError('syncStorage manifest magic/version mismatch.');
+    throw new StorageEngineError(
+      'syncStorage manifest magic/version mismatch.',
+    );
   }
 
   const chunkCount = parseNonNegativeSafeInteger(
@@ -114,9 +116,8 @@ const loadSyncChunksAndDecodeTreeJSON = async (
       chunkKey(state.keyPrefix, state.databaseKey, activeGeneration, i),
     );
   }
-  const chunkValuesByKey = chunkKeys.length === 0
-    ? {}
-    : await state.adapter.getItems(chunkKeys);
+  const chunkValuesByKey =
+    chunkKeys.length === 0 ? {} : await state.adapter.getItems(chunkKeys);
   const chunks: string[] = [];
   for (const cKey of chunkKeys) {
     const chunkValue = chunkValuesByKey[cKey];
@@ -135,7 +136,11 @@ const loadSyncChunksAndDecodeTreeJSON = async (
   } catch {
     throw new StorageEngineError('syncStorage chunk data JSON is malformed.');
   }
-  if (typeof parsedTreeJSON !== 'object' || parsedTreeJSON === null || Array.isArray(parsedTreeJSON)) {
+  if (
+    typeof parsedTreeJSON !== 'object' ||
+    parsedTreeJSON === null ||
+    Array.isArray(parsedTreeJSON)
+  ) {
     throw new PageCorruptionError('treeJSON must be a non-null plain object.');
   }
   return {
@@ -173,7 +178,9 @@ export const loadSyncStorageSnapshot = async (
   );
 
   const { treeJSON, rawJsonLength } = await loadSyncChunksAndDecodeTreeJSON(
-    state, activeGeneration, chunkCount,
+    state,
+    activeGeneration,
+    chunkCount,
   );
   const currentSizeBytes = rawJsonLength;
 
@@ -201,7 +208,12 @@ const buildSyncCommitItems = (
   const mKey = manifestKey(state.keyPrefix, state.databaseKey);
   const items: Record<string, unknown> = { [mKey]: newManifest };
   for (let i = 0; i < chunks.length; i += 1) {
-    const cKey = chunkKey(state.keyPrefix, state.databaseKey, nextGeneration, i);
+    const cKey = chunkKey(
+      state.keyPrefix,
+      state.databaseKey,
+      nextGeneration,
+      i,
+    );
     items[cKey] = chunks[i];
   }
   return items;
@@ -227,10 +239,14 @@ const splitSyncTreeJSONIntoChunks = (
 
 const ensureSyncCommitCountersSafe = (state: SyncStorageBackendState): void => {
   if (state.commitId >= Number.MAX_SAFE_INTEGER) {
-    throw new StorageEngineError('syncStorage commitId has reached Number.MAX_SAFE_INTEGER.');
+    throw new StorageEngineError(
+      'syncStorage commitId has reached Number.MAX_SAFE_INTEGER.',
+    );
   }
   if (state.activeGeneration >= Number.MAX_SAFE_INTEGER) {
-    throw new StorageEngineError('syncStorage activeGeneration has reached Number.MAX_SAFE_INTEGER.');
+    throw new StorageEngineError(
+      'syncStorage activeGeneration has reached Number.MAX_SAFE_INTEGER.',
+    );
   }
 };
 
@@ -242,7 +258,9 @@ export const commitSyncStorageSnapshot = async (
   const nextCommitId = state.commitId + 1;
   const nextGeneration = state.activeGeneration + 1;
   const chunks = splitSyncTreeJSONIntoChunks(
-    treeJSON, state.maxChunkChars, state.maxChunks,
+    treeJSON,
+    state.maxChunkChars,
+    state.maxChunks,
   );
 
   const newManifest: SyncStorageManifest = {
@@ -255,11 +273,19 @@ export const commitSyncStorageSnapshot = async (
   const resolveChunkKey = buildSyncChunkKeyResolver(state);
   const mKey = manifestKey(state.keyPrefix, state.databaseKey);
   validateSyncStorageCommitQuota(
-    state, nextGeneration, chunks, newManifest, resolveChunkKey, mKey,
+    state,
+    nextGeneration,
+    chunks,
+    newManifest,
+    resolveChunkKey,
+    mKey,
   );
 
   const newSnapshotItems = buildSyncCommitItems(
-    state, chunks, newManifest, nextGeneration,
+    state,
+    chunks,
+    newManifest,
+    nextGeneration,
   );
 
   // Stale chunks in the next generation are maintenance-only and uncommitted.
@@ -276,10 +302,9 @@ export const commitSyncStorageSnapshot = async (
     if (isQuotaBrowserError(error)) {
       throw new QuotaExceededError('syncStorage quota exceeded during commit.');
     }
-    throw new StorageEngineError(
-      'syncStorage write failed during commit.',
-      { cause: error },
-    );
+    throw new StorageEngineError('syncStorage write failed during commit.', {
+      cause: error,
+    });
   }
 
   const previousGeneration = state.activeGeneration;
@@ -289,6 +314,9 @@ export const commitSyncStorageSnapshot = async (
   state.activeChunkCount = chunks.length;
 
   await cleanupGenerationChunks(
-    state, previousGeneration, previousChunkCount, resolveChunkKey,
+    state,
+    previousGeneration,
+    previousChunkCount,
+    resolveChunkKey,
   );
 };

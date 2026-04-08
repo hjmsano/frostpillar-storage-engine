@@ -21,9 +21,7 @@ const CJK_STRING = '日本語テスト'; // 6 chars, but 18 UTF-8 bytes
 const buildMultiByteTreeJSON = () => ({
   version: 1,
   config: {},
-  entries: [
-    { key: CJK_STRING, payload: { value: CJK_STRING } },
-  ],
+  entries: [{ key: CJK_STRING, payload: { value: CJK_STRING } }],
 });
 
 const utf8ByteLength = (str) => new TextEncoder().encode(str).byteLength;
@@ -36,8 +34,12 @@ const createMockLocalStorage = () => {
   const store = new Map();
   return {
     getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => { store.set(key, String(value)); },
-    removeItem: (key) => { store.delete(key); },
+    setItem: (key, value) => {
+      store.set(key, String(value));
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
   };
 };
 
@@ -49,7 +51,9 @@ const lsChunkKey = (keyPrefix, databaseKey, generation, index) =>
 
 const createSuccessfulIdbRequest = (result) => {
   const request = { result, onsuccess: null, onerror: null };
-  queueMicrotask(() => { request.onsuccess?.({ target: request }); });
+  queueMicrotask(() => {
+    request.onsuccess?.({ target: request });
+  });
   return request;
 };
 
@@ -94,12 +98,16 @@ const createMockOpfsDirectory = (files) => {
       return {
         getFile: async () => ({ text: async () => store.get(name) }),
         createWritable: async () => ({
-          write: async (data) => { store.set(name, String(data)); },
+          write: async (data) => {
+            store.set(name, String(data));
+          },
           close: async () => {},
         }),
       };
     },
-    removeEntry: async (name) => { store.delete(name); },
+    removeEntry: async (name) => {
+      store.delete(name);
+    },
   };
 };
 
@@ -134,12 +142,20 @@ const syncChunkKey = (keyPrefix, databaseKey, generation, index) =>
 
 test('localStorage: currentSizeBytes uses UTF-8 byte length for multi-byte content', async () => {
   const { createLocalStorageBackendState, loadLocalStorageSnapshot } =
-    await importDistModule('storage/drivers/localStorage/localStorageBackend.js');
+    await importDistModule(
+      'storage/drivers/localStorage/localStorageBackend.js',
+    );
 
   const adapter = createMockLocalStorage();
   const keyPrefix = 'fp';
   const databaseKey = 'test';
-  const state = createLocalStorageBackendState(adapter, keyPrefix, databaseKey, 4096, 8);
+  const state = createLocalStorageBackendState(
+    adapter,
+    keyPrefix,
+    databaseKey,
+    4096,
+    8,
+  );
 
   const treeJSON = buildMultiByteTreeJSON();
   const jsonStr = JSON.stringify(treeJSON);
@@ -153,7 +169,13 @@ test('localStorage: currentSizeBytes uses UTF-8 byte length for multi-byte conte
 
   adapter.setItem(
     lsManifestKey(keyPrefix, databaseKey),
-    JSON.stringify({ magic: 'FPLS_META', version: 2, activeGeneration: 0, commitId: 1, chunkCount: 1 }),
+    JSON.stringify({
+      magic: 'FPLS_META',
+      version: 2,
+      activeGeneration: 0,
+      commitId: 1,
+      chunkCount: 1,
+    }),
   );
   adapter.setItem(lsChunkKey(keyPrefix, databaseKey, 0, 0), jsonStr);
 
@@ -167,8 +189,9 @@ test('localStorage: currentSizeBytes uses UTF-8 byte length for multi-byte conte
 });
 
 test('IndexedDB: currentSizeBytes uses UTF-8 byte length for multi-byte content', async () => {
-  const { loadIndexedDBSnapshot } =
-    await importDistModule('storage/drivers/IndexedDB/indexedDBBackend.js');
+  const { loadIndexedDBSnapshot } = await importDistModule(
+    'storage/drivers/IndexedDB/indexedDBBackend.js',
+  );
 
   const treeJSON = buildMultiByteTreeJSON();
   const jsonStr = JSON.stringify(treeJSON);
@@ -196,8 +219,9 @@ test('IndexedDB: currentSizeBytes uses UTF-8 byte length for multi-byte content'
 });
 
 test('OPFS: currentSizeBytes uses UTF-8 byte length for multi-byte content', async () => {
-  const { loadOpfsSnapshot } =
-    await importDistModule('storage/drivers/opfs/opfsBackend.js');
+  const { loadOpfsSnapshot } = await importDistModule(
+    'storage/drivers/opfs/opfsBackend.js',
+  );
 
   const treeJSON = buildMultiByteTreeJSON();
   const jsonStr = JSON.stringify(treeJSON);
@@ -209,7 +233,12 @@ test('OPFS: currentSizeBytes uses UTF-8 byte length for multi-byte content', asy
   );
 
   const directory = createMockOpfsDirectory({
-    'meta.json': JSON.stringify({ magic: 'FPOPFS_META', version: 2, activeData: 'a', commitId: 1 }),
+    'meta.json': JSON.stringify({
+      magic: 'FPOPFS_META',
+      version: 2,
+      activeData: 'a',
+      commitId: 1,
+    }),
     'data-a.json': jsonStr,
   });
 
@@ -251,7 +280,15 @@ test('syncStorage: currentSizeBytes uses UTF-8 byte length for multi-byte conten
   });
 
   // maxChunkChars=4096, maxChunks=8, maxItemBytes=8192, maxTotalBytes=102400
-  const state = createSyncStorageBackendState(adapter, keyPrefix, databaseKey, 4096, 8, 8192, 102400);
+  const state = createSyncStorageBackendState(
+    adapter,
+    keyPrefix,
+    databaseKey,
+    4096,
+    8,
+    8192,
+    102400,
+  );
 
   const snapshot = await loadSyncStorageSnapshot(state);
 

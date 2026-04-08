@@ -13,6 +13,7 @@ checks and tagged release automation.
 
 Without a documented contract, trigger scope, permissions, and release
 sequencing can drift over time, causing:
+
 - duplicated or missing checks between branch pushes and tag pushes
 - accidental over-privileged workflow permissions
 - inconsistent release artifacts and package publication behavior

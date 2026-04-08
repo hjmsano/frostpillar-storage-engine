@@ -38,7 +38,11 @@ describe('updateById capacity boundary checks', () => {
       const id = records[0]._id;
 
       const result = await datastore.updateById(id, { v: 'b' });
-      assert.equal(result, true, 'updateById must succeed when shrinking payload');
+      assert.equal(
+        result,
+        true,
+        'updateById must succeed when shrinking payload',
+      );
 
       const after = await datastore.getById(id);
       assert.equal(after.payload.v, 'b');
@@ -71,7 +75,11 @@ describe('updateById capacity boundary checks', () => {
 
       // Verify both original records still exist (no eviction occurred)
       const allRecords = await datastore.getAll();
-      assert.equal(allRecords.length, 2, 'turnover eviction must not be triggered by updateById');
+      assert.equal(
+        allRecords.length,
+        2,
+        'turnover eviction must not be triggered by updateById',
+      );
     } finally {
       await datastore.close();
     }

@@ -9,7 +9,10 @@ describe('Datastore replaceById', () => {
 
     before(async () => {
       ds = new Datastore({});
-      await ds.put({ key: 'k1', payload: { name: 'alice', age: 30, city: 'tokyo' } });
+      await ds.put({
+        key: 'k1',
+        payload: { name: 'alice', age: 30, city: 'tokyo' },
+      });
       await ds.put({ key: 'k2', payload: { name: 'bob', age: 25 } });
       const all = await ds.getAll();
       idA = all[0]._id;
@@ -20,7 +23,10 @@ describe('Datastore replaceById', () => {
     });
 
     it('fully replaces the payload (old fields removed)', async () => {
-      const replaced = await ds.replaceById(idA, { name: 'alice-v2', score: 100 });
+      const replaced = await ds.replaceById(idA, {
+        name: 'alice-v2',
+        score: 100,
+      });
       assert.equal(replaced, true);
 
       const record = await ds.getById(idA);
@@ -44,7 +50,10 @@ describe('Datastore replaceById', () => {
     it('record is still visible via key-based get', async () => {
       const records = await ds.get('k1');
       assert.equal(records.length, 1);
-      assert.deepStrictEqual(records[0].payload, { name: 'alice-v2', score: 100 });
+      assert.deepStrictEqual(records[0].payload, {
+        name: 'alice-v2',
+        score: 100,
+      });
     });
   });
 

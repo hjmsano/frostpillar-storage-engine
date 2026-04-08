@@ -53,6 +53,8 @@ export type CapacityPolicy = 'strict' | 'turnover';
 
 export type DuplicateKeyPolicy = 'allow' | 'replace' | 'reject';
 
+export type DeleteRebalancePolicy = 'standard' | 'lazy';
+
 export interface CapacityConfig {
   maxSize: ByteSizeInput;
   policy?: CapacityPolicy;
@@ -76,6 +78,7 @@ export interface IndexConfig {
   autoScale?: boolean;
   maxLeafEntries?: number;
   maxBranchChildren?: number;
+  deleteRebalancePolicy?: 'standard' | 'lazy';
 }
 
 export interface DatastoreCommonConfig {

@@ -28,7 +28,10 @@ describe('Datastore deleteByIds', () => {
 
       const remaining = await ds.getAll();
       assert.equal(remaining.length, 2);
-      assert.deepStrictEqual(remaining.map((r) => r.payload.v), [2, 4]);
+      assert.deepStrictEqual(
+        remaining.map((r) => r.payload.v),
+        [2, 4],
+      );
     });
 
     it('deleted records are inaccessible by getById', async () => {
@@ -101,7 +104,10 @@ describe('Datastore deleteByIds', () => {
 
       const remaining = await ds.get('shared');
       assert.equal(remaining.length, 2);
-      assert.deepStrictEqual(remaining.map((r) => r.payload.v), [1, 3]);
+      assert.deepStrictEqual(
+        remaining.map((r) => r.payload.v),
+        [1, 3],
+      );
     });
   });
 

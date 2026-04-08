@@ -31,7 +31,10 @@ describe('RecordKeyIndexBTree index config', () => {
 
   it('respects explicit autoScale: false', async () => {
     const { RecordKeyIndexBTree } = await loadAdapter();
-    const tree = new RecordKeyIndexBTree({ ...numericConfig, autoScale: false });
+    const tree = new RecordKeyIndexBTree({
+      ...numericConfig,
+      autoScale: false,
+    });
     const json = tree.toJSON();
     assert.equal(json.config.autoScale, false);
   });
@@ -72,6 +75,16 @@ describe('RecordKeyIndexBTree index config', () => {
     assert.equal(json.config.maxLeafEntries, 32);
     assert.equal(json.config.maxBranchChildren, 64);
   });
+
+  it('forwards deleteRebalancePolicy: lazy to tree config', async () => {
+    const { RecordKeyIndexBTree } = await loadAdapter();
+    const tree = new RecordKeyIndexBTree({
+      ...numericConfig,
+      deleteRebalancePolicy: 'lazy',
+    });
+    const json = tree.toJSON();
+    assert.equal(json.config.deleteRebalancePolicy, 'lazy');
+  });
 });
 
 // --- parseIndexConfig ---
@@ -108,7 +121,10 @@ describe('parseIndexConfig', () => {
 
   it('accepts autoScale: false with maxBranchChildren', async () => {
     const { parseIndexConfig } = await loadConfigParser();
-    const result = parseIndexConfig({ autoScale: false, maxBranchChildren: 256 });
+    const result = parseIndexConfig({
+      autoScale: false,
+      maxBranchChildren: 256,
+    });
     assert.equal(result.maxBranchChildren, 256);
   });
 
@@ -176,8 +192,37 @@ describe('parseIndexConfig', () => {
 
   it('accepts boundary value 16384', async () => {
     const { parseIndexConfig } = await loadConfigParser();
-    const result = parseIndexConfig({ autoScale: false, maxLeafEntries: 16384 });
+    const result = parseIndexConfig({
+      autoScale: false,
+      maxLeafEntries: 16384,
+    });
     assert.equal(result.maxLeafEntries, 16384);
+  });
+
+  it('defaults deleteRebalancePolicy to standard when not specified', async () => {
+    const { parseIndexConfig } = await loadConfigParser();
+    const result = parseIndexConfig(undefined);
+    assert.equal(result.deleteRebalancePolicy, 'standard');
+  });
+
+  it('accepts deleteRebalancePolicy: standard', async () => {
+    const { parseIndexConfig } = await loadConfigParser();
+    const result = parseIndexConfig({ deleteRebalancePolicy: 'standard' });
+    assert.equal(result.deleteRebalancePolicy, 'standard');
+  });
+
+  it('accepts deleteRebalancePolicy: lazy', async () => {
+    const { parseIndexConfig } = await loadConfigParser();
+    const result = parseIndexConfig({ deleteRebalancePolicy: 'lazy' });
+    assert.equal(result.deleteRebalancePolicy, 'lazy');
+  });
+
+  it('rejects invalid deleteRebalancePolicy value', async () => {
+    const { parseIndexConfig } = await loadConfigParser();
+    assert.throws(
+      () => parseIndexConfig({ deleteRebalancePolicy: 'invalid' }),
+      (err) => err instanceof ConfigurationError,
+    );
   });
 });
 
@@ -186,7 +231,10 @@ describe('parseIndexConfig', () => {
 describe('RecordKeyIndexBTree.fromJSON index config patching', () => {
   it('restores with autoScale: true by default', async () => {
     const { RecordKeyIndexBTree } = await loadAdapter();
-    const original = new RecordKeyIndexBTree({ ...numericConfig, autoScale: false });
+    const original = new RecordKeyIndexBTree({
+      ...numericConfig,
+      autoScale: false,
+    });
     original.put(1, 'a');
     const json = original.toJSON();
     assert.equal(json.config.autoScale, false);
@@ -216,7 +264,10 @@ describe('RecordKeyIndexBTree.fromJSON index config patching', () => {
 
   it('patches maxBranchChildren on restoration', async () => {
     const { RecordKeyIndexBTree } = await loadAdapter();
-    const original = new RecordKeyIndexBTree({ ...numericConfig, autoScale: false });
+    const original = new RecordKeyIndexBTree({
+      ...numericConfig,
+      autoScale: false,
+    });
     original.put(1, 'a');
     const json = original.toJSON();
 
@@ -227,6 +278,37 @@ describe('RecordKeyIndexBTree.fromJSON index config patching', () => {
     });
     const restoredJSON = restored.toJSON();
     assert.equal(restoredJSON.config.maxBranchChildren, 256);
+  });
+
+  it('patches deleteRebalancePolicy on restoration', async () => {
+    const { RecordKeyIndexBTree } = await loadAdapter();
+    const original = new RecordKeyIndexBTree(numericConfig);
+    original.put(1, 'a');
+    const json = original.toJSON();
+
+    const restored = RecordKeyIndexBTree.fromJSON(json, {
+      ...numericConfig,
+      deleteRebalancePolicy: 'lazy',
+    });
+    const restoredJSON = restored.toJSON();
+    assert.equal(restoredJSON.config.deleteRebalancePolicy, 'lazy');
+    assert.equal(restored.size(), 1);
+  });
+
+  it('defaults deleteRebalancePolicy to standard on restoration when not specified', async () => {
+    const { RecordKeyIndexBTree } = await loadAdapter();
+    const original = new RecordKeyIndexBTree(numericConfig);
+    original.put(1, 'a');
+    const json = original.toJSON();
+
+    const restored = RecordKeyIndexBTree.fromJSON(json, numericConfig);
+    const restoredJSON = restored.toJSON();
+    // 'standard' is the btree default and may be omitted from serialized config
+    assert.ok(
+      restoredJSON.config.deleteRebalancePolicy === 'standard' ||
+        restoredJSON.config.deleteRebalancePolicy === undefined,
+    );
+    assert.equal(restored.size(), 1);
   });
 
   it('preserves snapshot maxLeafEntries when config does not override', async () => {
@@ -301,6 +383,21 @@ describe('Datastore index config', () => {
       (err) => err instanceof ConfigurationError,
     );
   });
+
+  it('accepts index with deleteRebalancePolicy: lazy', async () => {
+    const ds = new Datastore({ index: { deleteRebalancePolicy: 'lazy' } });
+    await ds.put({ key: 'a', payload: { v: 'a' } });
+    const records = await ds.get('a');
+    assert.equal(records.length, 1);
+    await ds.close();
+  });
+
+  it('rejects invalid deleteRebalancePolicy', () => {
+    assert.throws(
+      () => new Datastore({ index: { deleteRebalancePolicy: 'invalid' } }),
+      (err) => err instanceof ConfigurationError,
+    );
+  });
 });
 
 // --- File driver reopen preserves index config ---
@@ -331,6 +428,33 @@ describe('file backend reopen preserves index config', () => {
 
       const ds2 = new Datastore({
         index: { autoScale: false, maxLeafEntries: 128 },
+        driver: fileDriver({ filePath }),
+      });
+      await ds2.put({ key: 'b', payload: { v: 2 } });
+      const all = await ds2.getAll();
+      assert.equal(all.length, 2);
+      await ds2.close();
+    } finally {
+      rmSync(sandbox, { recursive: true, force: true });
+    }
+  });
+
+  it('deleteRebalancePolicy: lazy survives close and reopen', async () => {
+    const { fileDriver } = await importDistModule('drivers/file.js');
+    const sandbox = createSandboxDirectory('index-reopen-lazy');
+    const filePath = join(sandbox, 'test.db');
+
+    try {
+      const ds1 = new Datastore({
+        index: { deleteRebalancePolicy: 'lazy' },
+        driver: fileDriver({ filePath }),
+      });
+      await ds1.put({ key: 'a', payload: { v: 1 } });
+      await ds1.commit();
+      await ds1.close();
+
+      const ds2 = new Datastore({
+        index: { deleteRebalancePolicy: 'lazy' },
         driver: fileDriver({ filePath }),
       });
       await ds2.put({ key: 'b', payload: { v: 2 } });

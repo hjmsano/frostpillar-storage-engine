@@ -403,9 +403,15 @@ const CONSTANT_TIME_OPS = new Set(['getAll', 'clear', 'count']);
 
 const OP_CATEGORIES = {
   write: { label: 'Write', ops: ['put', 'putMany'] },
-  read: { label: 'Read', ops: ['get', 'getFirst', 'has', 'getAll', 'getRange', 'getMany'] },
+  read: {
+    label: 'Read',
+    ops: ['get', 'getFirst', 'has', 'getAll', 'getRange', 'getMany'],
+  },
   update: { label: 'Update', ops: ['updateById', 'replaceById'] },
-  delete: { label: 'Delete', ops: ['delete', 'deleteById', 'deleteMany', 'deleteByIds'] },
+  delete: {
+    label: 'Delete',
+    ops: ['delete', 'deleteById', 'deleteMany', 'deleteByIds'],
+  },
   meta: { label: 'Metadata', ops: ['count', 'clear'] },
 };
 
@@ -426,11 +432,26 @@ const printTableRow = (cells, widths, alignRight = []) => {
   console.log(formatted.join('  '));
 };
 
-const DEFAULT_COLS = ['Operation', 'N', 'Median (ms)', 'ns/op', 'Normalized', 'Ratio'];
+const DEFAULT_COLS = [
+  'Operation',
+  'N',
+  'Median (ms)',
+  'ns/op',
+  'Normalized',
+  'Ratio',
+];
 const DEFAULT_WIDTHS = [14, 7, 12, 12, 16, 7];
 const DEFAULT_ALIGN_RIGHT = [1, 2, 3, 4, 5];
 
-const VARIANT_COLS = ['Config', 'Operation', 'N', 'Median (ms)', 'ns/op', 'Normalized', 'Ratio'];
+const VARIANT_COLS = [
+  'Config',
+  'Operation',
+  'N',
+  'Median (ms)',
+  'ns/op',
+  'Normalized',
+  'Ratio',
+];
 const VARIANT_WIDTHS = [13, 14, 7, 12, 12, 16, 7];
 const VARIANT_ALIGN_RIGHT = [2, 3, 4, 5, 6];
 
@@ -594,7 +615,15 @@ const runDefaultBenchmarks = async () => {
   return rows;
 };
 
-const VARIANT_OPS = ['put', 'putMany', 'get', 'updateById', 'replaceById', 'delete', 'deleteByIds'];
+const VARIANT_OPS = [
+  'put',
+  'putMany',
+  'get',
+  'updateById',
+  'replaceById',
+  'delete',
+  'deleteByIds',
+];
 
 const runVariantBenchmarks = async () => {
   const configs = [
@@ -736,7 +765,12 @@ const runP5Benchmarks = async () => {
     rows.push({ layer: 'DS+skip', operation: 'put', size, ...dsSkipPut });
 
     const dsSkipPutMany = await benchPutMany(size, skipOverrides);
-    rows.push({ layer: 'DS+skip', operation: 'putMany', size, ...dsSkipPutMany });
+    rows.push({
+      layer: 'DS+skip',
+      operation: 'putMany',
+      size,
+      ...dsSkipPutMany,
+    });
 
     // Datastore: strict capacity (P5-B batch path)
     const capOverrides = { capacity: { maxSize: '100MB', policy: 'strict' } };
@@ -761,7 +795,10 @@ const printP5Section = (rows) => {
   const btreeBaseline = new Map();
   for (const row of rows) {
     if (row.layer === 'BTree') {
-      btreeBaseline.set(`${row.operation}:${row.size}`, row.elapsedNs / row.operationCount);
+      btreeBaseline.set(
+        `${row.operation}:${row.size}`,
+        row.elapsedNs / row.operationCount,
+      );
     }
   }
 
@@ -769,7 +806,8 @@ const printP5Section = (rows) => {
     const nsPerOp = row.elapsedNs / row.operationCount;
     const baseKey = `${row.operation}:${row.size}`;
     const base = btreeBaseline.get(baseKey);
-    const ratio = base !== undefined ? `${formatNumber(nsPerOp / base, 2)}x` : '1.00x';
+    const ratio =
+      base !== undefined ? `${formatNumber(nsPerOp / base, 2)}x` : '1.00x';
 
     printTableRow(
       [

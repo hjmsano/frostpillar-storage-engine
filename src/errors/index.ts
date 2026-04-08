@@ -35,7 +35,6 @@ export class IndexCorruptionError extends StorageEngineError {}
 
 export class QuotaExceededError extends FrostpillarError {}
 
-
 export const toStorageEngineError = (
   error: unknown,
   fallbackMessage: string,
@@ -72,13 +71,15 @@ interface ErrorWithErrors extends Error {
   errors?: Error[];
 }
 
-const readAggregateErrorConstructor = (): AggregateErrorConstructorLike | null => {
-  const candidate = (globalThis as { AggregateError?: unknown }).AggregateError;
-  if (typeof candidate !== 'function') {
-    return null;
-  }
-  return candidate as AggregateErrorConstructorLike;
-};
+const readAggregateErrorConstructor =
+  (): AggregateErrorConstructorLike | null => {
+    const candidate = (globalThis as { AggregateError?: unknown })
+      .AggregateError;
+    if (typeof candidate !== 'function') {
+      return null;
+    }
+    return candidate as AggregateErrorConstructorLike;
+  };
 
 export const createAggregateError = (
   errors: Error[],

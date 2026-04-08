@@ -1,13 +1,6 @@
-import {
-  LocalStorageBackendController,
-} from '../storage/drivers/localStorage/localStorageBackendController.js';
-import {
-  parseLocalStorageConfig,
-} from '../storage/drivers/localStorage/localStorageConfig.js';
-import type {
-  DatastoreDriver,
-  LocalStorageConfig,
-} from '../types.js';
+import { LocalStorageBackendController } from '../storage/drivers/localStorage/localStorageBackendController.js';
+import { parseLocalStorageConfig } from '../storage/drivers/localStorage/localStorageConfig.js';
+import type { DatastoreDriver, LocalStorageConfig } from '../types.js';
 
 export type LocalStorageDriverOptions = LocalStorageConfig;
 

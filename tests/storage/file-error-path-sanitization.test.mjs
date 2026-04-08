@@ -2,9 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import path from 'node:path';
 
-import {
-  ensureCanonicalPathWithinWorkingDirectory,
-} from '../../dist/storage/config/config.node.js';
+import { ensureCanonicalPathWithinWorkingDirectory } from '../../dist/storage/config/config.node.js';
 import { ConfigurationError } from '../../dist/errors/index.js';
 
 describe('file error path sanitization', () => {
@@ -24,7 +22,10 @@ describe('file error path sanitization', () => {
 
   test('path traversal error message is user-friendly without full path', () => {
     try {
-      ensureCanonicalPathWithinWorkingDirectory('../../etc/passwd', 'target.filePath');
+      ensureCanonicalPathWithinWorkingDirectory(
+        '../../etc/passwd',
+        'target.filePath',
+      );
       assert.fail('Expected ConfigurationError');
     } catch (error) {
       assert.ok(error instanceof ConfigurationError);

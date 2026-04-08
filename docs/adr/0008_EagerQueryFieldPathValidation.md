@@ -8,6 +8,7 @@ Date: 2026-03-10
 Field-path parsing for `select`, `where.field`, and `orderBy.field` accepted trailing-escape-invalid paths (for example, `value\`) only when parsing was actually executed during record evaluation.
 
 This made validation timing data-dependent:
+
 - `select` and `where.field` parsing happened only while iterating records.
 - `orderBy.field` parsing happened only when sort comparison executed.
 
@@ -25,11 +26,13 @@ As a result, malformed paths could be silently accepted on empty datasets, which
 ## Consequences
 
 Positive:
+
 - Query validation behavior becomes deterministic and independent of record count.
 - Empty datastore queries now enforce the same path contract as non-empty datastores.
 - Test coverage explicitly guards `select`, `where.field`, and `orderBy.field` empty-dataset cases.
 
 Trade-off:
+
 - Some malformed queries that were previously accepted on empty inputs now fail earlier and consistently.
 
 ## Supersession Note

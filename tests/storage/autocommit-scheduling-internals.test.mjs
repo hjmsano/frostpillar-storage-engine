@@ -30,7 +30,10 @@ const createTrackingDriver = (options = {}) => {
               return;
             }
             pendingBytes += bytes;
-            if (maxPendingBytes !== undefined && pendingBytes >= maxPendingBytes) {
+            if (
+              maxPendingBytes !== undefined &&
+              pendingBytes >= maxPendingBytes
+            ) {
               await doCommit();
             }
           },

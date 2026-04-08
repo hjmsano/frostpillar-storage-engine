@@ -19,6 +19,7 @@ across API, indexing, and query defaults.
 Adopt a generic datastore key model with explicit key codec hooks.
 
 Key points:
+
 - canonical record field becomes `key` (not timestamp-only)
 - index adapter is generalized to `RecordKeyIndexBTree`
 - datastore accepts `config.key` with required callbacks:
@@ -35,11 +36,13 @@ Key points:
 ## Consequences
 
 Positive:
+
 - datastore can support any key type that can be normalized/compared/serialized
 - B-Tree package capabilities are now fully consumable at datastore level
 - timestamp use cases continue to work without custom configuration
 
 Trade-offs:
+
 - API surface and docs become more explicit/complex due to key codec contract
 - reopen behavior now depends on stable codec behavior for custom key types
 

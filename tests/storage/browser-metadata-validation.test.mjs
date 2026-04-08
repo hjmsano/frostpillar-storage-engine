@@ -83,11 +83,12 @@ const createMockSyncStorageArea = () => {
   const store = new Map();
   return {
     get: async (keys) => {
-      const normalizedKeys = keys === null
-        ? Array.from(store.keys())
-        : Array.isArray(keys)
-          ? keys
-          : [keys];
+      const normalizedKeys =
+        keys === null
+          ? Array.from(store.keys())
+          : Array.isArray(keys)
+            ? keys
+            : [keys];
       const result = {};
       for (const key of normalizedKeys) {
         if (store.has(key)) {
@@ -150,14 +151,21 @@ const createMockOpfsDirectory = (files) => {
 
 test('loadLocalStorageSnapshot rejects non-numeric activeGeneration in manifest', async () => {
   const { StorageEngineError } = await loadStorageModule();
-  const { createLocalStorageBackendState, loadLocalStorageSnapshot } = await importDistModule(
-    'storage/drivers/localStorage/localStorageBackend.js',
-  );
+  const { createLocalStorageBackendState, loadLocalStorageSnapshot } =
+    await importDistModule(
+      'storage/drivers/localStorage/localStorageBackend.js',
+    );
 
   const adapter = createMockLocalStorage();
   const keyPrefix = 'frostpillar';
   const databaseKey = 'default';
-  const state = createLocalStorageBackendState(adapter, keyPrefix, databaseKey, 4096, 8);
+  const state = createLocalStorageBackendState(
+    adapter,
+    keyPrefix,
+    databaseKey,
+    4096,
+    8,
+  );
 
   adapter.setItem(
     lsManifestKey(keyPrefix, databaseKey),
@@ -168,7 +176,10 @@ test('loadLocalStorageSnapshot rejects non-numeric activeGeneration in manifest'
       commitId: 0,
     }),
   );
-  adapter.setItem(lsChunkKey(keyPrefix, databaseKey, 'broken-generation', 0), JSON.stringify({ version: 1, config: {}, entries: [] }));
+  adapter.setItem(
+    lsChunkKey(keyPrefix, databaseKey, 'broken-generation', 0),
+    JSON.stringify({ version: 1, config: {}, entries: [] }),
+  );
 
   assert.throws(() => {
     loadLocalStorageSnapshot(state);
@@ -177,14 +188,21 @@ test('loadLocalStorageSnapshot rejects non-numeric activeGeneration in manifest'
 
 test('loadLocalStorageSnapshot rejects negative commitId in manifest', async () => {
   const { StorageEngineError } = await loadStorageModule();
-  const { createLocalStorageBackendState, loadLocalStorageSnapshot } = await importDistModule(
-    'storage/drivers/localStorage/localStorageBackend.js',
-  );
+  const { createLocalStorageBackendState, loadLocalStorageSnapshot } =
+    await importDistModule(
+      'storage/drivers/localStorage/localStorageBackend.js',
+    );
 
   const adapter = createMockLocalStorage();
   const keyPrefix = 'frostpillar';
   const databaseKey = 'default';
-  const state = createLocalStorageBackendState(adapter, keyPrefix, databaseKey, 4096, 8);
+  const state = createLocalStorageBackendState(
+    adapter,
+    keyPrefix,
+    databaseKey,
+    4096,
+    8,
+  );
 
   adapter.setItem(
     lsManifestKey(keyPrefix, databaseKey),
@@ -195,7 +213,10 @@ test('loadLocalStorageSnapshot rejects negative commitId in manifest', async () 
       commitId: -1,
     }),
   );
-  adapter.setItem(lsChunkKey(keyPrefix, databaseKey, 0, 0), JSON.stringify({ version: 1, config: {}, entries: [] }));
+  adapter.setItem(
+    lsChunkKey(keyPrefix, databaseKey, 0, 0),
+    JSON.stringify({ version: 1, config: {}, entries: [] }),
+  );
 
   assert.throws(() => {
     loadLocalStorageSnapshot(state);
@@ -204,14 +225,21 @@ test('loadLocalStorageSnapshot rejects negative commitId in manifest', async () 
 
 test('loadLocalStorageSnapshot rejects non-numeric chunkCount in manifest', async () => {
   const { StorageEngineError } = await loadStorageModule();
-  const { createLocalStorageBackendState, loadLocalStorageSnapshot } = await importDistModule(
-    'storage/drivers/localStorage/localStorageBackend.js',
-  );
+  const { createLocalStorageBackendState, loadLocalStorageSnapshot } =
+    await importDistModule(
+      'storage/drivers/localStorage/localStorageBackend.js',
+    );
 
   const adapter = createMockLocalStorage();
   const keyPrefix = 'frostpillar';
   const databaseKey = 'default';
-  const state = createLocalStorageBackendState(adapter, keyPrefix, databaseKey, 4096, 8);
+  const state = createLocalStorageBackendState(
+    adapter,
+    keyPrefix,
+    databaseKey,
+    4096,
+    8,
+  );
 
   adapter.setItem(
     lsManifestKey(keyPrefix, databaseKey),
@@ -223,7 +251,10 @@ test('loadLocalStorageSnapshot rejects non-numeric chunkCount in manifest', asyn
       chunkCount: 'broken-chunk-count',
     }),
   );
-  adapter.setItem(lsChunkKey(keyPrefix, databaseKey, 0, 0), JSON.stringify({ version: 1, config: {}, entries: [] }));
+  adapter.setItem(
+    lsChunkKey(keyPrefix, databaseKey, 0, 0),
+    JSON.stringify({ version: 1, config: {}, entries: [] }),
+  );
 
   assert.throws(() => {
     loadLocalStorageSnapshot(state);
@@ -232,14 +263,21 @@ test('loadLocalStorageSnapshot rejects non-numeric chunkCount in manifest', asyn
 
 test('loadLocalStorageSnapshot rejects when manifest-declared chunk is missing', async () => {
   const { StorageEngineError } = await loadStorageModule();
-  const { createLocalStorageBackendState, loadLocalStorageSnapshot } = await importDistModule(
-    'storage/drivers/localStorage/localStorageBackend.js',
-  );
+  const { createLocalStorageBackendState, loadLocalStorageSnapshot } =
+    await importDistModule(
+      'storage/drivers/localStorage/localStorageBackend.js',
+    );
 
   const adapter = createMockLocalStorage();
   const keyPrefix = 'frostpillar';
   const databaseKey = 'default';
-  const state = createLocalStorageBackendState(adapter, keyPrefix, databaseKey, 4096, 8);
+  const state = createLocalStorageBackendState(
+    adapter,
+    keyPrefix,
+    databaseKey,
+    4096,
+    8,
+  );
 
   adapter.setItem(
     lsManifestKey(keyPrefix, databaseKey),
@@ -255,10 +293,7 @@ test('loadLocalStorageSnapshot rejects when manifest-declared chunk is missing',
     lsChunkKey(keyPrefix, databaseKey, 0, 0),
     '{"version":1,"config"',
   );
-  adapter.setItem(
-    lsChunkKey(keyPrefix, databaseKey, 0, 1),
-    ',"entries":[]}',
-  );
+  adapter.setItem(lsChunkKey(keyPrefix, databaseKey, 0, 1), ',"entries":[]}');
   // chunk:2 is intentionally missing.
 
   assert.throws(() => {
@@ -268,7 +303,9 @@ test('loadLocalStorageSnapshot rejects when manifest-declared chunk is missing',
 
 test('loadIndexedDBSnapshot rejects non-numeric commitId in metadata', async () => {
   const { StorageEngineError } = await loadStorageModule();
-  const { loadIndexedDBSnapshot } = await importDistModule('storage/drivers/IndexedDB/indexedDBBackend.js');
+  const { loadIndexedDBSnapshot } = await importDistModule(
+    'storage/drivers/IndexedDB/indexedDBBackend.js',
+  );
 
   const db = createMockIndexedDbHandle([], {
     magic: 'FPIDB_META',
@@ -277,15 +314,14 @@ test('loadIndexedDBSnapshot rejects non-numeric commitId in metadata', async () 
     treeJSON: { version: 1, config: {}, entries: [] },
   });
 
-  await assert.rejects(
-    loadIndexedDBSnapshot(db, 'events'),
-    StorageEngineError,
-  );
+  await assert.rejects(loadIndexedDBSnapshot(db, 'events'), StorageEngineError);
 });
 
 test('syncStorage initialization rejects non-numeric commitId in manifest', async () => {
   const { Datastore, StorageEngineError } = await loadStorageModule();
-  const { syncStorageDriver } = await importDistModule('drivers/syncStorage.js');
+  const { syncStorageDriver } = await importDistModule(
+    'drivers/syncStorage.js',
+  );
 
   const keyPrefix = 'frostpillar';
   const databaseKey = 'default';
@@ -300,7 +336,11 @@ test('syncStorage initialization rejects non-numeric commitId in manifest', asyn
       commitId: 'broken-commit',
       chunkCount: 1,
     },
-    [firstChunkStorageKey]: JSON.stringify({ version: 1, config: {}, entries: [] }),
+    [firstChunkStorageKey]: JSON.stringify({
+      version: 1,
+      config: {},
+      entries: [],
+    }),
   });
 
   const previousBrowser = globalThis.browser;
@@ -334,7 +374,9 @@ test('syncStorage initialization rejects non-numeric commitId in manifest', asyn
 
 test('loadOpfsSnapshot rejects non-numeric commitId in metadata', async () => {
   const { StorageEngineError } = await loadStorageModule();
-  const { loadOpfsSnapshot } = await importDistModule('storage/drivers/opfs/opfsBackend.js');
+  const { loadOpfsSnapshot } = await importDistModule(
+    'storage/drivers/opfs/opfsBackend.js',
+  );
 
   const directory = createMockOpfsDirectory({
     'meta.json': JSON.stringify({
@@ -346,8 +388,5 @@ test('loadOpfsSnapshot rejects non-numeric commitId in metadata', async () => {
     'data-a.json': JSON.stringify({ version: 1, config: {}, entries: [] }),
   });
 
-  await assert.rejects(
-    loadOpfsSnapshot(directory),
-    StorageEngineError,
-  );
+  await assert.rejects(loadOpfsSnapshot(directory), StorageEngineError);
 });

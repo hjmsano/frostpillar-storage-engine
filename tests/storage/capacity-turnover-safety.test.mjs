@@ -38,13 +38,7 @@ test('turnover capacity enforcement rejects non-progressing zero-byte evictions'
   };
 
   assert.throws(() => {
-    enforceCapacityPolicy(
-      capacityState,
-      32,
-      1,
-      () => 1,
-      evictOldestRecord,
-    );
+    enforceCapacityPolicy(capacityState, 32, 1, () => 1, evictOldestRecord);
   }, IndexCorruptionError);
   assert.equal(evictionCalls, 1);
 });

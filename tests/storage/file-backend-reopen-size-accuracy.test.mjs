@@ -16,8 +16,10 @@ const createSandboxDirectory = (name) => {
 
 const createStringKeyDefinition = () => ({
   normalize: (value, fieldName) => {
-    if (typeof value !== 'string') throw new TypeError(`${fieldName} must be string.`);
-    if (value.length === 0) throw new TypeError(`${fieldName} must not be empty.`);
+    if (typeof value !== 'string')
+      throw new TypeError(`${fieldName} must be string.`);
+    if (value.length === 0)
+      throw new TypeError(`${fieldName} must not be empty.`);
     return value;
   },
   compare: (left, right) => (left < right ? -1 : left > right ? 1 : 0),
@@ -53,7 +55,11 @@ describe('file backend reopen size accuracy', () => {
 
       const allRecords = await ds2.getAll();
       const keys = allRecords.map((r) => r.key).sort();
-      assert.deepStrictEqual(keys, ['a', 'b'], 'both records must be present after reopen insert');
+      assert.deepStrictEqual(
+        keys,
+        ['a', 'b'],
+        'both records must be present after reopen insert',
+      );
 
       await ds2.close();
     } finally {
@@ -62,9 +68,8 @@ describe('file backend reopen size accuracy', () => {
   });
 
   test('loaded size matches JSON.stringify(treeJSON) length', async () => {
-    const { writeInitialFileSnapshot, loadFileSnapshot } = await importDistModule(
-      'storage/drivers/file/fileBackendSnapshot.js',
-    );
+    const { writeInitialFileSnapshot, loadFileSnapshot } =
+      await importDistModule('storage/drivers/file/fileBackendSnapshot.js');
 
     const tempDir = mkdtempSync(join(tmpdir(), 'fp-snapshot-size-'));
     try {

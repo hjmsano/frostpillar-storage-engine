@@ -36,6 +36,7 @@ See ADR-0046.
 `Datastore` is the public entry point.
 
 Core responsibilities:
+
 - validate and normalize input
 - maintain insertion-order and key-range selectable records via B+Tree (single source of truth)
 - enforce duplicate key policy (`allow` / `replace` / `reject`)
@@ -44,10 +45,12 @@ Core responsibilities:
 - delegate persistence to backend controllers
 
 External boundaries in this repository:
+
 - B+Tree core is externalized to `frostpillar-btree` (`@frostpillar/frostpillar-btree`).
 - Query-language/query-API concerns are externalized to `frostpillar-query-interface`.
 
 Backends in this baseline:
+
 - memory mode: omit `driver` and use in-memory only behavior.
 - durable modes: pass an explicit `driver` factory output to `Datastore`:
   - `fileDriver` for Node.js sidecar + lock-file durability
@@ -55,8 +58,8 @@ Backends in this baseline:
   - `indexedDBDriver`
   - `opfsDriver`
   - `syncStorageDriver` (browser extension sync storage, e.g. `browser.storage.sync` or `chrome.storage.sync`)
-  Durable backend controllers remain implementation-specific modules under
-  `storage/drivers/*`.
+    Durable backend controllers remain implementation-specific modules under
+    `storage/drivers/*`.
 
 ## Internal Modules
 

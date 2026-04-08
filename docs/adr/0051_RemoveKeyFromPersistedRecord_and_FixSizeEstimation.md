@@ -59,10 +59,13 @@ toPublicRecord(entryId: EntryId, key: unknown, record: PersistedRecord): KeyedRe
 `estimateRecordSizeBytes` now estimates the full B+Tree entry contribution:
 
 ```typescript
-estimateRecordSizeBytes(key, payload) = utf8ByteLength(JSON.stringify([key, { payload }]))
+estimateRecordSizeBytes(key, payload) = utf8ByteLength(
+  JSON.stringify([key, { payload }]),
+);
 ```
 
 This accounts for:
+
 - Array brackets and comma separating key from value
 - Object braces and property name overhead for payload
 - No longer needs to account for duplicated key
@@ -74,12 +77,14 @@ per entry) which is acceptable for capacity enforcement.
 ## Consequences
 
 Positive:
+
 - **Eliminates redundant key storage** in both memory and serialized form
 - **More accurate capacity tracking** prevents exceeding limits before
   turnover/rejection triggers
 - **Simpler `PersistedRecord` type** -- no generic parameter needed
 
 Trade-offs:
+
 - **Breaking change** on public `PersistedRecord` type (acceptable per
   ADR-0050: no existing users)
 - **Size estimation values change** -- existing capacity thresholds in tests

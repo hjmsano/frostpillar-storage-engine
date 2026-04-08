@@ -7,13 +7,20 @@ import type {
 } from '../../../types.js';
 import { AsyncDurableAutoCommitController } from '../../backend/asyncDurableAutoCommitController.js';
 import { parseAutoCommitConfig } from '../../config/config.shared.js';
-import { cleanupStaleGenerationFiles, createFileBackend, releaseFileLock } from './fileBackend.js';
+import {
+  cleanupStaleGenerationFiles,
+  createFileBackend,
+  releaseFileLock,
+} from './fileBackend.js';
 import {
   commitFileBackendSnapshot,
   loadFileSnapshot,
   writeInitialFileSnapshot,
 } from './fileBackendSnapshot.js';
-import type { DurableBackendController, FileBackendState } from '../../backend/types.js';
+import type {
+  DurableBackendController,
+  FileBackendState,
+} from '../../backend/types.js';
 
 export interface FileBackendControllerSnapshot {
   treeJSON: BTreeJSON<unknown, unknown>;
@@ -42,7 +49,10 @@ export interface FileBackendControllerCreateResult {
   initialCurrentSizeBytes: number;
 }
 
-export class FileBackendController extends AsyncDurableAutoCommitController implements DurableBackendController {
+export class FileBackendController
+  extends AsyncDurableAutoCommitController
+  implements DurableBackendController
+{
   private readonly backend: FileBackendState;
   private readonly getSnapshot: () => FileBackendControllerSnapshot;
   private readonly testHooks: FileBackendControllerTestHooks | null;
@@ -105,10 +115,7 @@ export class FileBackendController extends AsyncDurableAutoCommitController impl
     await this.testHooks?.beforeCommit?.();
 
     const snapshot = this.getSnapshot();
-    commitFileBackendSnapshot(
-      this.backend,
-      snapshot.treeJSON,
-    );
+    commitFileBackendSnapshot(this.backend, snapshot.treeJSON);
 
     await this.testHooks?.afterCommit?.();
   }

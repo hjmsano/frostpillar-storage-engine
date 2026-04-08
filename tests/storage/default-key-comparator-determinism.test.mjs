@@ -18,7 +18,10 @@ test('default string key comparator uses deterministic code-point ordering', asy
 
 test('default string key comparator source does not depend on localeCompare', async () => {
   const source = await readFile(
-    path.resolve(process.cwd(), 'src/storage/datastore/datastoreKeyDefinition.ts'),
+    path.resolve(
+      process.cwd(),
+      'src/storage/datastore/datastoreKeyDefinition.ts',
+    ),
     'utf8',
   );
 

@@ -1,10 +1,5 @@
-import {
-  FileBackendController,
-} from '../storage/drivers/file/fileBackendController.js';
-import type {
-  DatastoreDriver,
-  FileBackendConfig,
-} from '../types.js';
+import { FileBackendController } from '../storage/drivers/file/fileBackendController.js';
+import type { DatastoreDriver, FileBackendConfig } from '../types.js';
 
 export type FileDriverOptions = FileBackendConfig;
 

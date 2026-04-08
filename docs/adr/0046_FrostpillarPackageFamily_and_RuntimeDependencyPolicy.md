@@ -34,12 +34,14 @@ to `devDependencies`.
 ## Consequences
 
 Positive:
+
 - shared logic across the Frostpillar family can be extracted into dedicated
   packages without violating the dependency policy
 - reviewers have a documented rationale for exceptions to the "devDependencies
   only" rule
 
 Trade-offs:
+
 - each new Frostpillar family dependency still introduces a versioning surface
   and must be explicitly justified at integration time (see ADR-0018 as the
   precedent)

@@ -3,7 +3,10 @@ import type {
   BTreeJSON,
   OpfsConfig,
 } from '../../../types.js';
-import { StorageEngineError, UnsupportedBackendError } from '../../../errors/index.js';
+import {
+  StorageEngineError,
+  UnsupportedBackendError,
+} from '../../../errors/index.js';
 import { parseAutoCommitConfig } from '../../config/config.shared.js';
 import { AsyncDurableAutoCommitController } from '../../backend/asyncDurableAutoCommitController.js';
 import {
@@ -36,7 +39,10 @@ export interface OpfsBackendControllerCreateResult {
   initialCurrentSizeBytes: number;
 }
 
-export class OpfsBackendController extends AsyncDurableAutoCommitController implements DurableBackendController {
+export class OpfsBackendController
+  extends AsyncDurableAutoCommitController
+  implements DurableBackendController
+{
   private readonly dir: OpfsDirectoryHandle;
   private readonly getSnapshot: () => OpfsBackendControllerSnapshot;
   private activeData: 'a' | 'b';
@@ -93,7 +99,9 @@ export class OpfsBackendController extends AsyncDurableAutoCommitController impl
   protected async executeSingleCommit(): Promise<void> {
     const snapshot = this.getSnapshot();
     if (this.commitId >= Number.MAX_SAFE_INTEGER) {
-      throw new StorageEngineError('OPFS commitId has reached Number.MAX_SAFE_INTEGER.');
+      throw new StorageEngineError(
+        'OPFS commitId has reached Number.MAX_SAFE_INTEGER.',
+      );
     }
     const nextCommitId = this.commitId + 1;
     this.activeData = await commitOpfsSnapshot(

@@ -23,7 +23,7 @@ export class AsyncMutex {
         this.queue[this.head] = undefined!; // allow GC
         this.head += 1;
         // Compact when more than half the array is dead entries and above threshold
-        if (this.head > 1024 && this.head > (this.queue.length >>> 1)) {
+        if (this.head > 1024 && this.head > this.queue.length >>> 1) {
           this.queue = this.queue.slice(this.head);
           this.head = 0;
         }

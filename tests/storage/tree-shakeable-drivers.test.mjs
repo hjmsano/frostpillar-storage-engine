@@ -21,10 +21,14 @@ test('driver subpath modules expose named driver factories', async () => {
   await loadStorageModule();
 
   const { fileDriver } = await importDistModule('drivers/file.js');
-  const { localStorageDriver } = await importDistModule('drivers/localStorage.js');
+  const { localStorageDriver } = await importDistModule(
+    'drivers/localStorage.js',
+  );
   const { indexedDBDriver } = await importDistModule('drivers/indexedDB.js');
   const { opfsDriver } = await importDistModule('drivers/opfs.js');
-  const { syncStorageDriver } = await importDistModule('drivers/syncStorage.js');
+  const { syncStorageDriver } = await importDistModule(
+    'drivers/syncStorage.js',
+  );
 
   assert.equal(typeof fileDriver, 'function');
   assert.equal(typeof localStorageDriver, 'function');
@@ -69,7 +73,10 @@ void datastore;`,
 test('browser bundle succeeds when selecting localStorage driver only', async () => {
   await loadStorageModule();
   const distIndexPath = path.resolve(process.cwd(), 'dist/index.js');
-  const driverModulePath = path.resolve(process.cwd(), 'dist/drivers/localStorage.js');
+  const driverModulePath = path.resolve(
+    process.cwd(),
+    'dist/drivers/localStorage.js',
+  );
   const entryFilePath = await createTempEntryFile(
     `import { Datastore } from ${JSON.stringify(distIndexPath)};
 import { localStorageDriver } from ${JSON.stringify(driverModulePath)};
@@ -171,46 +178,16 @@ test('BrowserStorageType declaration is removed from source types', async () => 
     'utf8',
   );
 
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type BrowserStorageType =/u,
-  );
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type TimestampInput =/u,
-  );
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type TimeseriesRecord =/u,
-  );
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type PersistedTimeseriesRecord =/u,
-  );
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type InputTimeseriesRecord =/u,
-  );
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type TimeRangeQuery =/u,
-  );
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type InputKeyedRecord/u,
-  );
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type PersistedKeyedRecord/u,
-  );
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type RecordRangeQuery/u,
-  );
-  assert.doesNotMatch(
-    sourceTypes,
-    /export type NativeAggregateFunction =/u,
-  );
+  assert.doesNotMatch(sourceTypes, /export type BrowserStorageType =/u);
+  assert.doesNotMatch(sourceTypes, /export type TimestampInput =/u);
+  assert.doesNotMatch(sourceTypes, /export type TimeseriesRecord =/u);
+  assert.doesNotMatch(sourceTypes, /export type PersistedTimeseriesRecord =/u);
+  assert.doesNotMatch(sourceTypes, /export type InputTimeseriesRecord =/u);
+  assert.doesNotMatch(sourceTypes, /export type TimeRangeQuery =/u);
+  assert.doesNotMatch(sourceTypes, /export type InputKeyedRecord/u);
+  assert.doesNotMatch(sourceTypes, /export type PersistedKeyedRecord/u);
+  assert.doesNotMatch(sourceTypes, /export type RecordRangeQuery/u);
+  assert.doesNotMatch(sourceTypes, /export type NativeAggregateFunction =/u);
   assert.doesNotMatch(
     sourceTypes,
     /export interface NativeAggregateExpression/u,

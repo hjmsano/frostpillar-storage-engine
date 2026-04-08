@@ -16,7 +16,8 @@ export const DEFAULT_SYNC_STORAGE_MAX_TOTAL_BYTES = 102400;
 export const parseSyncStorageMaxTotalBytesForBackendLimit = (
   config?: SyncStorageConfig,
 ): number => {
-  const maxTotalBytes = config?.maxTotalBytes ?? DEFAULT_SYNC_STORAGE_MAX_TOTAL_BYTES;
+  const maxTotalBytes =
+    config?.maxTotalBytes ?? DEFAULT_SYNC_STORAGE_MAX_TOTAL_BYTES;
   if (!Number.isSafeInteger(maxTotalBytes) || maxTotalBytes <= 0) {
     throw new ConfigurationError(
       'syncStorage.maxTotalBytes must be a positive safe integer.',

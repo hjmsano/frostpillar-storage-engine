@@ -1,4 +1,7 @@
-import { PageCorruptionError, StorageEngineError } from '../../../errors/index.js';
+import {
+  PageCorruptionError,
+  StorageEngineError,
+} from '../../../errors/index.js';
 import type { BTreeJSON } from '../../../types.js';
 import { parseNonNegativeSafeInteger } from '../../../validation/metadata.js';
 import type {
@@ -60,7 +63,9 @@ const idbRequest = <T>(req: IDBRequestHandle<T>): Promise<T> =>
 
 const idbTransaction = (tx: IDBTransactionHandle): Promise<void> =>
   new Promise<void>((resolve, reject) => {
-    tx.oncomplete = (): void => { resolve(); };
+    tx.oncomplete = (): void => {
+      resolve();
+    };
     tx.onerror = (): void => {
       reject(new StorageEngineError('IndexedDB transaction failed.'));
     };
@@ -95,7 +100,9 @@ export const openIndexedDB = (
     request.onsuccess = (event): void => {
       const db = event.target.result;
       if (db === null) {
-        reject(new StorageEngineError('IndexedDB open returned null database.'));
+        reject(
+          new StorageEngineError('IndexedDB open returned null database.'),
+        );
         return;
       }
       resolve(db);
@@ -118,10 +125,7 @@ export const loadIndexedDBSnapshot = async (
   db: IDBDatabaseHandle,
   _objectStoreName: string,
 ): Promise<LoadedIndexedDBSnapshot> => {
-  const tx: IDBTransactionHandle = db.transaction(
-    [IDB_META_STORE],
-    'readonly',
-  );
+  const tx: IDBTransactionHandle = db.transaction([IDB_META_STORE], 'readonly');
 
   const txDone = idbTransaction(tx);
   const metaStore: IDBObjectStoreHandle = tx.objectStore(IDB_META_STORE);
@@ -144,7 +148,11 @@ export const loadIndexedDBSnapshot = async (
   );
 
   const treeJSON = meta.treeJSON;
-  if (typeof treeJSON !== 'object' || treeJSON === null || Array.isArray(treeJSON)) {
+  if (
+    typeof treeJSON !== 'object' ||
+    treeJSON === null ||
+    Array.isArray(treeJSON)
+  ) {
     throw new PageCorruptionError('treeJSON must be a non-null plain object.');
   }
   let serialized: string;

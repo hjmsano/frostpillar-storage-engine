@@ -76,10 +76,10 @@ record via `_id`.
 
 Storage/KV-store naming is used instead of database naming:
 
-| Current (database-style) | New (storage-style) | Reason |
-|---|---|---|
-| `insert(record)` | `put(record)` | `put` is standard in LevelDB, IndexedDB, lmdb-js |
-| `select(query)` | `getRange(start, end)` | Descriptive; `select` implies SQL |
+| Current (database-style) | New (storage-style)    | Reason                                           |
+| ------------------------ | ---------------------- | ------------------------------------------------ |
+| `insert(record)`         | `put(record)`          | `put` is standard in LevelDB, IndexedDB, lmdb-js |
+| `select(query)`          | `getRange(start, end)` | Descriptive; `select` implies SQL                |
 
 ## Operation Surface
 
@@ -87,13 +87,13 @@ Storage/KV-store naming is used instead of database naming:
 
 Primary interface. These operate on **all records** matching the given key.
 
-| Method | Status | Description |
-|--------|--------|-------------|
-| `get(key)` | **New** | Retrieve all records with the given key. Always returns `Record[]` (empty array if no match). |
-| `getFirst(key)` | **New** | Convenience method. Returns the first matching record, or `null` if not found. Equivalent to `get(key)[0] ?? null`. |
-| `put(record)` | **Rename** (was `insert`) | Append a record. Multiple records with the same key are allowed. A new entry is always created regardless of whether the key already exists. |
-| `delete(key)` | **New** | Delete **all** records matching the given key. Returns the number of records removed. This is intentionally destructive in append model; use `deleteById` for single-record delete. |
-| `has(key)` | **New** | Check whether at least one record with the given key exists. Returns `boolean`. Lightweight — does not load payloads. |
+| Method          | Status                    | Description                                                                                                                                                                         |
+| --------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `get(key)`      | **New**                   | Retrieve all records with the given key. Always returns `Record[]` (empty array if no match).                                                                                       |
+| `getFirst(key)` | **New**                   | Convenience method. Returns the first matching record, or `null` if not found. Equivalent to `get(key)[0] ?? null`.                                                                 |
+| `put(record)`   | **Rename** (was `insert`) | Append a record. Multiple records with the same key are allowed. A new entry is always created regardless of whether the key already exists.                                        |
+| `delete(key)`   | **New**                   | Delete **all** records matching the given key. Returns the number of records removed. This is intentionally destructive in append model; use `deleteById` for single-record delete. |
+| `has(key)`      | **New**                   | Check whether at least one record with the given key exists. Returns `boolean`. Lightweight — does not load payloads.                                                               |
 
 ### ID-based Operations
 
@@ -101,42 +101,42 @@ Precise operations that target **exactly one** record by its read-only `_id`.
 Useful when multiple records share the same key and the user needs to act on a
 specific one.
 
-| Method | Status | Description |
-|--------|--------|-------------|
-| `getById(id)` | **Existing** | Retrieve a single record by `_id`. |
+| Method                  | Status       | Description                                                           |
+| ----------------------- | ------------ | --------------------------------------------------------------------- |
+| `getById(id)`           | **Existing** | Retrieve a single record by `_id`.                                    |
 | `updateById(id, patch)` | **Existing** | Shallow-merge a patch into the record's payload, identified by `_id`. |
-| `deleteById(id)` | **Existing** | Remove a single record by `_id`. |
+| `deleteById(id)`        | **Existing** | Remove a single record by `_id`.                                      |
 
 ### Bulk Operations
 
 Operations over multiple records or ranges.
 
-| Method | Status | Description |
-|--------|--------|-------------|
-| `getAll()` | **New** | Return all records in the datastore. Intended for small-to-medium datasets (settings, caches, config). |
-| `getRange(start, end)` | **Rename** (was `select`) | Return all records where `start <= key <= end` (inclusive). Unchanged semantics from current `select`. |
-| `getMany(keys[])` | **New** | Retrieve records for a discrete set of keys. Unlike `getRange`, the keys do not need to be contiguous. Returns `Record[]` (flattened results across all keys). |
-| `putMany(records[])` | **New** | Batch append. Each record follows `put` semantics (always appends, allows duplicate keys). |
-| `deleteMany(keys[])` | **New** | Batch delete by keys. Each key follows `delete` semantics (removes all records with that key). |
-| `clear()` | **New** | Remove all records from the datastore. |
+| Method                 | Status                    | Description                                                                                                                                                    |
+| ---------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getAll()`             | **New**                   | Return all records in the datastore. Intended for small-to-medium datasets (settings, caches, config).                                                         |
+| `getRange(start, end)` | **Rename** (was `select`) | Return all records where `start <= key <= end` (inclusive). Unchanged semantics from current `select`.                                                         |
+| `getMany(keys[])`      | **New**                   | Retrieve records for a discrete set of keys. Unlike `getRange`, the keys do not need to be contiguous. Returns `Record[]` (flattened results across all keys). |
+| `putMany(records[])`   | **New**                   | Batch append. Each record follows `put` semantics (always appends, allows duplicate keys).                                                                     |
+| `deleteMany(keys[])`   | **New**                   | Batch delete by keys. Each key follows `delete` semantics (removes all records with that key).                                                                 |
+| `clear()`              | **New**                   | Remove all records from the datastore.                                                                                                                         |
 
 ### Metadata Operations
 
 Lightweight introspection without loading full payloads.
 
-| Method | Status | Description |
-|--------|--------|-------------|
-| `count()` | **New** | Return the total number of records in the datastore. |
-| `keys()` | **New** | Return all distinct keys, without payloads. Useful for enumeration, debugging, and UI rendering. |
+| Method    | Status  | Description                                                                                      |
+| --------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `count()` | **New** | Return the total number of records in the datastore.                                             |
+| `keys()`  | **New** | Return all distinct keys, without payloads. Useful for enumeration, debugging, and UI rendering. |
 
 ### Lifecycle & System
 
-| Method | Status | Description |
-|--------|--------|-------------|
-| `commit()` | **Existing** | Flush pending in-memory writes to the durable backend immediately. |
-| `close()` | **Existing** | Release resources and shut down the datastore. For durable backends, `commit()` remains the explicit persistence boundary. |
-| `on(event, listener)` | **Existing** | Subscribe to datastore events (currently `'error'` only). |
-| `off(event, listener)` | **Existing** | Unsubscribe from datastore events. |
+| Method                 | Status       | Description                                                                                                                |
+| ---------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `commit()`             | **Existing** | Flush pending in-memory writes to the durable backend immediately.                                                         |
+| `close()`              | **Existing** | Release resources and shut down the datastore. For durable backends, `commit()` remains the explicit persistence boundary. |
+| `on(event, listener)`  | **Existing** | Subscribe to datastore events (currently `'error'` only).                                                                  |
+| `off(event, listener)` | **Existing** | Unsubscribe from datastore events.                                                                                         |
 
 ## Determinism & Batch Semantics
 
@@ -154,30 +154,38 @@ To keep behavior deterministic across backends:
 
 ```ts
 // Append multiple records with the same key
-await store.put({ key: "2026-03-20T10:00:00Z", payload: { msg: "request started" } });
-await store.put({ key: "2026-03-20T10:00:00Z", payload: { msg: "request ended" } });
+await store.put({
+  key: '2026-03-20T10:00:00Z',
+  payload: { msg: 'request started' },
+});
+await store.put({
+  key: '2026-03-20T10:00:00Z',
+  payload: { msg: 'request ended' },
+});
 
 // Get all records by key → always an array
-const logs = await store.get("2026-03-20T10:00:00Z");
+const logs = await store.get('2026-03-20T10:00:00Z');
 // → [
 //   { _id: "k~...:0", key: "...", payload: { msg: "request started" } },
 //   { _id: "k~...:1", key: "...", payload: { msg: "request ended" } },
 // ]
 
 // Update one specific record using its _id
-await store.updateById(logs[1]._id, { msg: "request ended (200 OK)" });
+await store.updateById(logs[1]._id, { msg: 'request ended (200 OK)' });
 
 // Delete one specific record by _id
 await store.deleteById(logs[0]._id);
 
 // Delete ALL records with this key
-await store.delete("2026-03-20T10:00:00Z");
+await store.delete('2026-03-20T10:00:00Z');
 
 // Convenience: get first match only
-const latest = await store.getFirst("config:theme");
+const latest = await store.getFirst('config:theme');
 
 // Check existence without loading data
-if (await store.has("session:abc123")) { /* ... */ }
+if (await store.has('session:abc123')) {
+  /* ... */
+}
 
 // Introspection
 const total = await store.count();

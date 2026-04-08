@@ -1,5 +1,8 @@
 import { ValidationError } from '../errors/index.js';
-import { computeUtf8ByteLength, estimateJsonStringBytes } from '../storage/backend/encoding.js';
+import {
+  computeUtf8ByteLength,
+  estimateJsonStringBytes,
+} from '../storage/backend/encoding.js';
 import type { RecordPayload, SupportedNestedValue } from '../types.js';
 
 export const DEFAULT_MAX_PAYLOAD_DEPTH = 64;
@@ -28,11 +31,11 @@ export const DEFAULT_PAYLOAD_LIMITS: Readonly<ResolvedPayloadLimits> = {
 };
 
 // JSON-aware byte estimates for non-string primitives.
-const NULL_ESTIMATION_BYTES = 4;    // "null"  = 4 bytes
+const NULL_ESTIMATION_BYTES = 4; // "null"  = 4 bytes
 
 // JSON structural overhead constants for size estimation.
-const JSON_KEY_COLON_OVERHEAD = 1;      // 1 colon per key (quotes handled by estimateJsonStringBytes)
-const JSON_OBJECT_BRACE_OVERHEAD = 2;   // {} per object
+const JSON_KEY_COLON_OVERHEAD = 1; // 1 colon per key (quotes handled by estimateJsonStringBytes)
+const JSON_OBJECT_BRACE_OVERHEAD = 2; // {} per object
 // Root [key, {"payload": ...}] wrapper: [ + , + {"payload": + } + ] = 15 bytes
 const JSON_ROOT_WRAPPER_OVERHEAD = 15;
 
@@ -103,14 +106,21 @@ const validatePayloadKey = (
   }
 
   // Add key as JSON string (with escaping + quotes) plus colon.
-  addValidationBytes(state, estimateJsonStringBytes(key) + JSON_KEY_COLON_OVERHEAD);
+  addValidationBytes(
+    state,
+    estimateJsonStringBytes(key) + JSON_KEY_COLON_OVERHEAD,
+  );
 };
 
 export const deepFreezePayload = (payload: RecordPayload): RecordPayload => {
   Object.freeze(payload);
 
   for (const value of Object.values(payload)) {
-    if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
+    if (
+      value !== null &&
+      typeof value === 'object' &&
+      !Object.isFrozen(value)
+    ) {
       deepFreezePayload(value as RecordPayload);
     }
   }
@@ -172,7 +182,9 @@ const validateAndClonePayloadObject = (
 ): RecordPayload => {
   const objectLevel = depth + 1;
   if (objectLevel > state.limits.maxDepth) {
-    throw new ValidationError(`Payload nesting depth must be <= ${state.limits.maxDepth}.`);
+    throw new ValidationError(
+      `Payload nesting depth must be <= ${state.limits.maxDepth}.`,
+    );
   }
 
   if (state.activePath.has(payloadObject)) {
@@ -181,7 +193,9 @@ const validateAndClonePayloadObject = (
 
   const entries = Object.entries(payloadObject);
   if (entries.length > state.limits.maxKeysPerObject) {
-    throw new ValidationError(`Payload object key count must be <= ${state.limits.maxKeysPerObject}.`);
+    throw new ValidationError(
+      `Payload object key count must be <= ${state.limits.maxKeysPerObject}.`,
+    );
   }
 
   state.activePath.add(payloadObject);

@@ -1,8 +1,5 @@
 import { ConfigurationError } from '../../errors/index.js';
-import type {
-  CapacityConfig,
-  DatastoreConfig,
-} from '../../types.js';
+import type { CapacityConfig, DatastoreConfig } from '../../types.js';
 import { parseCapacityConfig } from '../config/config.shared.js';
 import type { CapacityState } from './types.js';
 

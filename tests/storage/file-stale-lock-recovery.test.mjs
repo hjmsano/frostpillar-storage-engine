@@ -24,11 +24,18 @@ test('stale lock with dead PID is recovered and backend is created successfully'
 
   try {
     // Write a lock file with a non-existent PID
-    writeFileSync(lockPath, JSON.stringify({ pid: 999999999, createdAt: new Date().toISOString() }));
+    writeFileSync(
+      lockPath,
+      JSON.stringify({ pid: 999999999, createdAt: new Date().toISOString() }),
+    );
 
     // Should succeed: stale lock recovered
     const backend = createFileBackend({ filePath });
-    assert.equal(backend.lockAcquired, true, 'Backend should have acquired the lock after stale recovery');
+    assert.equal(
+      backend.lockAcquired,
+      true,
+      'Backend should have acquired the lock after stale recovery',
+    );
 
     releaseFileLock(backend);
   } finally {
@@ -47,14 +54,21 @@ test('recovered lock file contains current process PID', async () => {
 
   try {
     // Write a stale lock with a dead PID
-    writeFileSync(lockPath, JSON.stringify({ pid: 999999999, createdAt: new Date().toISOString() }));
+    writeFileSync(
+      lockPath,
+      JSON.stringify({ pid: 999999999, createdAt: new Date().toISOString() }),
+    );
 
     const backend = createFileBackend({ filePath });
     assert.equal(backend.lockAcquired, true);
 
     // Verify the lock file now contains our PID
     const lockContent = JSON.parse(readFileSync(lockPath, 'utf8'));
-    assert.equal(lockContent.pid, process.pid, 'Lock file must contain current process PID after recovery');
+    assert.equal(
+      lockContent.pid,
+      process.pid,
+      'Lock file must contain current process PID after recovery',
+    );
 
     releaseFileLock(backend);
   } finally {
@@ -72,12 +86,19 @@ test('lock with alive PID blocks creation with DatabaseLockedError', async () =>
 
   try {
     // Write a lock file with the current process PID (alive)
-    writeFileSync(lockPath, JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }));
+    writeFileSync(
+      lockPath,
+      JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }),
+    );
 
     assert.throws(
       () => createFileBackend({ filePath }),
       (error) => {
-        assert.equal(error.name, 'DatabaseLockedError', `Expected DatabaseLockedError, got ${error.name}`);
+        assert.equal(
+          error.name,
+          'DatabaseLockedError',
+          `Expected DatabaseLockedError, got ${error.name}`,
+        );
         return true;
       },
     );
@@ -101,7 +122,11 @@ test('malformed lock file causes DatabaseLockedError (conservative)', async () =
     assert.throws(
       () => createFileBackend({ filePath }),
       (error) => {
-        assert.equal(error.name, 'DatabaseLockedError', `Expected DatabaseLockedError, got ${error.name}`);
+        assert.equal(
+          error.name,
+          'DatabaseLockedError',
+          `Expected DatabaseLockedError, got ${error.name}`,
+        );
         return true;
       },
     );
@@ -125,7 +150,11 @@ test('empty lock file causes DatabaseLockedError (conservative)', async () => {
     assert.throws(
       () => createFileBackend({ filePath }),
       (error) => {
-        assert.equal(error.name, 'DatabaseLockedError', `Expected DatabaseLockedError, got ${error.name}`);
+        assert.equal(
+          error.name,
+          'DatabaseLockedError',
+          `Expected DatabaseLockedError, got ${error.name}`,
+        );
         return true;
       },
     );

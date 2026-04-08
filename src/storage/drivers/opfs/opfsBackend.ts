@@ -1,4 +1,8 @@
-import { PageCorruptionError, StorageEngineError, toStorageEngineError } from '../../../errors/index.js';
+import {
+  PageCorruptionError,
+  StorageEngineError,
+  toStorageEngineError,
+} from '../../../errors/index.js';
 import type { BTreeJSON } from '../../../types.js';
 import { parseNonNegativeSafeInteger } from '../../../validation/metadata.js';
 import type {
@@ -69,7 +73,11 @@ export const openOpfsDirectory = async (
 
 const parseOpfsManifest = (
   metaText: string,
-): { manifest: Record<string, unknown>; commitId: number; activeData: 'a' | 'b' } => {
+): {
+  manifest: Record<string, unknown>;
+  commitId: number;
+  activeData: 'a' | 'b';
+} => {
   let manifestRaw: unknown;
   try {
     manifestRaw = JSON.parse(metaText);
@@ -82,11 +90,16 @@ const parseOpfsManifest = (
   }
 
   const manifest = manifestRaw;
-  if (manifest.magic !== OPFS_MAGIC || manifest.version !== OPFS_VERSION_VALUE) {
+  if (
+    manifest.magic !== OPFS_MAGIC ||
+    manifest.version !== OPFS_VERSION_VALUE
+  ) {
     throw new StorageEngineError('OPFS meta.json magic/version mismatch.');
   }
   if (manifest.activeData !== 'a' && manifest.activeData !== 'b') {
-    throw new StorageEngineError('OPFS meta.json activeData must be "a" or "b".');
+    throw new StorageEngineError(
+      'OPFS meta.json activeData must be "a" or "b".',
+    );
   }
   const commitId = parseNonNegativeSafeInteger(
     manifest.commitId,
@@ -112,7 +125,9 @@ const loadOpfsDataFile = async (
     const dataFile = await dataHandle.getFile();
     dataText = await dataFile.text();
   } catch {
-    throw new StorageEngineError(`OPFS active data file "${dataFileName}" not found.`);
+    throw new StorageEngineError(
+      `OPFS active data file "${dataFileName}" not found.`,
+    );
   }
 
   let parsedTreeJSON: unknown;
@@ -121,7 +136,11 @@ const loadOpfsDataFile = async (
   } catch {
     throw new StorageEngineError('OPFS data file JSON is malformed.');
   }
-  if (typeof parsedTreeJSON !== 'object' || parsedTreeJSON === null || Array.isArray(parsedTreeJSON)) {
+  if (
+    typeof parsedTreeJSON !== 'object' ||
+    parsedTreeJSON === null ||
+    Array.isArray(parsedTreeJSON)
+  ) {
     throw new PageCorruptionError('treeJSON must be a non-null plain object.');
   }
   return {

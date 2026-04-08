@@ -29,6 +29,7 @@ Introduce a dedicated `putManyBatch()` internal method that replaces the current
 **When `capacityState === null`**: loop records calling the fast-path `putSingle()`. No batch overhead.
 
 **When `capacityState !== null` and policy is `strict`**:
+
 1. Compute `remainingCapacity = capacityState.maxSizeBytes - currentSizeBytes` once.
 2. For each record: validate, compute `encodedBytes`, compute `capacityDelta` (accounting for replace), accumulate `totalBatchDelta`.
 3. If at any point `totalBatchDelta > remainingCapacity`: throw `QuotaExceededError` **without partial insertion** (all-or-nothing for strict batch).

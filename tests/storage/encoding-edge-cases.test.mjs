@@ -3,8 +3,11 @@ import { describe, test } from 'node:test';
 import { importDistModule } from '../load-module.mjs';
 
 describe('encoding edge cases', async () => {
-  const { estimateObjectSizeBytes, estimateRecordSizeBytes, estimateKeySizeBytes } =
-    await importDistModule('storage/backend/encoding.js');
+  const {
+    estimateObjectSizeBytes,
+    estimateRecordSizeBytes,
+    estimateKeySizeBytes,
+  } = await importDistModule('storage/backend/encoding.js');
 
   describe('estimateObjectSizeBytes – unsupported types', () => {
     test('returns 0 for undefined', () => {
@@ -12,7 +15,10 @@ describe('encoding edge cases', async () => {
     });
 
     test('returns 0 for function', () => {
-      assert.equal(estimateObjectSizeBytes(() => {}), 0);
+      assert.equal(
+        estimateObjectSizeBytes(() => {}),
+        0,
+      );
     });
 
     test('returns 0 for symbol', () => {
@@ -96,7 +102,7 @@ describe('encoding edge cases', async () => {
     });
 
     test('matches JSON.stringify for object with multibyte keys', () => {
-      const obj = { 'キー': 'バリュー' };
+      const obj = { キー: 'バリュー' };
       const expected = Buffer.byteLength(JSON.stringify(obj), 'utf8');
       assert.equal(estimateObjectSizeBytes(obj), expected);
     });

@@ -44,6 +44,7 @@ README-JA.md. Arrays are rejected at runtime by the payload validator.
 **W5 — File lock stale-recovery PID reuse risk (P3):**
 The current `isProcessAlive(pid)` check has a theoretical PID reuse race
 condition. Deferring because:
+
 - The race window is extremely narrow (between liveness check and `unlinkSync`).
 - In-memory ephemeral-first design means file locking is an opt-in edge case.
 - Proper fix requires lock identity strengthening (PID + start-time token +
@@ -51,6 +52,7 @@ condition. Deferring because:
 
 **W6 — localStorage/syncStorage chunk logic duplication (P3):**
 Both backends share similar chunk/manifest patterns. Deferring because:
+
 - Extracting shared helpers requires careful abstraction of backend-specific
   I/O adapters and quota policies.
 - Current duplication is manageable and has not caused divergence bugs.

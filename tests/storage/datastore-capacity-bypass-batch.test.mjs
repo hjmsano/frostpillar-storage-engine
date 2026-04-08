@@ -4,8 +4,10 @@ import { importDistModule, loadStorageModule } from '../load-module.mjs';
 
 const createStringKeyDefinition = () => ({
   normalize: (value, fieldName) => {
-    if (typeof value !== 'string') throw new TypeError(`${fieldName} must be string.`);
-    if (value.length === 0) throw new TypeError(`${fieldName} must not be empty.`);
+    if (typeof value !== 'string')
+      throw new TypeError(`${fieldName} must be string.`);
+    if (value.length === 0)
+      throw new TypeError(`${fieldName} must not be empty.`);
     return value;
   },
   compare: (left, right) => (left < right ? -1 : left > right ? 1 : 0),
@@ -108,11 +110,12 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
     });
     try {
       await assert.rejects(
-        () => datastore.putMany([
-          { key: 'k1', payload: { v: 'a'.repeat(30) } },
-          { key: 'k2', payload: { v: 'b'.repeat(30) } },
-          { key: 'k3', payload: { v: 'c'.repeat(30) } },
-        ]),
+        () =>
+          datastore.putMany([
+            { key: 'k1', payload: { v: 'a'.repeat(30) } },
+            { key: 'k2', payload: { v: 'b'.repeat(30) } },
+            { key: 'k3', payload: { v: 'c'.repeat(30) } },
+          ]),
         (err) => err instanceof QuotaExceededError,
       );
       // Atomicity: no partial insertion
@@ -131,10 +134,11 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
     });
     try {
       await assert.rejects(
-        () => datastore.putMany([
-          { key: 'k1', payload: { v: 'small' } },
-          { key: 'k2', payload: { v: 'z'.repeat(500) } },
-        ]),
+        () =>
+          datastore.putMany([
+            { key: 'k1', payload: { v: 'small' } },
+            { key: 'k2', payload: { v: 'z'.repeat(500) } },
+          ]),
         (err) => err instanceof QuotaExceededError,
       );
       assert.equal(await datastore.count(), 0);
@@ -213,7 +217,9 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
 
   test('strict policy, batch exactly at limit: succeeds', async () => {
     const { Datastore } = await loadStorageModule();
-    const { estimateRecordSizeBytes } = await importDistModule('storage/backend/encoding.js');
+    const { estimateRecordSizeBytes } = await importDistModule(
+      'storage/backend/encoding.js',
+    );
 
     // Compute exact bytes for a known record, then set maxSize to that exact value
     const key = 'exact';
@@ -245,12 +251,13 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
       const countBefore = await datastore.count();
 
       await assert.rejects(
-        () => datastore.putMany([
-          { key: 'n1', payload: { v: 'a'.repeat(50) } },
-          { key: 'n2', payload: { v: 'b'.repeat(50) } },
-          { key: 'n3', payload: { v: 'c'.repeat(50) } },
-          { key: 'n4', payload: { v: 'd'.repeat(50) } },
-        ]),
+        () =>
+          datastore.putMany([
+            { key: 'n1', payload: { v: 'a'.repeat(50) } },
+            { key: 'n2', payload: { v: 'b'.repeat(50) } },
+            { key: 'n3', payload: { v: 'c'.repeat(50) } },
+            { key: 'n4', payload: { v: 'd'.repeat(50) } },
+          ]),
         (err) => err instanceof QuotaExceededError,
       );
 
@@ -274,10 +281,11 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
     });
     try {
       await assert.rejects(
-        () => datastore.putMany([
-          { key: 'dup', payload: { v: 'first' } },
-          { key: 'dup', payload: { v: 'second' } },
-        ]),
+        () =>
+          datastore.putMany([
+            { key: 'dup', payload: { v: 'first' } },
+            { key: 'dup', payload: { v: 'second' } },
+          ]),
         (err) => err instanceof ValidationError,
       );
       assert.equal(await datastore.count(), 0);
@@ -298,10 +306,11 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
       await datastore.put({ key: 'existing', payload: { v: 'pre' } });
       // Second record has duplicate key 'existing' → fails
       await assert.rejects(
-        () => datastore.putMany([
-          { key: 'new1', payload: { v: 'ok' } },
-          { key: 'existing', payload: { v: 'dup' } },
-        ]),
+        () =>
+          datastore.putMany([
+            { key: 'new1', payload: { v: 'ok' } },
+            { key: 'existing', payload: { v: 'dup' } },
+          ]),
         (err) => err instanceof ValidationError,
       );
       // Non-atomic: 'new1' was inserted before failure
@@ -323,10 +332,11 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
     try {
       await datastore.put({ key: 'existing', payload: { v: 'pre' } });
       await assert.rejects(
-        () => datastore.putMany([
-          { key: 'new1', payload: { v: 'ok' } },
-          { key: 'existing', payload: { v: 'dup' } },
-        ]),
+        () =>
+          datastore.putMany([
+            { key: 'new1', payload: { v: 'ok' } },
+            { key: 'existing', payload: { v: 'dup' } },
+          ]),
         (err) => err instanceof ValidationError,
       );
       // Non-atomic: 'new1' was inserted before failure

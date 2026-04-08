@@ -64,6 +64,9 @@ test('emitAutoCommitErrorToListeners wraps non-Error unknown values with fallbac
 
   assert.ok(receivedEvent !== undefined);
   assert.ok(receivedEvent.error instanceof StorageEngineError);
-  assert.equal(receivedEvent.error.message, 'Unknown auto-commit storage failure.');
+  assert.equal(
+    receivedEvent.error.message,
+    'Unknown auto-commit storage failure.',
+  );
   assert.equal(receivedEvent.error.cause, 'string-error');
 });

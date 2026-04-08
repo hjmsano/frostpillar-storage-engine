@@ -5,8 +5,9 @@ import { importDistModule } from '../load-module.mjs';
 describe('payload boundary validation', async () => {
   const { validateAndNormalizePayload, deepFreezePayload } =
     await importDistModule('validation/payload.js');
-  const { estimateObjectSizeBytes } =
-    await importDistModule('storage/backend/encoding.js');
+  const { estimateObjectSizeBytes } = await importDistModule(
+    'storage/backend/encoding.js',
+  );
 
   describe('validateAndNormalizePayload – depth limit', () => {
     test('accepts payload at depth 63 (within MAX_PAYLOAD_DEPTH=64)', () => {
@@ -22,10 +23,9 @@ describe('payload boundary validation', async () => {
       for (let i = 0; i < 65; i++) {
         obj = { nested: obj };
       }
-      assert.throws(
-        () => validateAndNormalizePayload(obj),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload(obj), {
+        name: 'ValidationError',
+      });
     });
   });
 
@@ -33,10 +33,9 @@ describe('payload boundary validation', async () => {
     test('rejects key exceeding MAX_PAYLOAD_KEY_BYTES (1024)', () => {
       const longKey = 'k'.repeat(1025);
       const payload = { [longKey]: 'value' };
-      assert.throws(
-        () => validateAndNormalizePayload(payload),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload(payload), {
+        name: 'ValidationError',
+      });
     });
 
     test('accepts key within MAX_PAYLOAD_KEY_BYTES', () => {
@@ -50,20 +49,18 @@ describe('payload boundary validation', async () => {
       for (let i = 0; i < 257; i++) {
         payload[`key${i}`] = i;
       }
-      assert.throws(
-        () => validateAndNormalizePayload(payload),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload(payload), {
+        name: 'ValidationError',
+      });
     });
   });
 
   describe('validateAndNormalizePayload – string byte limit', () => {
     test('rejects string value exceeding MAX_PAYLOAD_STRING_BYTES (65535)', () => {
       const payload = { data: 'x'.repeat(65536) };
-      assert.throws(
-        () => validateAndNormalizePayload(payload),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload(payload), {
+        name: 'ValidationError',
+      });
     });
 
     test('accepts string value at MAX_PAYLOAD_STRING_BYTES', () => {
@@ -76,40 +73,35 @@ describe('payload boundary validation', async () => {
     test('rejects circular payload references', () => {
       const payload = { a: 1 };
       payload.self = payload;
-      assert.throws(
-        () => validateAndNormalizePayload(payload),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload(payload), {
+        name: 'ValidationError',
+      });
     });
   });
 
   describe('validateAndNormalizePayload – non-plain objects', () => {
     test('rejects Date value', () => {
-      assert.throws(
-        () => validateAndNormalizePayload({ date: new Date() }),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload({ date: new Date() }), {
+        name: 'ValidationError',
+      });
     });
 
     test('rejects RegExp value', () => {
-      assert.throws(
-        () => validateAndNormalizePayload({ pattern: /test/ }),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload({ pattern: /test/ }), {
+        name: 'ValidationError',
+      });
     });
 
     test('rejects Map as payload', () => {
-      assert.throws(
-        () => validateAndNormalizePayload(new Map()),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload(new Map()), {
+        name: 'ValidationError',
+      });
     });
 
     test('rejects function value', () => {
-      assert.throws(
-        () => validateAndNormalizePayload({ fn: () => {} }),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload({ fn: () => {} }), {
+        name: 'ValidationError',
+      });
     });
   });
 
@@ -191,10 +183,9 @@ describe('payload boundary validation', async () => {
       for (let i = 0; i < 256; i++) {
         payload[`k${String(i).padStart(4, '0')}`] = 'x'.repeat(65535);
       }
-      assert.throws(
-        () => validateAndNormalizePayload(payload),
-        { name: 'ValidationError' },
-      );
+      assert.throws(() => validateAndNormalizePayload(payload), {
+        name: 'ValidationError',
+      });
     });
   });
 

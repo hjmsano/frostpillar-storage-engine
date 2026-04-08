@@ -209,14 +209,14 @@ const db = new Datastore({
 
 Payloads are validated on every `put()`, `putMany()`, `updateById()`, and `replaceById()` call. The following default limits apply:
 
-| Constraint | Default | Config key |
-|------------|---------|------------|
-| Total payload bytes | 1,048,576 (1 MB) | `maxTotalBytes` |
-| Max nesting depth | 64 object levels | `maxDepth` |
-| Max total keys | 4,096 | `maxTotalKeys` |
-| Max keys per object | 256 | `maxKeysPerObject` |
-| Max key size | 1,024 bytes (UTF-8) | `maxKeyBytes` |
-| Max string value | 65,535 bytes (UTF-8) | `maxStringBytes` |
+| Constraint          | Default              | Config key         |
+| ------------------- | -------------------- | ------------------ |
+| Total payload bytes | 1,048,576 (1 MB)     | `maxTotalBytes`    |
+| Max nesting depth   | 64 object levels     | `maxDepth`         |
+| Max total keys      | 4,096                | `maxTotalKeys`     |
+| Max keys per object | 256                  | `maxKeysPerObject` |
+| Max key size        | 1,024 bytes (UTF-8)  | `maxKeyBytes`      |
+| Max string value    | 65,535 bytes (UTF-8) | `maxStringBytes`   |
 
 These limits can be customized per-datastore via `payloadLimits`:
 
@@ -232,6 +232,7 @@ const db = new Datastore({
 Each field is independently optional; omitted fields use the default value. Each value must be a positive safe integer, otherwise construction fails with `ConfigurationError`.
 
 Additional rules:
+
 - Payload must be a plain object (no arrays, functions, or `BigInt` at top level).
 - Keys must be non-empty, non-whitespace strings.
 - Reserved keys (`__proto__`, `constructor`, `prototype`) are forbidden.
@@ -264,11 +265,12 @@ const db2 = new Datastore({
 });
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `index.autoScale` | `boolean` | `true` | Automatically scale node capacity as data grows |
-| `index.maxLeafEntries` | `number` | btree default (64) | Max entries per leaf node (3–16384, only when `autoScale: false`) |
-| `index.maxBranchChildren` | `number` | btree default (64) | Max children per branch node (3–16384, only when `autoScale: false`) |
+| Field                         | Type                     | Default            | Description                                                                   |
+| ----------------------------- | ------------------------ | ------------------ | ----------------------------------------------------------------------------- |
+| `index.autoScale`             | `boolean`                | `true`             | Automatically scale node capacity as data grows                               |
+| `index.maxLeafEntries`        | `number`                 | btree default (64) | Max entries per leaf node (3–16384, only when `autoScale: false`)             |
+| `index.maxBranchChildren`     | `number`                 | btree default (64) | Max children per branch node (3–16384, only when `autoScale: false`)          |
+| `index.deleteRebalancePolicy` | `'standard'` \| `'lazy'` | `'standard'`       | Delete rebalance strategy. `'lazy'` skips rebalancing for faster bulk deletes |
 
 Setting `maxLeafEntries` or `maxBranchChildren` when `autoScale` is `true` throws `ConfigurationError`.
 
@@ -331,6 +333,12 @@ const all = await db.getAll();
 
 ```ts
 const range = await db.getRange('a', 'f');
+```
+
+**`countRange(start, end)`** — count records in a key range without materializing them.
+
+```ts
+const n = await db.countRange('a', 'f');
 ```
 
 **`getMany(keys)`** — records for a set of discrete keys.
@@ -500,18 +508,18 @@ await db.commit();
 await db.close();
 ```
 
-| Option | Type | Description |
-|--------|------|-------------|
+| Option     | Type     | Description                                                |
+| ---------- | -------- | ---------------------------------------------------------- |
 | `filePath` | `string` | Direct path to the data file (e.g. `'./data/events.fpdb'`) |
 
 Alternatively, use directory-based targeting via the `target` option:
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `target.kind` | `'directory'` | Use directory-based file resolution |
-| `target.directory` | `string` | Directory containing the data file |
-| `target.fileName` | `string` | Optional file name (default: auto-generated) |
-| `target.filePrefix` | `string` | Optional file name prefix |
+| Option              | Type          | Description                                  |
+| ------------------- | ------------- | -------------------------------------------- |
+| `target.kind`       | `'directory'` | Use directory-based file resolution          |
+| `target.directory`  | `string`      | Directory containing the data file           |
+| `target.fileName`   | `string`      | Optional file name (default: auto-generated) |
+| `target.filePrefix` | `string`      | Optional file name prefix                    |
 
 > **Path containment:** All resolved file paths (`filePath`, `target.directory`) must stay within `process.cwd()`. Paths that resolve outside the working directory (e.g. via `../` traversal or absolute paths pointing elsewhere) are rejected with `ConfigurationError`.
 
@@ -977,12 +985,12 @@ const db = new Datastore({
 });
 ```
 
-| Callback                      | Description                                              |
-| ----------------------------- | -------------------------------------------------------- |
-| `normalize(value, fieldName)` | Validate and normalize input to your key type            |
-| `compare(left, right)`        | Return a number for ordering (`< 0`, `0`, `> 0`)         |
-| `serialize(key)`              | Convert key to a string for storage                      |
-| `deserialize(serialized)`     | Restore key from stored string                           |
+| Callback                      | Description                                      |
+| ----------------------------- | ------------------------------------------------ |
+| `normalize(value, fieldName)` | Validate and normalize input to your key type    |
+| `compare(left, right)`        | Return a number for ordering (`< 0`, `0`, `> 0`) |
+| `serialize(key)`              | Convert key to a string for storage              |
+| `deserialize(serialized)`     | Restore key from stored string                   |
 
 All four are required when `config.key` is provided. `compare` should return a negative integer, zero, or positive integer. In the hot path, non-NaN values (including floats like `0.5` and `Infinity`) are automatically clamped to `-1`, `0`, or `+1` — this is by design for performance. `NaN` is the only value that causes undefined behavior and throws `IndexCorruptionError`.
 
@@ -1084,24 +1092,25 @@ If both a deferred backend initialization failure and a backend close failure oc
 
 ### ID-Based Operations
 
-| Method                     | Parameters               | Returns                        | Description            |
-| -------------------------- | ------------------------ | ------------------------------ | ---------------------- |
-| `getById(id)`              | `EntryId`                | `Promise<KeyedRecord \| null>` | Get by record ID       |
-| `updateById(id, patch)`    | `EntryId`, payload patch | `Promise<boolean>`             | Shallow-merge update   |
-| `replaceById(id, payload)` | `EntryId`, full payload  | `Promise<boolean>`             | Full payload replace   |
-| `deleteById(id)`           | `EntryId`                | `Promise<boolean>`             | Delete by record ID    |
+| Method                     | Parameters               | Returns                        | Description          |
+| -------------------------- | ------------------------ | ------------------------------ | -------------------- |
+| `getById(id)`              | `EntryId`                | `Promise<KeyedRecord \| null>` | Get by record ID     |
+| `updateById(id, patch)`    | `EntryId`, payload patch | `Promise<boolean>`             | Shallow-merge update |
+| `replaceById(id, payload)` | `EntryId`, full payload  | `Promise<boolean>`             | Full payload replace |
+| `deleteById(id)`           | `EntryId`                | `Promise<boolean>`             | Delete by record ID  |
 
 ### Bulk Operations
 
-| Method                 | Parameters         | Returns                  | Description                 |
-| ---------------------- | ------------------ | ------------------------ | --------------------------- |
-| `getAll()`             | —                  | `Promise<KeyedRecord[]>` | All records                 |
-| `getRange(start, end)` | start key, end key | `Promise<KeyedRecord[]>` | Inclusive range query       |
-| `getMany(keys)`        | key array          | `Promise<KeyedRecord[]>` | Records for multiple keys   |
-| `putMany(records)`     | record array       | `Promise<void>`          | Insert multiple records     |
-| `deleteMany(keys)`     | key array          | `Promise<number>`        | Delete across multiple keys |
-| `deleteByIds(ids)`     | `EntryId` array    | `Promise<number>`        | Delete by record IDs        |
-| `clear()`              | —                  | `Promise<void>`          | Remove all records          |
+| Method                   | Parameters         | Returns                  | Description                 |
+| ------------------------ | ------------------ | ------------------------ | --------------------------- |
+| `getAll()`               | —                  | `Promise<KeyedRecord[]>` | All records                 |
+| `getRange(start, end)`   | start key, end key | `Promise<KeyedRecord[]>` | Inclusive range query       |
+| `countRange(start, end)` | start key, end key | `Promise<number>`        | Count records in range      |
+| `getMany(keys)`          | key array          | `Promise<KeyedRecord[]>` | Records for multiple keys   |
+| `putMany(records)`       | record array       | `Promise<void>`          | Insert multiple records     |
+| `deleteMany(keys)`       | key array          | `Promise<number>`        | Delete across multiple keys |
+| `deleteByIds(ids)`       | `EntryId` array    | `Promise<number>`        | Delete by record IDs        |
+| `clear()`                | —                  | `Promise<void>`          | Remove all records          |
 
 ### Metadata
 
@@ -1112,50 +1121,51 @@ If both a deferred backend initialization failure and a backend close failure oc
 
 ### Lifecycle
 
-| Method                   | Returns                    | Description                                |
-| ------------------------ | -------------------------- | ------------------------------------------ |
+| Method                   | Returns                    | Description                                       |
+| ------------------------ | -------------------------- | ------------------------------------------------- |
 | `commit()`               | `Promise<void>`            | Flush to durable storage (no-op without a driver) |
-| `close()`                | `Promise<void>`            | Release resources and locks                |
-| `on('error', listener)`  | `() => void` (unsubscribe) | Monitor async errors                       |
-| `off('error', listener)` | `void`                     | Remove error listener                      |
+| `close()`                | `Promise<void>`            | Release resources and locks                       |
+| `on('error', listener)`  | `() => void` (unsubscribe) | Monitor async errors                              |
+| `off('error', listener)` | `void`                     | Remove error listener                             |
 
 ### Exported Types
 
-| Type | Description |
-|------|-------------|
-| `DatastoreConfig` | Constructor configuration object |
-| `DatastoreKeyDefinition` | Custom key normalize/compare/serialize/deserialize callbacks |
-| `InputRecord` | Record shape accepted by `put()` and `putMany()` |
-| `KeyedRecord` | Record object with `key`, `payload`, and `_id` fields |
-| `PersistedRecord` | Internal record format with `payload` and `sizeBytes` |
-| `RecordPayload` | Payload value type (nested record of strings, numbers, booleans, and nulls). Arrays are not supported and rejected at runtime. |
-| `EntryId` | Branded `number` identifying a specific record (ephemeral, re-issued on restore) |
-| `DuplicateKeyPolicy` | `'allow' \| 'reject' \| 'replace'` |
-| `IndexConfig` | Index configuration (`autoScale`, `maxLeafEntries`, `maxBranchChildren`) |
-| `CapacityConfig` | Capacity control configuration (`maxSize` + `policy`) |
-| `CapacityPolicy` | `'strict' \| 'turnover'` |
-| `AutoCommitConfig` | Auto-commit configuration (`frequency` + `maxPendingBytes`) |
-| `AutoCommitFrequencyInput` | Frequency value (`'immediate'` \| number \| time string) |
-| `DatastoreDriver` | Driver interface for pluggable backends |
-| `DatastoreDriverController` | Driver controller lifecycle interface |
-| `DatastoreDriverInitContext` | Context passed to driver during initialization |
-| `DatastoreDriverInitResult` | Result returned from driver initialization |
-| `DatastoreDriverSnapshot` | Snapshot payload for persistence |
-| `DatastoreErrorEvent` | Error event shape emitted by `on('error')` |
-| `DatastoreErrorListener` | Listener callback type for error events |
-| `FileBackendConfig` | File driver configuration |
-| `FileTargetConfig` | File target (path or directory) union type |
-| `FileTargetByPathConfig` | File target with direct `filePath` |
-| `FileTargetByDirectoryConfig` | File target with directory-based resolution |
-| `IndexedDBConfig` | IndexedDB driver configuration |
-| `LocalStorageConfig` | localStorage driver configuration |
-| `OpfsConfig` | OPFS driver configuration |
-| `SyncStorageConfig` | Sync storage driver configuration |
-| `FrostpillarError` | Root error class for all Frostpillar errors |
-| `ValidationError` | Invalid input error |
-| `ConfigurationError` | Invalid configuration error |
-| `QuotaExceededError` | Capacity exceeded error |
-| `StorageEngineError` | Storage-layer error |
+| Type                          | Description                                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `DatastoreConfig`             | Constructor configuration object                                                                                               |
+| `DatastoreKeyDefinition`      | Custom key normalize/compare/serialize/deserialize callbacks                                                                   |
+| `InputRecord`                 | Record shape accepted by `put()` and `putMany()`                                                                               |
+| `KeyedRecord`                 | Record object with `key`, `payload`, and `_id` fields                                                                          |
+| `PersistedRecord`             | Internal record format with `payload` and `sizeBytes`                                                                          |
+| `RecordPayload`               | Payload value type (nested record of strings, numbers, booleans, and nulls). Arrays are not supported and rejected at runtime. |
+| `EntryId`                     | Branded `number` identifying a specific record (ephemeral, re-issued on restore)                                               |
+| `DuplicateKeyPolicy`          | `'allow' \| 'reject' \| 'replace'`                                                                                             |
+| `DeleteRebalancePolicy`       | `'standard'` \| `'lazy'`                                                                                                       |
+| `IndexConfig`                 | Index configuration (`autoScale`, `maxLeafEntries`, `maxBranchChildren`, `deleteRebalancePolicy`)                              |
+| `CapacityConfig`              | Capacity control configuration (`maxSize` + `policy`)                                                                          |
+| `CapacityPolicy`              | `'strict' \| 'turnover'`                                                                                                       |
+| `AutoCommitConfig`            | Auto-commit configuration (`frequency` + `maxPendingBytes`)                                                                    |
+| `AutoCommitFrequencyInput`    | Frequency value (`'immediate'` \| number \| time string)                                                                       |
+| `DatastoreDriver`             | Driver interface for pluggable backends                                                                                        |
+| `DatastoreDriverController`   | Driver controller lifecycle interface                                                                                          |
+| `DatastoreDriverInitContext`  | Context passed to driver during initialization                                                                                 |
+| `DatastoreDriverInitResult`   | Result returned from driver initialization                                                                                     |
+| `DatastoreDriverSnapshot`     | Snapshot payload for persistence                                                                                               |
+| `DatastoreErrorEvent`         | Error event shape emitted by `on('error')`                                                                                     |
+| `DatastoreErrorListener`      | Listener callback type for error events                                                                                        |
+| `FileBackendConfig`           | File driver configuration                                                                                                      |
+| `FileTargetConfig`            | File target (path or directory) union type                                                                                     |
+| `FileTargetByPathConfig`      | File target with direct `filePath`                                                                                             |
+| `FileTargetByDirectoryConfig` | File target with directory-based resolution                                                                                    |
+| `IndexedDBConfig`             | IndexedDB driver configuration                                                                                                 |
+| `LocalStorageConfig`          | localStorage driver configuration                                                                                              |
+| `OpfsConfig`                  | OPFS driver configuration                                                                                                      |
+| `SyncStorageConfig`           | Sync storage driver configuration                                                                                              |
+| `FrostpillarError`            | Root error class for all Frostpillar errors                                                                                    |
+| `ValidationError`             | Invalid input error                                                                                                            |
+| `ConfigurationError`          | Invalid configuration error                                                                                                    |
+| `QuotaExceededError`          | Capacity exceeded error                                                                                                        |
+| `StorageEngineError`          | Storage-layer error                                                                                                            |
 
 For full behavioral details, see the [Datastore API spec](docs/specs/01_DatastoreAPI.md) and [Durable Backends spec](docs/specs/02_DurableBackends.md).
 

@@ -21,10 +21,7 @@ test('getRange rejects NaN comparator output with IndexCorruptionError', async (
   await ds.put({ key: 'a', payload: { v: 1 } });
 
   // getRange('a', 'b') calls compare('a', 'b') which returns NaN
-  await assert.rejects(
-    ds.getRange('a', 'b'),
-    IndexCorruptionError,
-  );
+  await assert.rejects(ds.getRange('a', 'b'), IndexCorruptionError);
 
   await ds.close();
 });
@@ -46,10 +43,7 @@ test('getRange rejects Infinity comparator output with IndexCorruptionError', as
 
   await ds.put({ key: 'a', payload: { v: 1 } });
 
-  await assert.rejects(
-    ds.getRange('a', 'b'),
-    IndexCorruptionError,
-  );
+  await assert.rejects(ds.getRange('a', 'b'), IndexCorruptionError);
 
   await ds.close();
 });
@@ -71,10 +65,7 @@ test('getRange rejects non-integer comparator output with IndexCorruptionError',
 
   await ds.put({ key: 'a', payload: { v: 1 } });
 
-  await assert.rejects(
-    ds.getRange('a', 'b'),
-    IndexCorruptionError,
-  );
+  await assert.rejects(ds.getRange('a', 'b'), IndexCorruptionError);
 
   await ds.close();
 });
@@ -105,10 +96,7 @@ test('keys() rejects NaN comparator output with IndexCorruptionError', async () 
 
   poisoned = true;
 
-  await assert.rejects(
-    ds.keys(),
-    IndexCorruptionError,
-  );
+  await assert.rejects(ds.keys(), IndexCorruptionError);
 
   await ds.close();
 });
@@ -136,10 +124,7 @@ test('getMany rejects NaN comparator output via BTree range query', async () => 
   poisoned = true;
 
   // NaN is detected by the BTree wrapped comparator during rangeQuery
-  await assert.rejects(
-    ds.getMany(['b', 'a']),
-    IndexCorruptionError,
-  );
+  await assert.rejects(ds.getMany(['b', 'a']), IndexCorruptionError);
 
   await ds.close();
 });

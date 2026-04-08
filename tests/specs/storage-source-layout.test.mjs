@@ -26,10 +26,14 @@ test('storage sources are organized by responsibility directories', async () => 
   await assertPathExists('src/storage/config/config.ts');
   await assertPathExists('src/storage/btree/recordKeyIndexBTree.ts');
   await assertPathExists('src/storage/drivers/file/fileBackend.ts');
-  await assertPathExists('src/storage/drivers/localStorage/localStorageBackend.ts');
+  await assertPathExists(
+    'src/storage/drivers/localStorage/localStorageBackend.ts',
+  );
   await assertPathExists('src/storage/drivers/IndexedDB/indexedDBBackend.ts');
   await assertPathExists('src/storage/drivers/opfs/opfsBackend.ts');
-  await assertPathExists('src/storage/drivers/syncStorage/syncStorageBackend.ts');
+  await assertPathExists(
+    'src/storage/drivers/syncStorage/syncStorageBackend.ts',
+  );
   await assertPathMissing('src/storage/record/recordId.ts');
 
   await assertPathMissing('src/storage/Datastore.ts');

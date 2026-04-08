@@ -21,11 +21,13 @@ Given this engine's security and predictability goals, query evaluation should o
 ## Consequences
 
 Positive:
+
 - Prevents inherited-property leakage into query results.
 - Aligns runtime behavior with explicit data-model expectations.
 - Reduces ambiguity and hard-to-debug query behavior when payload objects have custom prototypes.
 
 Trade-off:
+
 - Some historical payloads relying on inherited property lookup will no longer match queries.
 
 ## Supersession Note

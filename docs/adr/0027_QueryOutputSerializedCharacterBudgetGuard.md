@@ -6,6 +6,7 @@ Date: 2026-03-11
 ## Context
 
 Native query execution already enforced:
+
 - scanned-row limits
 - filter complexity limits
 - `distinct` intermediate working-set limits
@@ -20,6 +21,7 @@ denial-of-service risk through memory exhaustion.
 Add a cumulative output budget guard for query results.
 
 Key points:
+
 - define `MAX_QUERY_OUTPUT_TOTAL_CHARS = 1048576`
 - for each row that will be returned, estimate serialized size via
   `JSON.stringify(row).length`
@@ -31,6 +33,7 @@ The guard is evaluated in addition to existing row-count and `distinct` guards.
 ## Consequences
 
 Positive:
+
 - closes a memory-exhaustion gap where a bounded row count could still carry
   oversized payloads
 - keeps guard logic deterministic and lightweight (simple counter + string
@@ -38,6 +41,7 @@ Positive:
 - aligns with project availability principles for query execution
 
 Trade-off:
+
 - some previously accepted large-result queries now fail fast with
   `QueryValidationError`
 - limit is character-based (serialized output proxy), not exact heap-byte

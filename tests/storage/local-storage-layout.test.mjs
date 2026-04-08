@@ -3,15 +3,18 @@ import { describe, test } from 'node:test';
 import { importDistModule } from '../load-module.mjs';
 
 describe('localStorageLayout', async () => {
-  const { manifestKey, chunkKey, cleanupGenerationChunks, isQuotaBrowserError } =
-    await importDistModule('storage/drivers/localStorage/localStorageLayout.js');
+  const {
+    manifestKey,
+    chunkKey,
+    cleanupGenerationChunks,
+    isQuotaBrowserError,
+  } = await importDistModule(
+    'storage/drivers/localStorage/localStorageLayout.js',
+  );
 
   describe('manifestKey', () => {
     test('generates correct manifest key', () => {
-      assert.equal(
-        manifestKey('fp', 'mydb'),
-        'fp:ls:mydb:manifest',
-      );
+      assert.equal(manifestKey('fp', 'mydb'), 'fp:ls:mydb:manifest');
     });
 
     test('handles empty prefix and database key', () => {
@@ -21,17 +24,11 @@ describe('localStorageLayout', async () => {
 
   describe('chunkKey', () => {
     test('generates correct chunk key', () => {
-      assert.equal(
-        chunkKey('fp', 'mydb', 1, 0),
-        'fp:ls:mydb:g:1:chunk:0',
-      );
+      assert.equal(chunkKey('fp', 'mydb', 1, 0), 'fp:ls:mydb:g:1:chunk:0');
     });
 
     test('uses generation and index in key', () => {
-      assert.equal(
-        chunkKey('fp', 'db', 5, 3),
-        'fp:ls:db:g:5:chunk:3',
-      );
+      assert.equal(chunkKey('fp', 'db', 5, 3), 'fp:ls:db:g:5:chunk:3');
     });
   });
 

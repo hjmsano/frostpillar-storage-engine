@@ -8,10 +8,19 @@ import type {
   PersistedRecord,
   RecordPayload,
 } from '../../types.js';
-import { validateAndNormalizePayload, type ResolvedPayloadLimits } from '../../validation/payload.js';
-import { estimateKeySizeBytes, estimateRecordSizeBytes } from '../backend/encoding.js';
+import {
+  validateAndNormalizePayload,
+  type ResolvedPayloadLimits,
+} from '../../validation/payload.js';
+import {
+  estimateKeySizeBytes,
+  estimateRecordSizeBytes,
+} from '../backend/encoding.js';
 import type { CapacityState } from '../backend/types.js';
-import type { EntryId, RecordKeyIndexBTree } from '../btree/recordKeyIndexBTree.js';
+import type {
+  EntryId,
+  RecordKeyIndexBTree,
+} from '../btree/recordKeyIndexBTree.js';
 
 export const getPublicRecordById = (
   keyIndex: RecordKeyIndexBTree<unknown, PersistedRecord>,
@@ -70,13 +79,22 @@ export const updateRecordById = (
 ): UpdateByIdResult => {
   const entry = options.keyIndex.peekById(options.id);
   if (entry === null) {
-    return { updated: false, currentSizeBytes: options.currentSizeBytes, durabilitySignalBytes: 0 };
+    return {
+      updated: false,
+      currentSizeBytes: options.currentSizeBytes,
+      durabilitySignalBytes: 0,
+    };
   }
 
   const targetRecord = entry.value;
   const oldSize = targetRecord.sizeBytes;
   const merged = { ...targetRecord.payload, ...options.patch } as RecordPayload;
-  const mergedResult = validateAndEstimateSize(merged, entry.key, options.skipPayloadValidation, options.payloadLimits);
+  const mergedResult = validateAndEstimateSize(
+    merged,
+    entry.key,
+    options.skipPayloadValidation,
+    options.payloadLimits,
+  );
   const mergedPayload = mergedResult.payload;
   const newSize = mergedResult.sizeBytes;
   const encodedDelta = newSize - oldSize;
@@ -86,7 +104,9 @@ export const updateRecordById = (
     encodedDelta > 0 &&
     options.currentSizeBytes + encodedDelta > options.capacityState.maxSizeBytes
   ) {
-    throw new QuotaExceededError('updateById exceeds configured capacity.maxSize boundary.');
+    throw new QuotaExceededError(
+      'updateById exceeds configured capacity.maxSize boundary.',
+    );
   }
 
   const updatedRecord: PersistedRecord = {
@@ -95,7 +115,9 @@ export const updateRecordById = (
   };
 
   if (options.keyIndex.updateById(options.id, updatedRecord) === null) {
-    throw new IndexCorruptionError('Record index state is inconsistent during updateById.');
+    throw new IndexCorruptionError(
+      'Record index state is inconsistent during updateById.',
+    );
   }
 
   // Underflow is not possible: encodedDelta = newSize - oldSize, and oldSize was
@@ -129,11 +151,20 @@ export const replaceRecordById = (
 ): ReplaceByIdResult => {
   const entry = options.keyIndex.peekById(options.id);
   if (entry === null) {
-    return { replaced: false, currentSizeBytes: options.currentSizeBytes, durabilitySignalBytes: 0 };
+    return {
+      replaced: false,
+      currentSizeBytes: options.currentSizeBytes,
+      durabilitySignalBytes: 0,
+    };
   }
 
   const oldSize = entry.value.sizeBytes;
-  const replacementResult = validateAndEstimateSize(options.payload, entry.key, options.skipPayloadValidation, options.payloadLimits);
+  const replacementResult = validateAndEstimateSize(
+    options.payload,
+    entry.key,
+    options.skipPayloadValidation,
+    options.payloadLimits,
+  );
   const newSize = replacementResult.sizeBytes;
   const encodedDelta = newSize - oldSize;
 
@@ -142,7 +173,9 @@ export const replaceRecordById = (
     encodedDelta > 0 &&
     options.currentSizeBytes + encodedDelta > options.capacityState.maxSizeBytes
   ) {
-    throw new QuotaExceededError('replaceById exceeds configured capacity.maxSize boundary.');
+    throw new QuotaExceededError(
+      'replaceById exceeds configured capacity.maxSize boundary.',
+    );
   }
 
   const replacedRecord: PersistedRecord = {
@@ -151,7 +184,9 @@ export const replaceRecordById = (
   };
 
   if (options.keyIndex.updateById(options.id, replacedRecord) === null) {
-    throw new IndexCorruptionError('Record index state is inconsistent during replaceById.');
+    throw new IndexCorruptionError(
+      'Record index state is inconsistent during replaceById.',
+    );
   }
 
   // Underflow is not possible: encodedDelta = newSize - oldSize, and oldSize was
@@ -195,10 +230,7 @@ export const deleteRecordById = (
   // against any future estimation inconsistency.
   return {
     deleted: true,
-    currentSizeBytes: Math.max(
-      0,
-      options.currentSizeBytes - freedBytes,
-    ),
+    currentSizeBytes: Math.max(0, options.currentSizeBytes - freedBytes),
     durabilitySignalBytes: freedBytes,
   };
 };

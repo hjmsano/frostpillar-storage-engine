@@ -1,9 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-const { computeUtf8ByteLength } = await import(
-  '../../dist/storage/backend/encoding.js'
-);
+const { computeUtf8ByteLength } =
+  await import('../../dist/storage/backend/encoding.js');
 
 const encoder = new TextEncoder();
 const textEncoderByteLength = (value) => encoder.encode(value).byteLength;

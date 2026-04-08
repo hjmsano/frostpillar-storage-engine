@@ -23,12 +23,14 @@ paths or enumerated every subclass.
 ## Consequences
 
 Positive:
+
 - Consumers can catch the entire Frostpillar public error family with a single
   `instanceof` check.
 - The documented error hierarchy and the actual public API surface are aligned.
 - Existing subclass-based handling remains fully compatible.
 
 Trade-off:
+
 - Public API surface increases by one export and must be maintained as a
   compatibility commitment.
 

@@ -40,16 +40,21 @@ describe('putMany strict + custom comparator atomicity', () => {
     // 'A' and 'a' are comparator-equal under case-insensitive compare.
     // putMany must reject atomically — no partial insertion.
     await assert.rejects(
-      () => ds.putMany([
-        { key: 'A', payload: { v: 1 } },
-        { key: 'a', payload: { v: 2 } },
-      ]),
+      () =>
+        ds.putMany([
+          { key: 'A', payload: { v: 1 } },
+          { key: 'a', payload: { v: 2 } },
+        ]),
       (err) => err instanceof ValidationError,
     );
 
     // Atomicity: count must be 0, not 1
     const count = await ds.count();
-    assert.equal(count, 0, 'expected 0 records after atomic rejection, got partial write');
+    assert.equal(
+      count,
+      0,
+      'expected 0 records after atomic rejection, got partial write',
+    );
 
     await ds.close();
   });
@@ -62,10 +67,11 @@ describe('putMany strict + custom comparator atomicity', () => {
     });
 
     await assert.rejects(
-      () => ds.putMany([
-        { key: 'Hello', payload: { v: 1 } },
-        { key: 'HELLO', payload: { v: 2 } },
-      ]),
+      () =>
+        ds.putMany([
+          { key: 'Hello', payload: { v: 1 } },
+          { key: 'HELLO', payload: { v: 2 } },
+        ]),
       (err) => err instanceof ValidationError,
     );
 
@@ -104,9 +110,7 @@ describe('putMany strict + custom comparator atomicity', () => {
     await ds.put({ key: 'Existing', payload: { v: 0 } });
 
     await assert.rejects(
-      () => ds.putMany([
-        { key: 'EXISTING', payload: { v: 1 } },
-      ]),
+      () => ds.putMany([{ key: 'EXISTING', payload: { v: 1 } }]),
       (err) => err instanceof ValidationError,
     );
 

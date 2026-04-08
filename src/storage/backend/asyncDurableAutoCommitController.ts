@@ -151,7 +151,8 @@ export abstract class AsyncDurableAutoCommitController {
       this.dirtyFromClear = false;
 
       const shouldRunCommit =
-        runForeground || (runBackground && (this.pendingAutoCommitBytes > 0 || runClear));
+        runForeground ||
+        (runBackground && (this.pendingAutoCommitBytes > 0 || runClear));
       if (!shouldRunCommit) {
         shouldContinue = false;
         continue;
@@ -177,7 +178,10 @@ export abstract class AsyncDurableAutoCommitController {
         this.onAutoCommitError(error);
       }
 
-      if (!this.pendingForegroundCommitRequest && !this.pendingBackgroundCommitRequest) {
+      if (
+        !this.pendingForegroundCommitRequest &&
+        !this.pendingBackgroundCommitRequest
+      ) {
         shouldContinue = false;
       }
     }
@@ -194,7 +198,11 @@ export abstract class AsyncDurableAutoCommitController {
     this.autoCommitTimer = setInterval((): void => {
       this.handleAutoCommitTick();
     }, this.autoCommit.intervalMs);
-    if (typeof this.autoCommitTimer === 'object' && this.autoCommitTimer !== null && 'unref' in this.autoCommitTimer) {
+    if (
+      typeof this.autoCommitTimer === 'object' &&
+      this.autoCommitTimer !== null &&
+      'unref' in this.autoCommitTimer
+    ) {
       (this.autoCommitTimer as { unref: () => void }).unref();
     }
   }

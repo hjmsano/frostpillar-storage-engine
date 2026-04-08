@@ -1,13 +1,6 @@
-import {
-  SyncStorageBackendController,
-} from '../storage/drivers/syncStorage/syncStorageBackendController.js';
-import {
-  parseSyncStorageMaxTotalBytesForBackendLimit,
-} from '../storage/drivers/syncStorage/syncStorageConfig.js';
-import type {
-  DatastoreDriver,
-  SyncStorageConfig,
-} from '../types.js';
+import { SyncStorageBackendController } from '../storage/drivers/syncStorage/syncStorageBackendController.js';
+import { parseSyncStorageMaxTotalBytesForBackendLimit } from '../storage/drivers/syncStorage/syncStorageConfig.js';
+import type { DatastoreDriver, SyncStorageConfig } from '../types.js';
 
 export type SyncStorageDriverOptions = SyncStorageConfig;
 
