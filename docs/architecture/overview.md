@@ -40,7 +40,7 @@ Core responsibilities:
 - maintain insertion-order and key-range selectable records via B+Tree (single source of truth)
 - enforce duplicate key policy (`allow` / `replace` / `reject`)
 - enforce capacity policy (`strict` / `turnover`)
-- defensively clone payloads at insertion time (reads return independent copies)
+- defensively clone payloads at insertion time (reads return shared references, not copies — callers must treat returned payloads as read-only)
 - delegate persistence to backend controllers
 
 External boundaries in this repository:

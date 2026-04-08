@@ -52,8 +52,10 @@ const resolveCanonicalPathForContainment = (targetPath: string): string => {
 export const ensureCanonicalPathWithinWorkingDirectory = (
   targetPath: string,
   optionName: string,
+  capturedCwd?: string,
 ): void => {
-  const canonicalWorkingDirectory = realpathSync(resolve(process.cwd()));
+  const canonicalWorkingDirectory =
+    capturedCwd ?? realpathSync(process.cwd());
   const canonicalTargetPath = resolveCanonicalPathForContainment(targetPath);
 
   if (!isPathWithinBaseDirectory(canonicalTargetPath, canonicalWorkingDirectory)) {
@@ -74,7 +76,10 @@ const ensureSafeFileNameFragment = (
   }
 };
 
-export const resolveFileDataPath = (config: FileBackendConfig): string => {
+export const resolveFileDataPath = (
+  config: FileBackendConfig,
+  capturedCwd?: string,
+): string => {
   if (config.filePath !== undefined && config.target !== undefined) {
     throw new ConfigurationError(
       'filePath and target cannot be specified together.',
@@ -83,7 +88,7 @@ export const resolveFileDataPath = (config: FileBackendConfig): string => {
 
   if (config.filePath !== undefined) {
     const resolvedFilePath = resolve(config.filePath);
-    ensureCanonicalPathWithinWorkingDirectory(resolvedFilePath, 'filePath');
+    ensureCanonicalPathWithinWorkingDirectory(resolvedFilePath, 'filePath', capturedCwd);
     return resolvedFilePath;
   }
 
@@ -93,12 +98,12 @@ export const resolveFileDataPath = (config: FileBackendConfig): string => {
 
   if (config.target.kind === 'path') {
     const resolvedFilePath = resolve(config.target.filePath);
-    ensureCanonicalPathWithinWorkingDirectory(resolvedFilePath, 'target.filePath');
+    ensureCanonicalPathWithinWorkingDirectory(resolvedFilePath, 'target.filePath', capturedCwd);
     return resolvedFilePath;
   }
 
   const directoryPath = resolve(config.target.directory);
-  ensureCanonicalPathWithinWorkingDirectory(directoryPath, 'target.directory');
+  ensureCanonicalPathWithinWorkingDirectory(directoryPath, 'target.directory', capturedCwd);
   const filePrefix = config.target.filePrefix ?? '';
   const fileName = config.target.fileName ?? 'frostpillar';
   ensureSafeFileNameFragment(filePrefix, 'target.filePrefix');

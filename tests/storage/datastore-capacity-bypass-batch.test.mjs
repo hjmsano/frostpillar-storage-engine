@@ -286,6 +286,56 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
     }
   });
 
+  test('turnover policy, non-atomic: partial insertion survives mid-batch reject-policy failure', async () => {
+    const { Datastore } = await loadStorageModule();
+    const { ValidationError } = await importDistModule('errors/index.js');
+    const datastore = new Datastore({
+      key: createStringKeyDefinition(),
+      duplicateKeys: 'reject',
+      capacity: { maxSize: 2000, policy: 'turnover' },
+    });
+    try {
+      await datastore.put({ key: 'existing', payload: { v: 'pre' } });
+      // Second record has duplicate key 'existing' → fails
+      await assert.rejects(
+        () => datastore.putMany([
+          { key: 'new1', payload: { v: 'ok' } },
+          { key: 'existing', payload: { v: 'dup' } },
+        ]),
+        (err) => err instanceof ValidationError,
+      );
+      // Non-atomic: 'new1' was inserted before failure
+      assert.equal(await datastore.count(), 2);
+      const n1 = await datastore.get('new1');
+      assert.equal(n1.length, 1);
+    } finally {
+      await datastore.close();
+    }
+  });
+
+  test('no capacity, non-atomic: partial insertion survives mid-batch reject-policy failure', async () => {
+    const { Datastore } = await loadStorageModule();
+    const { ValidationError } = await importDistModule('errors/index.js');
+    const datastore = new Datastore({
+      key: createStringKeyDefinition(),
+      duplicateKeys: 'reject',
+    });
+    try {
+      await datastore.put({ key: 'existing', payload: { v: 'pre' } });
+      await assert.rejects(
+        () => datastore.putMany([
+          { key: 'new1', payload: { v: 'ok' } },
+          { key: 'existing', payload: { v: 'dup' } },
+        ]),
+        (err) => err instanceof ValidationError,
+      );
+      // Non-atomic: 'new1' was inserted before failure
+      assert.equal(await datastore.count(), 2);
+    } finally {
+      await datastore.close();
+    }
+  });
+
   test('strict policy with replace: shrink replacement frees capacity for additional records', async () => {
     const { Datastore } = await loadStorageModule();
     const datastore = new Datastore({

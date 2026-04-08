@@ -5,6 +5,7 @@ import {
   openSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   unlinkSync,
   writeSync,
 } from 'node:fs';
@@ -67,7 +68,10 @@ const tryRecoverStaleLock = (lockPath: string): boolean => {
 const writeLockFile = (lockPath: string): void => {
   const descriptor = openSync(lockPath, 'wx');
   try {
-    const pidContent = JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() });
+    const pidContent = JSON.stringify({
+      pid: process.pid,
+      createdAt: new Date().toISOString(),
+    });
     writeSync(descriptor, pidContent, null, 'utf8');
   } finally {
     closeSync(descriptor);
@@ -119,15 +123,10 @@ const acquireFileLock = (lockPath: string): void => {
           );
         }
       }
-      throw new DatabaseLockedError(
-        'Datastore is locked by another process.',
-      );
+      throw new DatabaseLockedError('Datastore is locked by another process.');
     }
 
-    throw toStorageEngineError(
-      error,
-      'Failed to acquire file lock.',
-    );
+    throw toStorageEngineError(error, 'Failed to acquire file lock.');
   }
 };
 
@@ -153,8 +152,13 @@ const cleanupFileTempArtifacts = (backend: FileBackendState): void => {
   }
 };
 
-export const createFileBackend = (config: FileBackendConfig): FileBackendState => {
-  const dataFilePath = resolveFileDataPath(config);
+export const createFileBackend = (
+  config: FileBackendConfig,
+): FileBackendState => {
+  // Capture the canonical working directory exactly once at construction time
+  // (spec §3.6). Later process.chdir() calls must not affect path containment.
+  const capturedCwd = realpathSync(process.cwd());
+  const dataFilePath = resolveFileDataPath(config, capturedCwd);
   const directoryPath = dirname(dataFilePath);
   const baseFileName = basename(dataFilePath);
   const sidecarPath = `${dataFilePath}.meta.json`;
@@ -163,6 +167,7 @@ export const createFileBackend = (config: FileBackendConfig): FileBackendState =
   ensureCanonicalPathWithinWorkingDirectory(
     dataFilePath,
     'resolvedDataFilePath',
+    capturedCwd,
   );
   mkdirSync(directoryPath, { recursive: true });
   acquireFileLock(lockPath);
@@ -188,7 +193,9 @@ export const createFileBackend = (config: FileBackendConfig): FileBackendState =
   return backend;
 };
 
-export const cleanupStaleGenerationFiles = (backend: FileBackendState): void => {
+export const cleanupStaleGenerationFiles = (
+  backend: FileBackendState,
+): void => {
   try {
     const entries = readdirSync(backend.directoryPath);
     const generationPrefix = `${backend.baseFileName}.g.`;

@@ -244,7 +244,7 @@ For trusted input where you control the shape, you can skip validation:
 const db = new Datastore({ skipPayloadValidation: true });
 ```
 
-> **Warning:** Skipping validation disables all payload safety checks, ignores `payloadLimits`, and skips defensive cloning (payloads are stored by reference). Only use this when you are certain the input is well-formed and you will not mutate the payload object after insertion.
+> **Warning:** Skipping validation disables all runtime payload safety checks and skips defensive cloning (payloads are stored by reference). `payloadLimits` are still validated at construction time (invalid values throw `ConfigurationError`), but are not applied at runtime. Only use this when you are certain the input is well-formed and you will not mutate the payload object after insertion.
 
 #### Index Configuration
 
@@ -284,7 +284,7 @@ Setting `maxLeafEntries` or `maxBranchChildren` when `autoScale` is `true` throw
 await db.put({ key: 'k1', payload: { name: 'Alice' } });
 ```
 
-**`putMany(records)`** — insert multiple records (non-atomic, left-to-right).
+**`putMany(records)`** — insert multiple records. Atomicity depends on capacity policy: `strict` performs an atomic batch (all-or-nothing); `turnover` or no capacity executes non-atomic left-to-right.
 
 ```ts
 await db.putMany([
@@ -531,21 +531,8 @@ If the owning process is still alive (or the lock file is malformed), the open f
 
 #### localStorage Driver
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { localStorageDriver } from '@frostpillar/frostpillar-storage-engine/drivers/localStorage';
-
-const db = new Datastore({
-  driver: localStorageDriver({
-    databaseKey: 'app-events',
-    keyPrefix: 'frostpillar',
-    maxChunkChars: 32768,
-    maxChunks: 64,
-  }),
-});
-```
+> **Browser / Extension environments only.** This driver is not available on Node.js.
+> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -587,21 +574,8 @@ const db = new Datastore({
 
 #### IndexedDB Driver
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { indexedDBDriver } from '@frostpillar/frostpillar-storage-engine/drivers/indexedDB';
-
-const db = new Datastore({
-  autoCommit: { frequency: 'immediate' },
-  driver: indexedDBDriver({
-    databaseName: 'frostpillar-demo',
-    objectStoreName: 'records',
-    version: 1,
-  }),
-});
-```
+> **Browser / Extension environments only.** This driver is not available on Node.js.
+> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -642,19 +616,8 @@ const db = new Datastore({
 
 #### OPFS Driver
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { opfsDriver } from '@frostpillar/frostpillar-storage-engine/drivers/opfs';
-
-const db = new Datastore({
-  autoCommit: { frequency: 'immediate' },
-  driver: opfsDriver({
-    directoryName: 'frostpillar-opfs',
-  }),
-});
-```
+> **Browser / Extension environments only.** This driver is not available on Node.js.
+> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -689,32 +652,8 @@ const db = new Datastore({
 
 #### Sync Storage Driver (Browser Extensions)
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { syncStorageDriver } from '@frostpillar/frostpillar-storage-engine/drivers/syncStorage';
-
-const db = new Datastore({
-  capacity: {
-    maxSize: 'backendLimit',
-    policy: 'strict',
-  },
-  autoCommit: {
-    frequency: '10s',
-    maxPendingBytes: 32768,
-  },
-  driver: syncStorageDriver({
-    databaseKey: 'extension-events',
-    keyPrefix: 'frostpillar-ext',
-    maxChunkChars: 6000,
-    maxChunks: 128,
-    maxItemBytes: 8192,
-    maxTotalBytes: 102400,
-    maxItems: 256,
-  }),
-});
-```
+> **Browser / Extension environments only.** This driver is not available on Node.js.
+> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -950,7 +889,7 @@ const db = new Datastore({
 **Policies:**
 
 - **`strict`** (default) — rejects writes that exceed the limit with `QuotaExceededError`.
-- **`turnover`** — evicts the oldest records (by insertion order) until the new record fits.
+- **`turnover`** — evicts records with the smallest key first (ascending B+Tree key order) until the new record fits.
 
 **`backendLimit` sentinel:**
 
@@ -1041,11 +980,11 @@ const db = new Datastore({
 | Callback                      | Description                                              |
 | ----------------------------- | -------------------------------------------------------- |
 | `normalize(value, fieldName)` | Validate and normalize input to your key type            |
-| `compare(left, right)`        | Return a finite integer for ordering (`< 0`, `0`, `> 0`) |
+| `compare(left, right)`        | Return a number for ordering (`< 0`, `0`, `> 0`)         |
 | `serialize(key)`              | Convert key to a string for storage                      |
 | `deserialize(serialized)`     | Restore key from stored string                           |
 
-All four are required when `config.key` is provided. `compare` must return a finite integer — `NaN`, `Infinity`, or non-integer values fail with `IndexCorruptionError`.
+All four are required when `config.key` is provided. `compare` should return a negative integer, zero, or positive integer. In the hot path, non-NaN values (including floats like `0.5` and `Infinity`) are automatically clamped to `-1`, `0`, or `+1` — this is by design for performance. `NaN` is the only value that causes undefined behavior and throws `IndexCorruptionError`.
 
 ---
 
@@ -1189,7 +1128,7 @@ If both a deferred backend initialization failure and a backend close failure oc
 | `InputRecord` | Record shape accepted by `put()` and `putMany()` |
 | `KeyedRecord` | Record object with `key`, `payload`, and `_id` fields |
 | `PersistedRecord` | Internal record format with `payload` and `sizeBytes` |
-| `RecordPayload` | Payload value type (nested record of strings, numbers, booleans, nulls, and arrays) |
+| `RecordPayload` | Payload value type (nested record of strings, numbers, booleans, and nulls). Arrays are not supported and rejected at runtime. |
 | `EntryId` | Branded `number` identifying a specific record (ephemeral, re-issued on restore) |
 | `DuplicateKeyPolicy` | `'allow' \| 'reject' \| 'replace'` |
 | `IndexConfig` | Index configuration (`autoScale`, `maxLeafEntries`, `maxBranchChildren`) |

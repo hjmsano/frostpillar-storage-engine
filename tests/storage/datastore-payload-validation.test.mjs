@@ -128,4 +128,40 @@ describe('Datastore payload validation', () => {
     const result = await ds.getFirst('empty');
     assert.deepStrictEqual(result.payload, {});
   });
+
+  // Regression: put/putMany must throw ValidationError for invalid record shapes
+  it('put(null) throws ValidationError', async () => {
+    await assert.rejects(
+      () => ds.put(null),
+      (err) => err instanceof ValidationError && err.message === 'Record must be a non-null object',
+    );
+  });
+
+  it('put(undefined) throws ValidationError', async () => {
+    await assert.rejects(
+      () => ds.put(undefined),
+      (err) => err instanceof ValidationError && err.message === 'Record must be a non-null object',
+    );
+  });
+
+  it('put({ payload: {} }) (missing key) throws ValidationError', async () => {
+    await assert.rejects(
+      () => ds.put({ payload: {} }),
+      (err) => err instanceof ValidationError,
+    );
+  });
+
+  it('putMany([null]) throws ValidationError', async () => {
+    await assert.rejects(
+      () => ds.putMany([null]),
+      (err) => err instanceof ValidationError && err.message === 'Record must be a non-null object',
+    );
+  });
+
+  it('putMany([undefined]) throws ValidationError', async () => {
+    await assert.rejects(
+      () => ds.putMany([undefined]),
+      (err) => err instanceof ValidationError && err.message === 'Record must be a non-null object',
+    );
+  });
 });

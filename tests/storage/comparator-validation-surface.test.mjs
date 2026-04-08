@@ -79,13 +79,12 @@ test('getRange rejects non-integer comparator output with IndexCorruptionError',
   await ds.close();
 });
 
-// P14: keys() and getMany now use clampComparatorResult (no validation) for
-// hot-path performance. NaN/Infinity comparator results are silently clamped
-// instead of throwing IndexCorruptionError. Validation still occurs in
-// getRange (single call at boundary) and in buildWrappedComparator (B-tree level).
+// NaN comparator results are consistently rejected with IndexCorruptionError
+// across all APIs including hot-path loop APIs (keys, getMany).
+// clampComparatorResult checks NaN (x !== x) with negligible overhead.
 
-test('keys() does not throw on NaN comparator output (clamped by P14)', async () => {
-  const { Datastore } = await loadStorageModule();
+test('keys() rejects NaN comparator output with IndexCorruptionError', async () => {
+  const { Datastore, IndexCorruptionError } = await loadStorageModule();
 
   let poisoned = false;
   const ds = new Datastore({
@@ -106,9 +105,10 @@ test('keys() does not throw on NaN comparator output (clamped by P14)', async ()
 
   poisoned = true;
 
-  // NaN is clamped to 1 (not-equal), so all keys are treated as distinct
-  const result = await ds.keys();
-  assert.equal(result.length, 2);
+  await assert.rejects(
+    ds.keys(),
+    IndexCorruptionError,
+  );
 
   await ds.close();
 });
@@ -168,6 +168,51 @@ test('BTree wrapped comparator rejects NaN during put to prevent index corruptio
   );
 
   await ds.close();
+});
+
+test('keys() does not throw on Infinity comparator output (clamped, non-NaN)', async () => {
+  const { Datastore } = await loadStorageModule();
+
+  let poisoned = false;
+  const ds = new Datastore({
+    key: {
+      normalize: (v) => v,
+      compare: (left, right) => {
+        if (left === right) return 0;
+        if (poisoned) return Number.POSITIVE_INFINITY;
+        return left < right ? -1 : 1;
+      },
+      serialize: (v) => String(v),
+      deserialize: (v) => v,
+    },
+  });
+
+  await ds.put({ key: 'a', payload: { v: 1 } });
+  await ds.put({ key: 'z', payload: { v: 2 } });
+
+  poisoned = true;
+
+  // Infinity is clamped to 1 (not-equal), so all keys are treated as distinct
+  const result = await ds.keys();
+  assert.equal(result.length, 2);
+
+  await ds.close();
+});
+
+test('clampComparatorResult rejects NaN with IndexCorruptionError', async () => {
+  const { clampComparatorResult } = await importDistModule(
+    'storage/btree/recordKeyIndexBTree.js',
+  );
+  const { IndexCorruptionError } = await importDistModule('errors/index.js');
+
+  assert.equal(clampComparatorResult(0), 0);
+  assert.equal(clampComparatorResult(-42), -1);
+  assert.equal(clampComparatorResult(99), 1);
+  // Infinity is clamped, not thrown
+  assert.equal(clampComparatorResult(Number.POSITIVE_INFINITY), 1);
+  assert.equal(clampComparatorResult(Number.NEGATIVE_INFINITY), -1);
+  // NaN throws
+  assert.throws(() => clampComparatorResult(Number.NaN), IndexCorruptionError);
 });
 
 test('normalizeComparatorResult is exported from recordKeyIndexBTree module', async () => {

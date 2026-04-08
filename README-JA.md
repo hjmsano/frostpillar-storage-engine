@@ -244,7 +244,7 @@ const db = new Datastore({
 const db = new Datastore({ skipPayloadValidation: true });
 ```
 
-> **警告:** バリデーションのスキップは、すべてのペイロード安全チェックを無効化し、`payloadLimits` も無視され、防御的クローンもスキップされます（ペイロードは参照のまま格納されます）。入力が正しい形式であり、挿入後にペイロードオブジェクトを変更しないことが確実な場合のみ使用してください。
+> **警告:** バリデーションのスキップは、すべてのランタイムペイロード安全チェックを無効化し、防御的クローンもスキップされます（ペイロードは参照のまま格納されます）。`payloadLimits` は構築時に検証されます（無効な値は `ConfigurationError` をスロー）が、ランタイムでは適用されません。入力が正しい形式であり、挿入後にペイロードオブジェクトを変更しないことが確実な場合のみ使用してください。
 
 #### インデックス設定
 
@@ -284,7 +284,7 @@ const db2 = new Datastore({
 await db.put({ key: 'k1', payload: { name: 'Alice' } });
 ```
 
-**`putMany(records)`** — 複数レコードを挿入します（非アトミック、左から右へ順次実行）。
+**`putMany(records)`** — 複数レコードを挿入します。アトミック性は容量ポリシーに依存します：`strict` はアトミックバッチ（全件成功または全件失敗）、`turnover` または容量未設定は非アトミック（左から右へ順次実行）。
 
 ```ts
 await db.putMany([
@@ -531,21 +531,8 @@ await db.close();
 
 #### localStorage ドライバ
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { localStorageDriver } from '@frostpillar/frostpillar-storage-engine/drivers/localStorage';
-
-const db = new Datastore({
-  driver: localStorageDriver({
-    databaseKey: 'app-events',
-    keyPrefix: 'frostpillar',
-    maxChunkChars: 32768,
-    maxChunks: 64,
-  }),
-});
-```
+> **ブラウザ / 拡張機能環境専用。** このドライバは Node.js では利用できません。
+> Node.js でのインメモリストレージには `memoryDriver`、永続化には `fileDriver` を使用してください。
 
 **ブラウザ（ESM）:**
 
@@ -587,21 +574,8 @@ const db = new Datastore({
 
 #### IndexedDB ドライバ
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { indexedDBDriver } from '@frostpillar/frostpillar-storage-engine/drivers/indexedDB';
-
-const db = new Datastore({
-  autoCommit: { frequency: 'immediate' },
-  driver: indexedDBDriver({
-    databaseName: 'frostpillar-demo',
-    objectStoreName: 'records',
-    version: 1,
-  }),
-});
-```
+> **ブラウザ / 拡張機能環境専用。** このドライバは Node.js では利用できません。
+> Node.js でのインメモリストレージには `memoryDriver`、永続化には `fileDriver` を使用してください。
 
 **ブラウザ（ESM）:**
 
@@ -642,19 +616,8 @@ const db = new Datastore({
 
 #### OPFS ドライバ
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { opfsDriver } from '@frostpillar/frostpillar-storage-engine/drivers/opfs';
-
-const db = new Datastore({
-  autoCommit: { frequency: 'immediate' },
-  driver: opfsDriver({
-    directoryName: 'frostpillar-opfs',
-  }),
-});
-```
+> **ブラウザ / 拡張機能環境専用。** このドライバは Node.js では利用できません。
+> Node.js でのインメモリストレージには `memoryDriver`、永続化には `fileDriver` を使用してください。
 
 **ブラウザ（ESM）:**
 
@@ -689,32 +652,8 @@ const db = new Datastore({
 
 #### Sync Storage ドライバ（ブラウザ拡張）
 
-**Node.js / TypeScript:**
-
-```ts
-import { Datastore } from '@frostpillar/frostpillar-storage-engine';
-import { syncStorageDriver } from '@frostpillar/frostpillar-storage-engine/drivers/syncStorage';
-
-const db = new Datastore({
-  capacity: {
-    maxSize: 'backendLimit',
-    policy: 'strict',
-  },
-  autoCommit: {
-    frequency: '10s',
-    maxPendingBytes: 32768,
-  },
-  driver: syncStorageDriver({
-    databaseKey: 'extension-events',
-    keyPrefix: 'frostpillar-ext',
-    maxChunkChars: 6000,
-    maxChunks: 128,
-    maxItemBytes: 8192,
-    maxTotalBytes: 102400,
-    maxItems: 256,
-  }),
-});
-```
+> **ブラウザ / 拡張機能環境専用。** このドライバは Node.js では利用できません。
+> Node.js でのインメモリストレージには `memoryDriver`、永続化には `fileDriver` を使用してください。
 
 **ブラウザ（ESM）:**
 
@@ -950,7 +889,7 @@ const db = new Datastore({
 **ポリシー：**
 
 - **`strict`**（デフォルト）— 制限を超える書き込みを `QuotaExceededError` で拒否します。
-- **`turnover`** — 新しいレコードが収まるまで、最も古いレコード（挿入順）を退避します。
+- **`turnover`** — 新しいレコードが収まるまで、B+Tree のキー昇順で最小キーを持つレコードから順に退避します。
 
 **`backendLimit` センチネル：**
 
@@ -1041,11 +980,11 @@ const db = new Datastore({
 | コールバック                  | 説明                                                |
 | ----------------------------- | --------------------------------------------------- |
 | `normalize(value, fieldName)` | 入力をキー型にバリデーション・正規化                |
-| `compare(left, right)`        | 順序付けのための有限整数を返す（`< 0`、`0`、`> 0`） |
+| `compare(left, right)`        | 順序付けのための数値を返す（`< 0`、`0`、`> 0`）     |
 | `serialize(key)`              | キーをストレージ用の文字列に変換                    |
 | `deserialize(serialized)`     | 格納された文字列からキーを復元                      |
 
-`config.key` を指定する場合、4 つすべてが必須です。`compare` は有限整数を返す必要があります。`NaN`、`Infinity`、非整数値は `IndexCorruptionError` で失敗します。
+`config.key` を指定する場合、4 つすべてが必須です。`compare` は負の整数・ゼロ・正の整数を返すことが推奨されます。ホットパスでは、NaN 以外の値（`0.5` などの小数や `Infinity`）は自動的に `-1`・`0`・`+1` にクランプされます。これはパフォーマンスのための設計です。`NaN` のみが未定義動作を引き起こし、`IndexCorruptionError` をスローします。
 
 ---
 
@@ -1189,7 +1128,7 @@ try {
 | `InputRecord` | `put()` および `putMany()` が受け付けるレコード形式 |
 | `KeyedRecord` | `key`、`payload`、`_id` フィールドを持つレコードオブジェクト |
 | `PersistedRecord` | `payload` と `sizeBytes` を持つ内部レコード形式 |
-| `RecordPayload` | ペイロードの値型（文字列、数値、真偽値、null、配列のネストされたレコード） |
+| `RecordPayload` | ペイロードの値型（文字列、数値、真偽値、null のネストされたレコード）。配列は未サポートでランタイムで拒否されます。 |
 | `EntryId` | レコードを識別するブランド付き `number`（エフェメラル、復元時に再発行） |
 | `DuplicateKeyPolicy` | `'allow' \| 'reject' \| 'replace'` |
 | `IndexConfig` | インデックス設定（`autoScale`、`maxLeafEntries`、`maxBranchChildren`） |
