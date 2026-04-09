@@ -156,6 +156,7 @@ describe('Duplicate key policy: reject (putMany)', () => {
           err.message,
           'Duplicate key rejected: a record with this key already exists.',
         );
+        assert.equal(err.name, 'DuplicateKeyError');
         return true;
       },
     );
