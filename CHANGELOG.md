@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.5...v0.1.6) (2026-04-09)
+
+
+### Bug Fixes
+
+* expose  DuplicateKeyError and improve tests and docs ([7093bc8](https://github.com/hjmsano/frostpillar-storage-engine/commit/7093bc870bf9e8ab94d09659dc193ccf29776486))
+
 ## [0.1.5](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.4...v0.1.5) (2026-04-09)
 
 ### Bug Fixes
