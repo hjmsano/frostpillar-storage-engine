@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.4...v0.1.5) (2026-04-09)
+
+
+### Bug Fixes
+
+* preserve deleteRebalancePolicy on restore and expand countRange validation coverage ([150251c](https://github.com/hjmsano/frostpillar-storage-engine/commit/150251c3b68dd4e22cafa8468ed2996d8eda4d78))
+
 ## [0.1.4](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.3...v0.1.4) (2026-04-08)
 
 ### Bug Fixes
