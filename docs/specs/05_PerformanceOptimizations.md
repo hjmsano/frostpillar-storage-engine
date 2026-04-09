@@ -71,7 +71,7 @@ let replacedBytes = 0;
 if (this.duplicateKeyPolicy !== 'allow') {
   const existing = this.keyIndex.findFirst(normalizedKey);
   if (existing !== null && this.duplicateKeyPolicy === 'reject') {
-    throw new ValidationError(
+    throw new DuplicateKeyError(
       'Duplicate key rejected: a record with this key already exists.',
     );
   }

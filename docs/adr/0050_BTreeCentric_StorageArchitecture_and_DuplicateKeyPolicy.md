@@ -208,8 +208,9 @@ rather than maintaining incremental per-record byte counts.
 
 #### 3.3 Adapt mutation paths per policy
 
-- `put()` in `'reject'` mode: surface btree's `BTreeValidationError` as
-  storage engine error
+- `put()` in `'reject'` mode: storage engine performs the duplicate check
+  ahead of the btree insert and throws `DuplicateKeyError` — extends
+  `ValidationError`, with a stable message. See `01_DatastoreAPI.md` §2.1, §8.
 - `put()` in `'replace'` mode: btree handles overwrite natively
 - `updateById()`: use `tree.updateById(entryId, value)` directly
 - `deleteById()`: use `tree.removeById(entryId)` directly

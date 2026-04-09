@@ -271,9 +271,10 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
     }
   });
 
-  test('strict policy with reject: intra-batch duplicate key throws ValidationError; count() is 0', async () => {
+  test('strict policy with reject: intra-batch duplicate key throws DuplicateKeyError; count() is 0', async () => {
     const { Datastore } = await loadStorageModule();
-    const { ValidationError } = await importDistModule('errors/index.js');
+    const { DuplicateKeyError, ValidationError } =
+      await importDistModule('errors/index.js');
     const datastore = new Datastore({
       key: createStringKeyDefinition(),
       duplicateKeys: 'reject',
@@ -286,7 +287,8 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
             { key: 'dup', payload: { v: 'first' } },
             { key: 'dup', payload: { v: 'second' } },
           ]),
-        (err) => err instanceof ValidationError,
+        (err) =>
+          err instanceof DuplicateKeyError && err instanceof ValidationError,
       );
       assert.equal(await datastore.count(), 0);
     } finally {
@@ -296,7 +298,8 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
 
   test('turnover policy, non-atomic: partial insertion survives mid-batch reject-policy failure', async () => {
     const { Datastore } = await loadStorageModule();
-    const { ValidationError } = await importDistModule('errors/index.js');
+    const { DuplicateKeyError, ValidationError } =
+      await importDistModule('errors/index.js');
     const datastore = new Datastore({
       key: createStringKeyDefinition(),
       duplicateKeys: 'reject',
@@ -311,7 +314,8 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
             { key: 'new1', payload: { v: 'ok' } },
             { key: 'existing', payload: { v: 'dup' } },
           ]),
-        (err) => err instanceof ValidationError,
+        (err) =>
+          err instanceof DuplicateKeyError && err instanceof ValidationError,
       );
       // Non-atomic: 'new1' was inserted before failure
       assert.equal(await datastore.count(), 2);
@@ -324,7 +328,8 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
 
   test('no capacity, non-atomic: partial insertion survives mid-batch reject-policy failure', async () => {
     const { Datastore } = await loadStorageModule();
-    const { ValidationError } = await importDistModule('errors/index.js');
+    const { DuplicateKeyError, ValidationError } =
+      await importDistModule('errors/index.js');
     const datastore = new Datastore({
       key: createStringKeyDefinition(),
       duplicateKeys: 'reject',
@@ -337,7 +342,8 @@ describe('P5-B: Batch putMany with Strict Atomicity', () => {
             { key: 'new1', payload: { v: 'ok' } },
             { key: 'existing', payload: { v: 'dup' } },
           ]),
-        (err) => err instanceof ValidationError,
+        (err) =>
+          err instanceof DuplicateKeyError && err instanceof ValidationError,
       );
       // Non-atomic: 'new1' was inserted before failure
       assert.equal(await datastore.count(), 2);

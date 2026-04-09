@@ -38,6 +38,7 @@ export {
   ClosedDatastoreError,
   ConfigurationError,
   DatabaseLockedError,
+  DuplicateKeyError,
   FrostpillarError,
   IndexCorruptionError,
   InvalidQueryRangeError,

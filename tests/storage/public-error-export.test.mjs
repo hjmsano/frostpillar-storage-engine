@@ -103,6 +103,18 @@ test('public API exports all core error subclasses for granular instanceof check
   );
 });
 
+test('DuplicateKeyError is exported and extends ValidationError', async () => {
+  const frostpillarModule = await loadPublicModule();
+
+  assert.equal(typeof frostpillarModule.DuplicateKeyError, 'function');
+
+  const err = new frostpillarModule.DuplicateKeyError('x');
+  assert.ok(err instanceof frostpillarModule.ValidationError);
+  assert.ok(err instanceof frostpillarModule.FrostpillarError);
+  assert.ok(err instanceof Error);
+  assert.equal(err.name, 'DuplicateKeyError');
+});
+
 test('query-layer error classes are not part of the storage engine public API', async () => {
   const frostpillarModule = await loadPublicModule();
 

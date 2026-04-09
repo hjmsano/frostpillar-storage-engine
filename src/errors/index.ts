@@ -15,6 +15,8 @@ export class FrostpillarError extends Error {
 
 export class ValidationError extends FrostpillarError {}
 
+export class DuplicateKeyError extends ValidationError {}
+
 export class InvalidQueryRangeError extends FrostpillarError {}
 
 export class ConfigurationError extends FrostpillarError {}

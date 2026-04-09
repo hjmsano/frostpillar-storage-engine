@@ -1,6 +1,10 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { Datastore, ValidationError } from '../../dist/index.js';
+import {
+  Datastore,
+  DuplicateKeyError,
+  ValidationError,
+} from '../../dist/index.js';
 
 /**
  * Bug 2: putMany strict path can violate atomicity with custom comparator + duplicateKeys: 'reject'.
@@ -45,7 +49,8 @@ describe('putMany strict + custom comparator atomicity', () => {
           { key: 'A', payload: { v: 1 } },
           { key: 'a', payload: { v: 2 } },
         ]),
-      (err) => err instanceof ValidationError,
+      (err) =>
+        err instanceof DuplicateKeyError && err instanceof ValidationError,
     );
 
     // Atomicity: count must be 0, not 1
@@ -72,7 +77,8 @@ describe('putMany strict + custom comparator atomicity', () => {
           { key: 'Hello', payload: { v: 1 } },
           { key: 'HELLO', payload: { v: 2 } },
         ]),
-      (err) => err instanceof ValidationError,
+      (err) =>
+        err instanceof DuplicateKeyError && err instanceof ValidationError,
     );
 
     const count = await ds.count();
@@ -111,7 +117,8 @@ describe('putMany strict + custom comparator atomicity', () => {
 
     await assert.rejects(
       () => ds.putMany([{ key: 'EXISTING', payload: { v: 1 } }]),
-      (err) => err instanceof ValidationError,
+      (err) =>
+        err instanceof DuplicateKeyError && err instanceof ValidationError,
     );
 
     // Only the original record remains
