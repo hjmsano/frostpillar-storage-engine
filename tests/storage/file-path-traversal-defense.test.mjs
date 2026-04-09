@@ -10,21 +10,30 @@ import { ConfigurationError } from '../../dist/errors/index.js';
 describe('file path traversal defense', () => {
   test('ensureCanonicalPathWithinWorkingDirectory rejects absolute path outside cwd', () => {
     assert.throws(
-      () => ensureCanonicalPathWithinWorkingDirectory('/etc/passwd', 'filePath'),
-      (error) => error instanceof ConfigurationError && error.message.includes('must stay within process.cwd()'),
+      () =>
+        ensureCanonicalPathWithinWorkingDirectory('/etc/passwd', 'filePath'),
+      (error) =>
+        error instanceof ConfigurationError &&
+        error.message.includes('must stay within process.cwd()'),
     );
   });
 
   test('ensureCanonicalPathWithinWorkingDirectory rejects relative traversal outside cwd', () => {
     assert.throws(
-      () => ensureCanonicalPathWithinWorkingDirectory('../../etc/passwd', 'filePath'),
-      (error) => error instanceof ConfigurationError && error.message.includes('must stay within process.cwd()'),
+      () =>
+        ensureCanonicalPathWithinWorkingDirectory(
+          '../../etc/passwd',
+          'filePath',
+        ),
+      (error) =>
+        error instanceof ConfigurationError &&
+        error.message.includes('must stay within process.cwd()'),
     );
   });
 
   test('ensureCanonicalPathWithinWorkingDirectory accepts path within cwd', () => {
-    assert.doesNotThrow(
-      () => ensureCanonicalPathWithinWorkingDirectory('./data/test.fpdb', 'filePath'),
+    assert.doesNotThrow(() =>
+      ensureCanonicalPathWithinWorkingDirectory('./data/test.fpdb', 'filePath'),
     );
   });
 
@@ -37,7 +46,10 @@ describe('file path traversal defense', () => {
 
   test('resolveFileDataPath rejects target.filePath with absolute escape', () => {
     assert.throws(
-      () => resolveFileDataPath({ target: { kind: 'path', filePath: '/tmp/escape.fpdb' } }),
+      () =>
+        resolveFileDataPath({
+          target: { kind: 'path', filePath: '/tmp/escape.fpdb' },
+        }),
       (error) => error instanceof ConfigurationError,
     );
   });
@@ -62,7 +74,9 @@ describe('file path traversal defense', () => {
         }),
       (error) =>
         error instanceof ConfigurationError &&
-        error.message.includes('must not contain path separators or traversal tokens'),
+        error.message.includes(
+          'must not contain path separators or traversal tokens',
+        ),
     );
   });
 
@@ -87,7 +101,9 @@ describe('file path traversal defense', () => {
         }),
       (error) =>
         error instanceof ConfigurationError &&
-        error.message.includes('filePath and target cannot be specified together'),
+        error.message.includes(
+          'filePath and target cannot be specified together',
+        ),
     );
   });
 

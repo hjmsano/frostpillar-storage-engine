@@ -43,11 +43,13 @@ The btree becomes the sole data structure. The `recordsByInsertionOrder` Map
 and all sync guards are removed.
 
 **Before:**
+
 ```
 User API → Datastore → Map (ID lookup) + BTree (key lookup) → Backend Driver
 ```
 
 **After:**
+
 ```
 User API → Datastore (validation, capacity) → BTree (all data ops) → Backend Driver
 ```
@@ -66,11 +68,11 @@ interface DatastoreConfig<TKey, TInput> {
 }
 ```
 
-| Policy | Behavior | Use case |
-|--------|----------|----------|
-| `'allow'` | Multiple records per key, insertion-order preserved | Logs, events, time-series |
-| `'replace'` | One record per key, last-write-wins | Config, settings, cache |
-| `'reject'` | One record per key, throws on duplicate | Unique constraints |
+| Policy      | Behavior                                            | Use case                  |
+| ----------- | --------------------------------------------------- | ------------------------- |
+| `'allow'`   | Multiple records per key, insertion-order preserved | Logs, events, time-series |
+| `'replace'` | One record per key, last-write-wins                 | Config, settings, cache   |
+| `'reject'`  | One record per key, throws on duplicate             | Unique constraints        |
 
 ### 3. Ephemeral `EntryId` replaces `RecordId`
 
@@ -120,11 +122,13 @@ rather than maintaining incremental per-record byte counts.
 ### Phase 1: Core restructure — btree adapter and types
 
 #### 1.1 Update `DatastoreConfig` types
+
 - Add `duplicateKeys?: 'allow' | 'replace' | 'reject'` to config
 - Update config validation to accept the new option
 - Default to `'allow'` for backward compatibility with append-store model
 
 #### 1.2 Rewrite `RecordKeyIndexBTree` adapter
+
 - Remove `RecordKeyIndexEntryKey<TKey>` composite type
 - Use plain `TKey` as btree key
 - Pass `duplicateKeys` policy to btree config
@@ -135,6 +139,7 @@ rather than maintaining incremental per-record byte counts.
 - Expose `toJSON()` / `fromJSON()` through the adapter
 
 #### 1.3 Simplify `PersistedRecord` type
+
 - Remove `insertionOrder: bigint`
 - Remove `encodedBytes: number`
 - Remove `keySerialized: string` (btree stores the key natively)
@@ -142,12 +147,14 @@ rather than maintaining incremental per-record byte counts.
 - Record becomes: `{ payload: RecordPayload, sizeBytes: number }`
 
 #### 1.4 Replace `RecordId` with `EntryId`
+
 - Replace `_id: RecordId` with `_id: EntryId` on public `KeyedRecord`
 - Remove `createRecordId()` / `parseRecordId()`
 - Remove `src/storage/record/recordId.ts`
 - Update `getById`, `updateById`, `deleteById` to accept `EntryId`
 
 #### 1.5 Remove `recordsByInsertionOrder` Map
+
 - Remove from `Datastore` internal state
 - Remove all Map/BTree sync guards — `IndexCorruptionError` checks in
   `datastoreStateOps.ts` and `mutationById.ts`
@@ -157,23 +164,27 @@ rather than maintaining incremental per-record byte counts.
 ### Phase 2: Persistence simplification — backend drivers
 
 #### 2.1 Define `BTreeJSON`-based persistence contract
+
 - Backend drivers receive `tree.toJSON()` output as the persistence payload
 - Backend drivers return the stored JSON for `fromJSON()` on init
 - Define the interface between Datastore and backend controllers around
   `BTreeJSON`
 
 #### 2.2 Update file backend driver
+
 - Replace dual-generation file content with `BTreeJSON` serialization
 - Sidecar metadata (`.meta.json`) may be simplified or absorbed into `BTreeJSON`
 - Maintain atomic write semantics (generation rollover)
 
 #### 2.3 Update browser backend drivers
+
 - localStorage: Store `BTreeJSON` as chunked JSON (existing chunking applies)
 - IndexedDB: Store `BTreeJSON` in object store
 - OPFS: Store `BTreeJSON` via dual-file strategy
 - SyncStorage: Store `BTreeJSON` via sync storage adapter
 
 #### 2.4 Update capacity enforcement
+
 - Replace per-record `encodedBytes` tracking with total serialized size
 - Evaluate capacity at commit boundaries using `JSON.stringify(tree.toJSON()).length`
   or a lightweight size estimator
@@ -183,17 +194,20 @@ rather than maintaining incremental per-record byte counts.
 ### Phase 3: Leverage remaining btree capabilities
 
 #### 3.1 Delegate bulk operations to btree
+
 - `delete(key)` in `'allow'` mode → `tree.deleteRange(key, key, { lowerBound: 'inclusive', upperBound: 'inclusive' })`
 - `deleteMany(keys[])` → batch `deleteRange` calls
 - `count()` → `tree.size()`
 - Range count → `tree.count(start, end)`
 
 #### 3.2 Delegate iteration to btree
+
 - `getAll()` → `tree.snapshot()` or `tree.values()`
 - `keys()` → `tree.keys()` with deduplication
 - `getRange(start, end)` → `tree.range(start, end)`
 
 #### 3.3 Adapt mutation paths per policy
+
 - `put()` in `'reject'` mode: surface btree's `BTreeValidationError` as
   storage engine error
 - `put()` in `'replace'` mode: btree handles overwrite natively
@@ -201,6 +215,7 @@ rather than maintaining incremental per-record byte counts.
 - `deleteById()`: use `tree.removeById(entryId)` directly
 
 #### 3.4 Adapt concurrent btree adapter
+
 - Update `ConcurrentRecordKeyIndexBTree` to match new plain-key design
 - Pass `duplicateKeys` policy through concurrent config
 - Or evaluate if the concurrent adapter is still needed given the simplified
@@ -209,6 +224,7 @@ rather than maintaining incremental per-record byte counts.
 ### Phase 4: Cleanup and documentation
 
 #### 4.1 Remove dead code
+
 - `src/storage/datastore/datastoreStateOps.ts` — fully replaced
 - `src/storage/datastore/mutationById.ts` — replaced by direct btree ops
 - `src/storage/record/recordId.ts` — `RecordId` format removed
@@ -216,11 +232,13 @@ rather than maintaining incremental per-record byte counts.
 - `src/storage/backend/encoding.ts` — `computeRecordEncodedBytes` removed
 
 #### 4.2 Update specs
+
 - `01_DatastoreAPI.md` — new `duplicateKeys` config, `EntryId` replaces `RecordId`
 - `02_DurableBackends.md` — `BTreeJSON`-based persistence contract
 - `03_InternalArchitecture.md` — single data structure, btree adapter boundary
 
 #### 4.3 Update tests
+
 - Remove all `RecordId` format tests (`record-id-canonical.test.mjs`, etc.)
 - Remove `insertionOrder`-related tests
 - Add `duplicateKeys` policy tests for all three modes
@@ -229,6 +247,7 @@ rather than maintaining incremental per-record byte counts.
 - Update capacity tests for new byte tracking approach
 
 #### 4.4 Update public type exports
+
 - Remove `RecordId` from public types
 - Export `EntryId` (re-export from `@frostpillar/frostpillar-btree`)
 - Update `KeyedRecord` type (`_id: EntryId`)

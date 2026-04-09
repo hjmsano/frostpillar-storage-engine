@@ -27,11 +27,12 @@ const createMockSyncStorageArea = () => {
   const store = new Map();
   return {
     get: async (keys) => {
-      const normalizedKeys = keys === null
-        ? Array.from(store.keys())
-        : Array.isArray(keys)
-          ? keys
-          : [keys];
+      const normalizedKeys =
+        keys === null
+          ? Array.from(store.keys())
+          : Array.isArray(keys)
+            ? keys
+            : [keys];
       const result = {};
       for (const key of normalizedKeys) {
         if (store.has(key)) {
@@ -63,8 +64,12 @@ const removeSyncStorage = () => {
 };
 
 const loadCapacityDriverModules = async () => {
-  const { localStorageDriver } = await importDistModule('drivers/localStorage.js');
-  const { syncStorageDriver } = await importDistModule('drivers/syncStorage.js');
+  const { localStorageDriver } = await importDistModule(
+    'drivers/localStorage.js',
+  );
+  const { syncStorageDriver } = await importDistModule(
+    'drivers/syncStorage.js',
+  );
   return { localStorageDriver, syncStorageDriver };
 };
 

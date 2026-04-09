@@ -48,8 +48,15 @@ test('D3: scheduled autoCommit timer is unreferenced in Node.js', async () => {
   try {
     controller = new TestController();
 
-    assert.ok(timerSet, 'setInterval must have been called for scheduled frequency');
-    assert.equal(unrefCallCount, 1, 'unref() must be called once on the timer handle');
+    assert.ok(
+      timerSet,
+      'setInterval must have been called for scheduled frequency',
+    );
+    assert.equal(
+      unrefCallCount,
+      1,
+      'unref() must be called once on the timer handle',
+    );
   } finally {
     globalThis.setInterval = originalSetInterval;
     if (controller) {
@@ -86,7 +93,10 @@ test('D3: immediate autoCommit does not set an interval timer', async () => {
   let controller;
   try {
     controller = new TestController();
-    assert.ok(!timerSet, 'setInterval must NOT be called for immediate frequency');
+    assert.ok(
+      !timerSet,
+      'setInterval must NOT be called for immediate frequency',
+    );
   } finally {
     globalThis.setInterval = originalSetInterval;
     if (controller) {

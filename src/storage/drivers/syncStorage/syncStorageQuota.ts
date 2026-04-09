@@ -17,7 +17,8 @@ const computeSyncStorageItemBytes = (key: string, value: unknown): number => {
     );
   }
   return (
-    utf8Encoder.encode(key).byteLength + utf8Encoder.encode(valueJson).byteLength
+    utf8Encoder.encode(key).byteLength +
+    utf8Encoder.encode(valueJson).byteLength
   );
 };
 

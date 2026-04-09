@@ -29,13 +29,24 @@ test('D2: concurrent close() callers both receive the error when close throws', 
   // Release the gate so both resolve
   releaseClose();
 
-  const [firstResult, secondResult] = await Promise.allSettled([firstClose, secondClose]);
+  const [firstResult, secondResult] = await Promise.allSettled([
+    firstClose,
+    secondClose,
+  ]);
 
   assert.equal(firstResult.status, 'rejected', 'first close must reject');
   assert.equal(secondResult.status, 'rejected', 'second close must reject');
 
-  assert.equal(firstResult.reason, closeError, 'first caller must receive the original error');
-  assert.equal(secondResult.reason, closeError, 'second caller must receive the same error');
+  assert.equal(
+    firstResult.reason,
+    closeError,
+    'first caller must receive the original error',
+  );
+  assert.equal(
+    secondResult.reason,
+    closeError,
+    'second caller must receive the same error',
+  );
 });
 
 test('D2: concurrent close() callers with successful close both resolve', async () => {

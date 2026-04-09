@@ -108,7 +108,10 @@ test('rangeQuery returns entries in range', async () => {
 
 test('rangeQuery with same start and end returns exact key entries', async () => {
   const { RecordKeyIndexBTree } = await loadAdapter();
-  const tree = new RecordKeyIndexBTree({ ...numericConfig, duplicateKeys: 'allow' });
+  const tree = new RecordKeyIndexBTree({
+    ...numericConfig,
+    duplicateKeys: 'allow',
+  });
   tree.put(5, 'first');
   tree.put(5, 'second');
   tree.put(6, 'other');
@@ -160,7 +163,10 @@ test('snapshot returns all entries', async () => {
   tree.put(2, 'b');
   const snap = tree.snapshot();
   assert.equal(snap.length, 3);
-  assert.deepEqual(snap.map((e) => e.key), [1, 2, 3]);
+  assert.deepEqual(
+    snap.map((e) => e.key),
+    [1, 2, 3],
+  );
 });
 
 test('snapshot returns empty array for empty tree', async () => {
@@ -187,6 +193,50 @@ test('popFirst returns null on empty tree', async () => {
   const { RecordKeyIndexBTree } = await loadAdapter();
   const tree = new RecordKeyIndexBTree(numericConfig);
   assert.equal(tree.popFirst(), null);
+});
+
+// --- popLast ---
+
+test('popLast returns and removes largest key entry', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(3, 'c');
+  tree.put(1, 'a');
+  tree.put(2, 'b');
+  const last = tree.popLast();
+  assert.ok(last !== null);
+  assert.equal(last.key, 3);
+  assert.equal(last.value, 'c');
+  assert.equal(tree.size(), 2);
+});
+
+test('popLast returns null on empty tree', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  assert.equal(tree.popLast(), null);
+});
+
+test('popLast with single entry returns that entry and empties tree', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(42, 'only');
+  const last = tree.popLast();
+  assert.ok(last !== null);
+  assert.equal(last.key, 42);
+  assert.equal(last.value, 'only');
+  assert.equal(tree.size(), 0);
+});
+
+test('popLast successive calls remove entries in reverse order', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(1, 'a');
+  tree.put(2, 'b');
+  tree.put(3, 'c');
+  assert.equal(tree.popLast().key, 3);
+  assert.equal(tree.popLast().key, 2);
+  assert.equal(tree.popLast().key, 1);
+  assert.equal(tree.popLast(), null);
 });
 
 // --- size ---
@@ -268,8 +318,14 @@ test('fromJSON roundtrip preserves entries', async () => {
   const restored = RecordKeyIndexBTree.fromJSON(json, numericConfig);
   const snap = restored.snapshot();
   assert.equal(snap.length, 3);
-  assert.deepEqual(snap.map((e) => e.key), [1, 2, 3]);
-  assert.deepEqual(snap.map((e) => e.value), ['a', 'b', 'c']);
+  assert.deepEqual(
+    snap.map((e) => e.key),
+    [1, 2, 3],
+  );
+  assert.deepEqual(
+    snap.map((e) => e.value),
+    ['a', 'b', 'c'],
+  );
 });
 
 test('fromJSON restores adapter with working operations', async () => {
@@ -300,6 +356,60 @@ test('clear empties the tree', async () => {
   tree.clear();
   assert.equal(tree.size(), 0);
   assert.deepEqual(tree.snapshot(), []);
+});
+
+// --- forEachRange ---
+
+test('forEachRange iterates entries in range', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(1, 'a');
+  tree.put(2, 'b');
+  tree.put(3, 'c');
+  tree.put(4, 'd');
+  const visited = [];
+  tree.forEachRange(2, 3, (entry) => {
+    visited.push(entry.key);
+  });
+  assert.deepEqual(visited, [2, 3]);
+});
+
+test('forEachRange with same start and end visits exact key entries', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree({
+    ...numericConfig,
+    duplicateKeys: 'allow',
+  });
+  tree.put(5, 'first');
+  tree.put(5, 'second');
+  tree.put(6, 'other');
+  const visited = [];
+  tree.forEachRange(5, 5, (entry) => {
+    visited.push(entry.key);
+  });
+  assert.equal(visited.length, 2);
+  assert.ok(visited.every((k) => k === 5));
+});
+
+test('forEachRange does not call callback for empty range', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(1, 'a');
+  let called = false;
+  tree.forEachRange(10, 20, () => {
+    called = true;
+  });
+  assert.equal(called, false);
+});
+
+test('forEachRange on empty tree does not call callback', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  let called = false;
+  tree.forEachRange(1, 10, () => {
+    called = true;
+  });
+  assert.equal(called, false);
 });
 
 // --- Comparator clamping (OPT-2: hot-path uses clampComparatorResult, no validation) ---
@@ -348,16 +458,14 @@ test('NaN comparator result is rejected by BTree wrapped comparator', async () =
 
 test("duplicateKeys 'reject' mode: second put with same key throws BTreeValidationError", async () => {
   const { RecordKeyIndexBTree } = await loadAdapter();
-  const { BTreeValidationError } = await import('@frostpillar/frostpillar-btree');
+  const { BTreeValidationError } =
+    await import('@frostpillar/frostpillar-btree');
   const tree = new RecordKeyIndexBTree({
     ...numericConfig,
     duplicateKeys: 'reject',
   });
   tree.put(1, 'a');
-  assert.throws(
-    () => tree.put(1, 'b'),
-    BTreeValidationError,
-  );
+  assert.throws(() => tree.put(1, 'b'), BTreeValidationError);
 });
 
 test("duplicateKeys 'replace' mode: second put overwrites and size stays 1", async () => {
@@ -408,8 +516,14 @@ test('putMany inserts multiple pre-sorted entries and returns EntryId array', as
   assert.equal(ids.length, 3);
   assert.equal(tree.size(), 3);
   const snap = tree.snapshot();
-  assert.deepEqual(snap.map((e) => e.key), [1, 2, 3]);
-  assert.deepEqual(snap.map((e) => e.value), ['a', 'b', 'c']);
+  assert.deepEqual(
+    snap.map((e) => e.key),
+    [1, 2, 3],
+  );
+  assert.deepEqual(
+    snap.map((e) => e.value),
+    ['a', 'b', 'c'],
+  );
 });
 
 test('putMany returns empty array for empty input', async () => {
@@ -449,13 +563,15 @@ test('putMany entries are retrievable via peekById', async () => {
 
 test('putMany with unsorted entries throws BTreeValidationError', async () => {
   const { RecordKeyIndexBTree } = await loadAdapter();
-  const { BTreeValidationError } = await import('@frostpillar/frostpillar-btree');
+  const { BTreeValidationError } =
+    await import('@frostpillar/frostpillar-btree');
   const tree = new RecordKeyIndexBTree(numericConfig);
   assert.throws(
-    () => tree.putMany([
-      { key: 3, value: 'c' },
-      { key: 1, value: 'a' },
-    ]),
+    () =>
+      tree.putMany([
+        { key: 3, value: 'c' },
+        { key: 1, value: 'a' },
+      ]),
     BTreeValidationError,
   );
 });
@@ -471,7 +587,10 @@ test('putMany with string keys inserts in sorted order', async () => {
   assert.equal(ids.length, 3);
   assert.equal(tree.size(), 3);
   const snap = tree.snapshot();
-  assert.deepEqual(snap.map((e) => e.key), ['apple', 'banana', 'cherry']);
+  assert.deepEqual(
+    snap.map((e) => e.key),
+    ['apple', 'banana', 'cherry'],
+  );
 });
 
 // --- peekLast ---
@@ -513,4 +632,114 @@ test('peekLast with single entry returns that entry', async () => {
   assert.ok(last !== null);
   assert.equal(last.key, 42);
   assert.equal(last.value, 'only');
+});
+
+// --- entries ---
+
+test('entries() returns iterator over all entries in order', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(3, 'c');
+  tree.put(1, 'a');
+  tree.put(2, 'b');
+  const keys = [...tree.entries()].map((e) => e.key);
+  assert.deepEqual(keys, [1, 2, 3]);
+});
+
+test('entries() on empty tree yields no entries', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  assert.deepEqual([...tree.entries()], []);
+});
+
+test('entries() with single entry yields that entry with correct key/value', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(7, 'seven');
+  const results = [...tree.entries()];
+  assert.equal(results.length, 1);
+  assert.equal(results[0].key, 7);
+  assert.equal(results[0].value, 'seven');
+});
+
+// --- entriesReversed ---
+
+test('entriesReversed() returns iterator in reverse order', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(3, 'c');
+  tree.put(1, 'a');
+  tree.put(2, 'b');
+  const keys = [...tree.entriesReversed()].map((e) => e.key);
+  assert.deepEqual(keys, [3, 2, 1]);
+});
+
+test('entriesReversed() on empty tree yields no entries', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  assert.deepEqual([...tree.entriesReversed()], []);
+});
+
+// --- entries() laziness ---
+
+test('entries() is lazy - supports break after first entry', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(1, 'a');
+  tree.put(2, 'b');
+  tree.put(3, 'c');
+  let count = 0;
+  for (const _entry of tree.entries()) {
+    count++;
+    break;
+  }
+  assert.equal(count, 1);
+});
+
+// --- count ---
+
+test('count returns number of entries in range', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(1, 'a');
+  tree.put(2, 'b');
+  tree.put(3, 'c');
+  tree.put(4, 'd');
+  assert.equal(tree.count(2, 3), 2);
+});
+
+test('count with same start and end returns exact key count (duplicate keys)', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree({
+    ...numericConfig,
+    duplicateKeys: 'allow',
+  });
+  tree.put(5, 'x');
+  tree.put(5, 'y');
+  tree.put(5, 'z');
+  assert.equal(tree.count(5, 5), 3);
+});
+
+test('count returns 0 for out-of-range', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  tree.put(1, 'a');
+  tree.put(2, 'b');
+  assert.equal(tree.count(10, 20), 0);
+});
+
+test('count returns 0 on empty tree', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(numericConfig);
+  assert.equal(tree.count(1, 5), 0);
+});
+
+test('count works with string keys', async () => {
+  const { RecordKeyIndexBTree } = await loadAdapter();
+  const tree = new RecordKeyIndexBTree(stringConfig);
+  tree.put('apple', 1);
+  tree.put('banana', 2);
+  tree.put('cherry', 3);
+  tree.put('date', 4);
+  assert.equal(tree.count('banana', 'cherry'), 2);
 });

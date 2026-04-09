@@ -10,6 +10,7 @@ row. This wording was ambiguous and could be read as `_id` being always present
 in default `queryNative` rows.
 
 Current implementation behavior was:
+
 - `_id` is a virtual field resolved by field lookup.
 - default `queryNative` rows include `timestamp` and top-level scalar payload
   fields.
@@ -26,11 +27,13 @@ Current implementation behavior was:
 ## Consequences
 
 Positive:
+
 - Spec, tests, and implementation are aligned for `_id`.
 - Query result shape remains stable for existing callers of `queryNative({})`.
 - Record ID retrieval flow is explicit and predictable.
 
 Trade-off:
+
 - Callers must include `_id` in `select` when they need IDs.
 
 ## Supersession Note

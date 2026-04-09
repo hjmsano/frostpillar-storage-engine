@@ -9,8 +9,10 @@ describe('datastore capacity multibyte', () => {
     const ds = new Datastore({
       key: {
         normalize: (value, fieldName) => {
-          if (typeof value !== 'string') throw new TypeError(`${fieldName} must be string.`);
-          if (value.length === 0) throw new TypeError(`${fieldName} must not be empty.`);
+          if (typeof value !== 'string')
+            throw new TypeError(`${fieldName} must be string.`);
+          if (value.length === 0)
+            throw new TypeError(`${fieldName} must not be empty.`);
           return value;
         },
         compare: (left, right) => (left < right ? -1 : left > right ? 1 : 0),
@@ -27,7 +29,8 @@ describe('datastore capacity multibyte', () => {
       () => ds.put({ key: 'k', payload: { v: 'あ'.repeat(15) } }),
       (err) => {
         assert.ok(
-          err.name === 'QuotaExceededError' || err.constructor.name === 'QuotaExceededError',
+          err.name === 'QuotaExceededError' ||
+            err.constructor.name === 'QuotaExceededError',
           `expected QuotaExceededError, got ${err.constructor.name}`,
         );
         return true;
@@ -36,7 +39,9 @@ describe('datastore capacity multibyte', () => {
   });
 
   test('capacity estimation uses UTF-8 byte length, not string length', async () => {
-    const { estimateRecordSizeBytes } = await importDistModule('storage/backend/encoding.js');
+    const { estimateRecordSizeBytes } = await importDistModule(
+      'storage/backend/encoding.js',
+    );
 
     // JSON.stringify(['key', { payload: { v: 'あ' } }]) includes structural overhead
     // = '["key",{"payload":{"v":"あ"}}]' = 29 chars but 31 UTF-8 bytes (あ is 3 UTF-8 bytes)
@@ -45,11 +50,17 @@ describe('datastore capacity multibyte', () => {
   });
 
   test('ASCII content: byte length equals string length', async () => {
-    const { estimateRecordSizeBytes } = await importDistModule('storage/backend/encoding.js');
+    const { estimateRecordSizeBytes } = await importDistModule(
+      'storage/backend/encoding.js',
+    );
 
     // JSON.stringify(['k', { payload: { v: 'abc' } }])
     // = '["k",{"payload":{"v":"abc"}}]' = 29 bytes (ASCII only)
     const result = estimateRecordSizeBytes('k', { v: 'abc' });
-    assert.equal(result, 29, `expected 29 bytes for ASCII content, got ${result}`);
+    assert.equal(
+      result,
+      29,
+      `expected 29 bytes for ASCII content, got ${result}`,
+    );
   });
 });

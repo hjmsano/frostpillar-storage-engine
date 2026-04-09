@@ -155,7 +155,10 @@ export interface IDBTransactionHandle {
 
 export interface IDBDatabaseHandle {
   close(): void;
-  createObjectStore(name: string, options?: { keyPath?: string }): IDBObjectStoreHandle;
+  createObjectStore(
+    name: string,
+    options?: { keyPath?: string },
+  ): IDBObjectStoreHandle;
   objectStoreNames: { contains(name: string): boolean };
   transaction(storeNames: string[], mode: string): IDBTransactionHandle;
 }
@@ -165,7 +168,13 @@ export interface IDBOpenRequestHandle {
   error: Error | null;
   onsuccess: ((event: { target: IDBOpenRequestHandle }) => void) | null;
   onerror: ((event: { target: IDBOpenRequestHandle }) => void) | null;
-  onupgradeneeded: ((event: { target: IDBOpenRequestHandle; oldVersion: number; newVersion: number }) => void) | null;
+  onupgradeneeded:
+    | ((event: {
+        target: IDBOpenRequestHandle;
+        oldVersion: number;
+        newVersion: number;
+      }) => void)
+    | null;
 }
 
 export interface IDBFactoryAdapter {
@@ -183,12 +192,20 @@ export interface OpfsFileWritable {
 
 export interface OpfsFileHandle {
   getFile(): Promise<{ text(): Promise<string> }>;
-  createWritable(opts?: { keepExistingData?: boolean }): Promise<OpfsFileWritable>;
+  createWritable(opts?: {
+    keepExistingData?: boolean;
+  }): Promise<OpfsFileWritable>;
 }
 
 export interface OpfsDirectoryHandle {
-  getDirectoryHandle(name: string, opts?: { create?: boolean }): Promise<OpfsDirectoryHandle>;
-  getFileHandle(name: string, opts?: { create?: boolean }): Promise<OpfsFileHandle>;
+  getDirectoryHandle(
+    name: string,
+    opts?: { create?: boolean },
+  ): Promise<OpfsDirectoryHandle>;
+  getFileHandle(
+    name: string,
+    opts?: { create?: boolean },
+  ): Promise<OpfsFileHandle>;
   removeEntry(name: string): Promise<void>;
 }
 

@@ -45,11 +45,15 @@ const tscCliPath = path.resolve(
   repositoryRoot,
   'node_modules/typescript/bin/tsc',
 );
-const buildResult = spawnSync(process.execPath, [tscCliPath, '--build', '--force'], {
-  stdio: 'inherit',
-  shell: false,
-  cwd: repositoryRoot,
-});
+const buildResult = spawnSync(
+  process.execPath,
+  [tscCliPath, '--build', '--force'],
+  {
+    stdio: 'inherit',
+    shell: false,
+    cwd: repositoryRoot,
+  },
+);
 
 if (buildResult.error !== undefined) {
   throw buildResult.error;
@@ -59,11 +63,15 @@ if (buildResult.status !== 0) {
   process.exit(buildResult.status ?? 1);
 }
 
-const result = spawnSync(process.execPath, ['--test', ...extraNodeArgs, ...testTargets], {
-  stdio: 'inherit',
-  shell: false,
-  cwd: repositoryRoot,
-});
+const result = spawnSync(
+  process.execPath,
+  ['--test', ...extraNodeArgs, ...testTargets],
+  {
+    stdio: 'inherit',
+    shell: false,
+    cwd: repositoryRoot,
+  },
+);
 
 if (result.error !== undefined) {
   throw result.error;

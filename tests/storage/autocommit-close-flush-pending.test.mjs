@@ -27,10 +27,9 @@ const createTestController = async (options = {}) => {
 
   class TestController extends AsyncDurableAutoCommitController {
     constructor() {
-      super(
-        { frequency, intervalMs, maxPendingBytes },
-        (error) => { errors.push(error); },
-      );
+      super({ frequency, intervalMs, maxPendingBytes }, (error) => {
+        errors.push(error);
+      });
     }
 
     async executeSingleCommit() {
@@ -114,7 +113,10 @@ test('close() flushes dirty-from-clear state set after last commit', async () =>
 
   await controller.close();
 
-  assert.ok(commitCount() > commitsAfterExplicit, 'expected commit for cleared state on close');
+  assert.ok(
+    commitCount() > commitsAfterExplicit,
+    'expected commit for cleared state on close',
+  );
 });
 
 test('close() does not commit when nothing is pending', async () => {
@@ -171,7 +173,8 @@ test('close() rejects when final flush commit fails', async () => {
   // close() must propagate the commit error to the caller
   await assert.rejects(
     () => controller.close(),
-    (err) => err instanceof Error && err.message.includes('backend unavailable'),
+    (err) =>
+      err instanceof Error && err.message.includes('backend unavailable'),
   );
 
   // Error listener should NOT be called — caller owns the error
@@ -217,8 +220,14 @@ test('close() preserves both errors when flush and drain both fail', async () =>
   assert.equal(thrownError.errors.length, 2);
 
   const messages = thrownError.errors.map((e) => e.message);
-  assert.ok(messages.some((m) => m.includes('backend unavailable')), 'flush error preserved');
-  assert.ok(messages.some((m) => m.includes('lock release error')), 'drain error preserved');
+  assert.ok(
+    messages.some((m) => m.includes('backend unavailable')),
+    'flush error preserved',
+  );
+  assert.ok(
+    messages.some((m) => m.includes('lock release error')),
+    'drain error preserved',
+  );
 });
 
 test('close() preserves both errors on runtimes without AggregateError', async () => {
@@ -245,12 +254,21 @@ test('close() preserves both errors on runtimes without AggregateError', async (
     assert.notEqual(thrownError, null, 'close() must reject');
     assert.ok(thrownError instanceof Error);
     // Fallback: plain Error with .errors array
-    assert.ok(Array.isArray(thrownError.errors), 'expected .errors array on fallback');
+    assert.ok(
+      Array.isArray(thrownError.errors),
+      'expected .errors array on fallback',
+    );
     assert.equal(thrownError.errors.length, 2);
 
     const messages = thrownError.errors.map((e) => e.message);
-    assert.ok(messages.some((m) => m.includes('backend unavailable')), 'flush error preserved');
-    assert.ok(messages.some((m) => m.includes('lock release error')), 'drain error preserved');
+    assert.ok(
+      messages.some((m) => m.includes('backend unavailable')),
+      'flush error preserved',
+    );
+    assert.ok(
+      messages.some((m) => m.includes('lock release error')),
+      'drain error preserved',
+    );
   } finally {
     globalThis.AggregateError = original;
   }

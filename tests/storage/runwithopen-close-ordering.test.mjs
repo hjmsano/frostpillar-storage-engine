@@ -65,5 +65,9 @@ test('close awaits pendingInit before draining operations', async () => {
 
   resolvePendingInit();
   await closePromise;
-  assert.equal(closeResolved, true, 'close completed after pendingInit resolved');
+  assert.equal(
+    closeResolved,
+    true,
+    'close completed after pendingInit resolved',
+  );
 });

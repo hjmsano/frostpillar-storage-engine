@@ -21,6 +21,7 @@ Numbering policy:
 - [0053_SkipPayloadValidation_TrustedInputMode.md](./0053_SkipPayloadValidation_TrustedInputMode.md)
 - [0054_HotPathPerformanceOptimizations_P7_P15.md](./0054_HotPathPerformanceOptimizations_P7_P15.md)
 - [0055_ContractClarifications_and_DeferredItems.md](./0055_ContractClarifications_and_DeferredItems.md)
+- [0056_CountRange_DeleteRebalancePolicy_PopLast.md](./0056_CountRange_DeleteRebalancePolicy_PopLast.md)
 
 ## Query
 

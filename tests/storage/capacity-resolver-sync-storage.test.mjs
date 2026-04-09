@@ -7,7 +7,9 @@ test('capacity resolver maps backendLimit to syncStorage maxTotalBytes', async (
   const { resolveCapacityState } = await importDistModule(
     'storage/backend/capacityResolver.js',
   );
-  const { syncStorageDriver } = await importDistModule('drivers/syncStorage.js');
+  const { syncStorageDriver } = await importDistModule(
+    'drivers/syncStorage.js',
+  );
 
   const previousBrowser = globalThis.browser;
   const previousChrome = globalThis.chrome;
@@ -15,10 +17,8 @@ test('capacity resolver maps backendLimit to syncStorage maxTotalBytes', async (
     storage: {
       sync: {
         get: async () => ({}),
-        set: async () => {
-        },
-        remove: async () => {
-        },
+        set: async () => {},
+        remove: async () => {},
       },
     },
   };
@@ -58,7 +58,9 @@ test('capacity resolver for syncStorage backendLimit ignores non-capacity runtim
   const { resolveCapacityState } = await importDistModule(
     'storage/backend/capacityResolver.js',
   );
-  const { syncStorageDriver } = await importDistModule('drivers/syncStorage.js');
+  const { syncStorageDriver } = await importDistModule(
+    'drivers/syncStorage.js',
+  );
 
   const previousBrowser = globalThis.browser;
   const previousChrome = globalThis.chrome;
@@ -66,10 +68,8 @@ test('capacity resolver for syncStorage backendLimit ignores non-capacity runtim
     storage: {
       sync: {
         get: async () => ({}),
-        set: async () => {
-        },
-        remove: async () => {
-        },
+        set: async () => {},
+        remove: async () => {},
       },
     },
   };

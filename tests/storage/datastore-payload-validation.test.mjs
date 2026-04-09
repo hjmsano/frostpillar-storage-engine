@@ -133,14 +133,18 @@ describe('Datastore payload validation', () => {
   it('put(null) throws ValidationError', async () => {
     await assert.rejects(
       () => ds.put(null),
-      (err) => err instanceof ValidationError && err.message === 'Record must be a non-null object',
+      (err) =>
+        err instanceof ValidationError &&
+        err.message === 'Record must be a non-null object',
     );
   });
 
   it('put(undefined) throws ValidationError', async () => {
     await assert.rejects(
       () => ds.put(undefined),
-      (err) => err instanceof ValidationError && err.message === 'Record must be a non-null object',
+      (err) =>
+        err instanceof ValidationError &&
+        err.message === 'Record must be a non-null object',
     );
   });
 
@@ -154,14 +158,18 @@ describe('Datastore payload validation', () => {
   it('putMany([null]) throws ValidationError', async () => {
     await assert.rejects(
       () => ds.putMany([null]),
-      (err) => err instanceof ValidationError && err.message === 'Record must be a non-null object',
+      (err) =>
+        err instanceof ValidationError &&
+        err.message === 'Record must be a non-null object',
     );
   });
 
   it('putMany([undefined]) throws ValidationError', async () => {
     await assert.rejects(
       () => ds.putMany([undefined]),
-      (err) => err instanceof ValidationError && err.message === 'Record must be a non-null object',
+      (err) =>
+        err instanceof ValidationError &&
+        err.message === 'Record must be a non-null object',
     );
   });
 });

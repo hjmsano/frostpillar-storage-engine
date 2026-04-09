@@ -35,10 +35,7 @@ test('writeInitialFileSnapshot produces treeJSON matching empty RecordKeyIndexBT
 
     writeInitialFileSnapshot(backend);
 
-    const generationRaw = readFileSync(
-      join(tempDir, activeDataFile),
-      'utf8',
-    );
+    const generationRaw = readFileSync(join(tempDir, activeDataFile), 'utf8');
     const generation = JSON.parse(generationRaw);
     const persistedTreeJSON = generation.treeJSON;
 

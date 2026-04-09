@@ -1,5 +1,8 @@
 import type { CapacityState } from './types.js';
-import { IndexCorruptionError, QuotaExceededError } from '../../errors/index.js';
+import {
+  IndexCorruptionError,
+  QuotaExceededError,
+} from '../../errors/index.js';
 
 export const enforceCapacityPolicy = (
   capacityState: CapacityState | null,

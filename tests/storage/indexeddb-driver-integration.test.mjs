@@ -16,7 +16,9 @@ import { importDistModule, loadStorageModule } from '../load-module.mjs';
 
 const createSuccessfulIdbRequest = (result) => {
   const request = { result, onsuccess: null, onerror: null };
-  queueMicrotask(() => { request.onsuccess?.({ target: request }); });
+  queueMicrotask(() => {
+    request.onsuccess?.({ target: request });
+  });
   return request;
 };
 
@@ -49,7 +51,9 @@ const createMockDatabase = (dbStores) => {
         _oncomplete = fn;
         // idbTransaction() sets oncomplete after all put/clear calls;
         // fire it on the next microtask to satisfy await idbTransaction(tx).
-        queueMicrotask(() => { fn?.(); });
+        queueMicrotask(() => {
+          fn?.();
+        });
       },
     });
     tx.objectStore = (name) => createMockObjectStore(dbStores.get(name));
@@ -85,14 +89,26 @@ const createMockIDBFactory = () => {
       const dbStores = databases.get(databaseName);
       const db = createMockDatabase(dbStores);
 
-      const request = { result: db, error: null, onsuccess: null, onerror: null, onupgradeneeded: null };
+      const request = {
+        result: db,
+        error: null,
+        onsuccess: null,
+        onerror: null,
+        onupgradeneeded: null,
+      };
 
       queueMicrotask(() => {
         // Fire onupgradeneeded so openIndexedDB() can create the object stores.
-        request.onupgradeneeded?.({ target: request, oldVersion: 0, newVersion: version });
+        request.onupgradeneeded?.({
+          target: request,
+          oldVersion: 0,
+          newVersion: version,
+        });
         // Fire onsuccess on the following microtask so the upgrade handler
         // (which is synchronous) finishes before onsuccess resolves.
-        queueMicrotask(() => { request.onsuccess?.({ target: request }); });
+        queueMicrotask(() => {
+          request.onsuccess?.({ target: request });
+        });
       });
 
       return request;
@@ -124,7 +140,9 @@ const injectMockIndexedDB = () => {
 
 test('indexedDB driver: fresh open returns empty datastore', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { indexedDBDriver } = await importDistModule('drivers/indexedDB.js');
 
   const restore = injectMockIndexedDB();
@@ -143,15 +161,23 @@ test('indexedDB driver: fresh open returns empty datastore', async () => {
 
 test('indexedDB driver: inserted records survive close and reopen', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { indexedDBDriver } = await importDistModule('drivers/indexedDB.js');
 
   const restore = injectMockIndexedDB();
   try {
     // First instance: write
     const first = new Datastore({ driver: indexedDBDriver() });
-    await first.put({ key: '2025-06-01T00:00:00.000Z', payload: { id: 'alpha', value: 42 } });
-    await first.put({ key: '2025-06-02T00:00:00.000Z', payload: { id: 'beta', value: 99 } });
+    await first.put({
+      key: '2025-06-01T00:00:00.000Z',
+      payload: { id: 'alpha', value: 42 },
+    });
+    await first.put({
+      key: '2025-06-02T00:00:00.000Z',
+      payload: { id: 'beta', value: 99 },
+    });
     // autoCommit is 'immediate' by default — records are committed per-insert.
     await first.close();
 
@@ -174,13 +200,18 @@ test('indexedDB driver: inserted records survive close and reopen', async () => 
 
 test('indexedDB driver: explicit commit() flushes records before close', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { indexedDBDriver } = await importDistModule('drivers/indexedDB.js');
 
   const restore = injectMockIndexedDB();
   try {
     const first = new Datastore({ driver: indexedDBDriver() });
-    await first.put({ key: '2025-07-01T00:00:00.000Z', payload: { id: 'gamma' } });
+    await first.put({
+      key: '2025-07-01T00:00:00.000Z',
+      payload: { id: 'gamma' },
+    });
     await first.commit();
     await first.close();
 
@@ -199,16 +230,27 @@ test('indexedDB driver: explicit commit() flushes records before close', async (
 
 test('indexedDB driver: deletion is reflected after reopen', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { indexedDBDriver } = await importDistModule('drivers/indexedDB.js');
 
   const restore = injectMockIndexedDB();
   try {
     const first = new Datastore({ driver: indexedDBDriver() });
-    await first.put({ key: '2025-08-01T00:00:00.000Z', payload: { id: 'to-delete' } });
-    await first.put({ key: '2025-08-02T00:00:00.000Z', payload: { id: 'to-keep' } });
+    await first.put({
+      key: '2025-08-01T00:00:00.000Z',
+      payload: { id: 'to-delete' },
+    });
+    await first.put({
+      key: '2025-08-02T00:00:00.000Z',
+      payload: { id: 'to-keep' },
+    });
 
-    const toDeleteRecords = await first.getRange('2025-08-01T00:00:00.000Z', '2025-08-01T00:00:00.000Z');
+    const toDeleteRecords = await first.getRange(
+      '2025-08-01T00:00:00.000Z',
+      '2025-08-01T00:00:00.000Z',
+    );
     assert.equal(toDeleteRecords.length, 1);
     await first.deleteById(toDeleteRecords[0]._id);
     await first.close();
@@ -228,15 +270,23 @@ test('indexedDB driver: deletion is reflected after reopen', async () => {
 
 test('indexedDB driver: update is reflected after reopen', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { indexedDBDriver } = await importDistModule('drivers/indexedDB.js');
 
   const restore = injectMockIndexedDB();
   try {
     const first = new Datastore({ driver: indexedDBDriver() });
-    await first.put({ key: '2025-09-01T00:00:00.000Z', payload: { id: 'updateable', value: 1 } });
+    await first.put({
+      key: '2025-09-01T00:00:00.000Z',
+      payload: { id: 'updateable', value: 1 },
+    });
 
-    const targetRecords = await first.getRange('2025-09-01T00:00:00.000Z', '2025-09-01T00:00:00.000Z');
+    const targetRecords = await first.getRange(
+      '2025-09-01T00:00:00.000Z',
+      '2025-09-01T00:00:00.000Z',
+    );
     assert.equal(targetRecords.length, 1);
     await first.updateById(targetRecords[0]._id, { value: 999 });
     await first.close();
@@ -256,7 +306,9 @@ test('indexedDB driver: update is reflected after reopen', async () => {
 
 test('indexedDB driver: throws UnsupportedBackendError when indexedDB is unavailable', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { indexedDBDriver } = await importDistModule('drivers/indexedDB.js');
 
   const previousIndexedDB = globalThis.indexedDB;
@@ -266,8 +318,12 @@ test('indexedDB driver: throws UnsupportedBackendError when indexedDB is unavail
     const datastore = new Datastore({ driver: indexedDBDriver() });
 
     await assert.rejects(
-      datastore.put({ key: '2025-01-01T00:00:00.000Z', payload: { id: 'fail' } }),
-      (error) => error instanceof Error && error.name === 'UnsupportedBackendError',
+      datastore.put({
+        key: '2025-01-01T00:00:00.000Z',
+        payload: { id: 'fail' },
+      }),
+      (error) =>
+        error instanceof Error && error.name === 'UnsupportedBackendError',
     );
 
     await datastore.close().catch(() => undefined);
@@ -282,7 +338,9 @@ test('indexedDB driver: throws UnsupportedBackendError when indexedDB is unavail
 
 test('indexedDB driver: insertion order is preserved across multiple records with the same key after reopen', async () => {
   await loadStorageModule();
-  const { Datastore } = await importDistModule('storage/datastore/Datastore.js');
+  const { Datastore } = await importDistModule(
+    'storage/datastore/Datastore.js',
+  );
   const { indexedDBDriver } = await importDistModule('drivers/indexedDB.js');
 
   const restore = injectMockIndexedDB();

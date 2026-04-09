@@ -51,8 +51,12 @@ const createMockLocalStorage = (initialData = {}) => {
   const store = new Map(Object.entries(initialData));
   return {
     getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => { store.set(key, String(value)); },
-    removeItem: (key) => { store.delete(key); },
+    setItem: (key, value) => {
+      store.set(key, String(value));
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
   };
 };
 
@@ -130,11 +134,14 @@ const createMockIDBFactoryWithTreeJSON = (treeJSONValue) => {
                 }
                 const createSuccessfulRequest = (result) => {
                   const req = { result, onsuccess: null, onerror: null };
-                  queueMicrotask(() => { req.onsuccess?.({ target: req }); });
+                  queueMicrotask(() => {
+                    req.onsuccess?.({ target: req });
+                  });
                   return req;
                 };
                 return {
-                  get: (key) => createSuccessfulRequest(store.get(key) ?? undefined),
+                  get: (key) =>
+                    createSuccessfulRequest(store.get(key) ?? undefined),
                   put: (value, key) => {
                     store.set(key, value);
                     return createSuccessfulRequest(undefined);
@@ -143,7 +150,9 @@ const createMockIDBFactoryWithTreeJSON = (treeJSONValue) => {
               },
             };
             queueMicrotask(() => {
-              queueMicrotask(() => { tx.oncomplete?.(); });
+              queueMicrotask(() => {
+                tx.oncomplete?.();
+              });
             });
             return tx;
           },
@@ -225,8 +234,14 @@ describe('S2: treeJSON structural validation – file backend', () => {
       assert.throws(
         () => loadFileSnapshot(backend),
         (error) => {
-          assert.ok(error instanceof PageCorruptionError, `Expected PageCorruptionError, got: ${error.constructor.name}: ${error.message}`);
-          assert.ok(error.message.includes('treeJSON'), `Expected message to include 'treeJSON', got: ${error.message}`);
+          assert.ok(
+            error instanceof PageCorruptionError,
+            `Expected PageCorruptionError, got: ${error.constructor.name}: ${error.message}`,
+          );
+          assert.ok(
+            error.message.includes('treeJSON'),
+            `Expected message to include 'treeJSON', got: ${error.message}`,
+          );
           return true;
         },
       );
@@ -247,7 +262,10 @@ describe('S2: treeJSON structural validation – file backend', () => {
       assert.throws(
         () => loadFileSnapshot(backend),
         (error) => {
-          assert.ok(error instanceof PageCorruptionError, `Expected PageCorruptionError, got: ${error.constructor.name}: ${error.message}`);
+          assert.ok(
+            error instanceof PageCorruptionError,
+            `Expected PageCorruptionError, got: ${error.constructor.name}: ${error.message}`,
+          );
           assert.ok(error.message.includes('treeJSON'));
           return true;
         },
@@ -269,7 +287,10 @@ describe('S2: treeJSON structural validation – file backend', () => {
       assert.throws(
         () => loadFileSnapshot(backend),
         (error) => {
-          assert.ok(error instanceof PageCorruptionError, `Expected PageCorruptionError, got: ${error.constructor.name}: ${error.message}`);
+          assert.ok(
+            error instanceof PageCorruptionError,
+            `Expected PageCorruptionError, got: ${error.constructor.name}: ${error.message}`,
+          );
           assert.ok(error.message.includes('treeJSON'));
           return true;
         },
@@ -297,15 +318,24 @@ describe('S2: treeJSON structural validation – localStorage backend', () => {
 
     try {
       assert.throws(
-        () => LocalStorageBackendController.create({
-          config: {},
-          autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
-          onAutoCommitError: () => {},
-        }),
+        () =>
+          LocalStorageBackendController.create({
+            config: {},
+            autoCommit: { frequency: 'immediate' },
+            getSnapshot: () => ({
+              treeJSON: { version: 1, config: {}, entries: [] },
+            }),
+            onAutoCommitError: () => {},
+          }),
         (error) => {
-          assert.ok(error instanceof StorageEngineError, `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`);
-          assert.ok(error.message.includes('treeJSON'), `Expected message to include 'treeJSON', got: ${error.message}`);
+          assert.ok(
+            error instanceof StorageEngineError,
+            `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`,
+          );
+          assert.ok(
+            error.message.includes('treeJSON'),
+            `Expected message to include 'treeJSON', got: ${error.message}`,
+          );
           return true;
         },
       );
@@ -330,15 +360,24 @@ describe('S2: treeJSON structural validation – localStorage backend', () => {
 
     try {
       assert.throws(
-        () => LocalStorageBackendController.create({
-          config: {},
-          autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
-          onAutoCommitError: () => {},
-        }),
+        () =>
+          LocalStorageBackendController.create({
+            config: {},
+            autoCommit: { frequency: 'immediate' },
+            getSnapshot: () => ({
+              treeJSON: { version: 1, config: {}, entries: [] },
+            }),
+            onAutoCommitError: () => {},
+          }),
         (error) => {
-          assert.ok(error instanceof StorageEngineError, `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`);
-          assert.ok(error.message.includes('treeJSON'), `Expected message to include 'treeJSON', got: ${error.message}`);
+          assert.ok(
+            error instanceof StorageEngineError,
+            `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`,
+          );
+          assert.ok(
+            error.message.includes('treeJSON'),
+            `Expected message to include 'treeJSON', got: ${error.message}`,
+          );
           return true;
         },
       );
@@ -376,12 +415,20 @@ describe('S2: treeJSON structural validation – IndexedDB backend', () => {
             version: 1,
           },
           autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
+          getSnapshot: () => ({
+            treeJSON: { version: 1, config: {}, entries: [] },
+          }),
           onAutoCommitError: () => {},
         }),
         (error) => {
-          assert.ok(error instanceof StorageEngineError, `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`);
-          assert.ok(error.message.includes('treeJSON'), `Expected message to include 'treeJSON', got: ${error.message}`);
+          assert.ok(
+            error instanceof StorageEngineError,
+            `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`,
+          );
+          assert.ok(
+            error.message.includes('treeJSON'),
+            `Expected message to include 'treeJSON', got: ${error.message}`,
+          );
           return true;
         },
       );
@@ -413,12 +460,20 @@ describe('S2: treeJSON structural validation – IndexedDB backend', () => {
             version: 1,
           },
           autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
+          getSnapshot: () => ({
+            treeJSON: { version: 1, config: {}, entries: [] },
+          }),
           onAutoCommitError: () => {},
         }),
         (error) => {
-          assert.ok(error instanceof StorageEngineError, `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`);
-          assert.ok(error.message.includes('treeJSON'), `Expected message to include 'treeJSON', got: ${error.message}`);
+          assert.ok(
+            error instanceof StorageEngineError,
+            `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`,
+          );
+          assert.ok(
+            error.message.includes('treeJSON'),
+            `Expected message to include 'treeJSON', got: ${error.message}`,
+          );
           return true;
         },
       );
@@ -452,12 +507,20 @@ describe('S2: treeJSON structural validation – syncStorage backend', () => {
         SyncStorageBackendController.create({
           config: {},
           autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
+          getSnapshot: () => ({
+            treeJSON: { version: 1, config: {}, entries: [] },
+          }),
           onAutoCommitError: () => {},
         }),
         (error) => {
-          assert.ok(error instanceof StorageEngineError, `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`);
-          assert.ok(error.message.includes('treeJSON'), `Expected message to include 'treeJSON', got: ${error.message}`);
+          assert.ok(
+            error instanceof StorageEngineError,
+            `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`,
+          );
+          assert.ok(
+            error.message.includes('treeJSON'),
+            `Expected message to include 'treeJSON', got: ${error.message}`,
+          );
           return true;
         },
       );
@@ -485,12 +548,20 @@ describe('S2: treeJSON structural validation – syncStorage backend', () => {
         SyncStorageBackendController.create({
           config: {},
           autoCommit: { frequency: 'immediate' },
-          getSnapshot: () => ({ treeJSON: { version: 1, config: {}, entries: [] } }),
+          getSnapshot: () => ({
+            treeJSON: { version: 1, config: {}, entries: [] },
+          }),
           onAutoCommitError: () => {},
         }),
         (error) => {
-          assert.ok(error instanceof StorageEngineError, `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`);
-          assert.ok(error.message.includes('treeJSON'), `Expected message to include 'treeJSON', got: ${error.message}`);
+          assert.ok(
+            error instanceof StorageEngineError,
+            `Expected StorageEngineError, got: ${error.constructor.name}: ${error.message}`,
+          );
+          assert.ok(
+            error.message.includes('treeJSON'),
+            `Expected message to include 'treeJSON', got: ${error.message}`,
+          );
           return true;
         },
       );

@@ -1,16 +1,26 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { Datastore, ValidationError, ConfigurationError } from '../../dist/index.js';
+import {
+  Datastore,
+  ValidationError,
+  ConfigurationError,
+} from '../../dist/index.js';
 
 describe('Datastore payloadLimits configuration', () => {
   describe('default limits (no payloadLimits provided)', () => {
     let ds;
-    before(() => { ds = new Datastore({}); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({});
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('rejects payload at depth 65 (default maxDepth=64)', async () => {
       let obj = { value: 'leaf' };
-      for (let i = 0; i < 64; i++) { obj = { nested: obj }; }
+      for (let i = 0; i < 64; i++) {
+        obj = { nested: obj };
+      }
       await assert.rejects(
         () => ds.put({ key: 'k', payload: obj }),
         (err) => err instanceof ValidationError,
@@ -33,7 +43,9 @@ describe('Datastore payloadLimits configuration', () => {
 
     it('rejects object with >256 keys (default maxKeysPerObject)', async () => {
       const payload = {};
-      for (let i = 0; i < 257; i++) { payload[`key${i}`] = i; }
+      for (let i = 0; i < 257; i++) {
+        payload[`key${i}`] = i;
+      }
       await assert.rejects(
         () => ds.put({ key: 'k', payload }),
         (err) => err instanceof ValidationError,
@@ -43,8 +55,12 @@ describe('Datastore payloadLimits configuration', () => {
 
   describe('custom maxDepth', () => {
     let ds;
-    before(() => { ds = new Datastore({ payloadLimits: { maxDepth: 4 } }); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({ payloadLimits: { maxDepth: 4 } });
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('accepts payload at custom maxDepth (4)', async () => {
       const payload = { a: { b: { c: { d: 'leaf' } } } }; // depth 4
@@ -64,8 +80,12 @@ describe('Datastore payloadLimits configuration', () => {
 
   describe('custom maxKeyBytes', () => {
     let ds;
-    before(() => { ds = new Datastore({ payloadLimits: { maxKeyBytes: 10 } }); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({ payloadLimits: { maxKeyBytes: 10 } });
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('accepts payload key within custom maxKeyBytes (10)', async () => {
       await ds.put({ key: 'k1', payload: { abcdefghij: 'v' } }); // 10 bytes
@@ -83,8 +103,12 @@ describe('Datastore payloadLimits configuration', () => {
 
   describe('custom maxStringBytes', () => {
     let ds;
-    before(() => { ds = new Datastore({ payloadLimits: { maxStringBytes: 20 } }); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({ payloadLimits: { maxStringBytes: 20 } });
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('accepts string value within custom maxStringBytes (20)', async () => {
       await ds.put({ key: 'k1', payload: { data: 'x'.repeat(20) } });
@@ -102,8 +126,12 @@ describe('Datastore payloadLimits configuration', () => {
 
   describe('custom maxKeysPerObject', () => {
     let ds;
-    before(() => { ds = new Datastore({ payloadLimits: { maxKeysPerObject: 3 } }); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({ payloadLimits: { maxKeysPerObject: 3 } });
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('accepts object with keys at custom maxKeysPerObject (3)', async () => {
       await ds.put({ key: 'k1', payload: { a: 1, b: 2, c: 3 } });
@@ -121,8 +149,12 @@ describe('Datastore payloadLimits configuration', () => {
 
   describe('custom maxTotalKeys', () => {
     let ds;
-    before(() => { ds = new Datastore({ payloadLimits: { maxTotalKeys: 3 } }); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({ payloadLimits: { maxTotalKeys: 3 } });
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('accepts payload with total keys at custom maxTotalKeys (3)', async () => {
       await ds.put({ key: 'k1', payload: { a: 1, nested: { b: 2 } } }); // 3 keys: a, nested, b
@@ -140,8 +172,12 @@ describe('Datastore payloadLimits configuration', () => {
 
   describe('custom maxTotalBytes', () => {
     let ds;
-    before(() => { ds = new Datastore({ payloadLimits: { maxTotalBytes: 50 } }); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({ payloadLimits: { maxTotalBytes: 50 } });
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('accepts payload within custom maxTotalBytes (50)', async () => {
       await ds.put({ key: 'k1', payload: { a: 1 } });
@@ -159,8 +195,12 @@ describe('Datastore payloadLimits configuration', () => {
 
   describe('payloadLimits with updateById', () => {
     let ds;
-    before(() => { ds = new Datastore({ payloadLimits: { maxStringBytes: 10 } }); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({ payloadLimits: { maxStringBytes: 10 } });
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('rejects updateById patch that violates custom maxStringBytes', async () => {
       await ds.put({ key: 'k1', payload: { data: 'short' } });
@@ -174,8 +214,12 @@ describe('Datastore payloadLimits configuration', () => {
 
   describe('payloadLimits with replaceById', () => {
     let ds;
-    before(() => { ds = new Datastore({ payloadLimits: { maxStringBytes: 10 } }); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({ payloadLimits: { maxStringBytes: 10 } });
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('rejects replaceById payload that violates custom maxStringBytes', async () => {
       await ds.put({ key: 'k1', payload: { data: 'short' } });
@@ -207,7 +251,9 @@ describe('Datastore payloadLimits configuration', () => {
         payloadLimits: { maxDepth: 2 },
       });
     });
-    after(async () => { await ds.close(); });
+    after(async () => {
+      await ds.close();
+    });
 
     it('accepts payload exceeding custom maxDepth when validation is skipped', async () => {
       const payload = { a: { b: { c: { d: 'deep' } } } }; // depth 4 > maxDepth 2
@@ -220,10 +266,11 @@ describe('Datastore payloadLimits configuration', () => {
   describe('payloadLimits still validated at construction time with skipPayloadValidation', () => {
     it('rejects invalid payloadLimits even when skipPayloadValidation is true', () => {
       assert.throws(
-        () => new Datastore({
-          skipPayloadValidation: true,
-          payloadLimits: { maxDepth: -1 },
-        }),
+        () =>
+          new Datastore({
+            skipPayloadValidation: true,
+            payloadLimits: { maxDepth: -1 },
+          }),
         (err) => err instanceof ConfigurationError,
       );
     });
@@ -276,7 +323,10 @@ describe('Datastore payloadLimits configuration', () => {
 
     it('rejects unsafe integer maxTotalBytes', () => {
       assert.throws(
-        () => new Datastore({ payloadLimits: { maxTotalBytes: Number.MAX_SAFE_INTEGER + 1 } }),
+        () =>
+          new Datastore({
+            payloadLimits: { maxTotalBytes: Number.MAX_SAFE_INTEGER + 1 },
+          }),
         (err) => err instanceof ConfigurationError,
       );
     });
@@ -296,15 +346,20 @@ describe('Datastore payloadLimits configuration', () => {
 
   describe('putMany respects custom payloadLimits', () => {
     let ds;
-    before(() => { ds = new Datastore({ payloadLimits: { maxStringBytes: 10 } }); });
-    after(async () => { await ds.close(); });
+    before(() => {
+      ds = new Datastore({ payloadLimits: { maxStringBytes: 10 } });
+    });
+    after(async () => {
+      await ds.close();
+    });
 
     it('rejects putMany record that violates custom maxStringBytes', async () => {
       await assert.rejects(
-        () => ds.putMany([
-          { key: 'k1', payload: { data: 'short' } },
-          { key: 'k2', payload: { data: 'x'.repeat(11) } },
-        ]),
+        () =>
+          ds.putMany([
+            { key: 'k1', payload: { data: 'short' } },
+            { key: 'k2', payload: { data: 'x'.repeat(11) } },
+          ]),
         (err) => err instanceof ValidationError,
       );
     });

@@ -15,8 +15,10 @@ const createSandboxDirectory = (name) => {
 
 const createStringKeyDefinition = () => ({
   normalize: (value, fieldName) => {
-    if (typeof value !== 'string') throw new TypeError(`${fieldName} must be string.`);
-    if (value.length === 0) throw new TypeError(`${fieldName} must not be empty.`);
+    if (typeof value !== 'string')
+      throw new TypeError(`${fieldName} must be string.`);
+    if (value.length === 0)
+      throw new TypeError(`${fieldName} must not be empty.`);
     return value;
   },
   compare: (left, right) => (left < right ? -1 : left > right ? 1 : 0),
@@ -48,7 +50,11 @@ describe('file backend reopen preserves duplicateKeys policy for empty DB', () =
       await ds2.put({ key: 'x', payload: { v: 2 } });
 
       const count = await ds2.count();
-      assert.equal(count, 1, "replace policy must be preserved after reopen: count must be 1");
+      assert.equal(
+        count,
+        1,
+        'replace policy must be preserved after reopen: count must be 1',
+      );
 
       await ds2.close();
     } finally {
@@ -80,7 +86,7 @@ describe('file backend reopen preserves duplicateKeys policy for empty DB', () =
       await assert.rejects(
         () => ds2.put({ key: 'x', payload: { v: 2 } }),
         (error) => error instanceof Error && error.name === 'ValidationError',
-        "reject policy must be preserved after reopen: second put must throw ValidationError",
+        'reject policy must be preserved after reopen: second put must throw ValidationError',
       );
 
       await ds2.close();
@@ -114,7 +120,11 @@ describe('file backend reopen preserves duplicateKeys policy for empty DB', () =
       await ds2.put({ key: 'a', payload: { v: 99 } });
 
       const count = await ds2.count();
-      assert.equal(count, 2, "replace must apply: 'a' replaced, 'b' kept → count 2");
+      assert.equal(
+        count,
+        2,
+        "replace must apply: 'a' replaced, 'b' kept → count 2",
+      );
 
       const records = await ds2.get('a');
       assert.equal(records[0].payload.v, 99, "'a' must reflect replaced value");

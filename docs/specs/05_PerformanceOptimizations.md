@@ -528,11 +528,11 @@ When `skipPayloadValidation` is `true`:
 
 ### 17.5 Affected Files
 
-| File                                    | Change                                                                        |
-| --------------------------------------- | ----------------------------------------------------------------------------- |
-| `src/types.ts`                          | Add `skipPayloadValidation?: boolean` to `DatastoreCommonConfig`              |
+| File                                    | Change                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------ |
+| `src/types.ts`                          | Add `skipPayloadValidation?: boolean` to `DatastoreCommonConfig`         |
 | `src/storage/datastore/Datastore.ts`    | Branch on `skipPayloadValidation` in `putSingle()` and `putManyStrict()` |
-| `src/storage/datastore/mutationById.ts` | Branch on `skipPayloadValidation` in `validateAndEstimateSize()`              |
+| `src/storage/datastore/mutationById.ts` | Branch on `skipPayloadValidation` in `validateAndEstimateSize()`         |
 
 ### 17.6 Test Plan
 
@@ -743,10 +743,10 @@ Update `resolvePayload`:
 
 ### 21.4 Affected Files
 
-| File                                    | Change                                             |
-| --------------------------------------- | -------------------------------------------------- |
-| `src/storage/backend/encoding.ts`       | Export `estimateKeySizeBytes`                      |
-| `src/storage/datastore/Datastore.ts`    | Use `estimateKeySizeBytes` in `resolvePayload`     |
+| File                                    | Change                                                  |
+| --------------------------------------- | ------------------------------------------------------- |
+| `src/storage/backend/encoding.ts`       | Export `estimateKeySizeBytes`                           |
+| `src/storage/datastore/Datastore.ts`    | Use `estimateKeySizeBytes` in `resolvePayload`          |
 | `src/storage/datastore/mutationById.ts` | Use `estimateKeySizeBytes` in `validateAndEstimateSize` |
 
 ## 22. P11: Reduce B-tree Lookup Redundancy in putSingle (Replace + Capacity)
@@ -933,10 +933,10 @@ Export `clampComparatorResult` from `recordKeyIndexBTree.ts` for use in `Datasto
 
 ### 25.5 Affected Files
 
-| File                                       | Change                                                              |
-| ------------------------------------------ | ------------------------------------------------------------------- |
-| `src/storage/btree/recordKeyIndexBTree.ts` | Export `clampComparatorResult` ✅                                   |
-| `src/storage/datastore/Datastore.ts`       | Use `clampComparatorResult` in `getMany`, `keys` ✅                |
+| File                                       | Change                                              |
+| ------------------------------------------ | --------------------------------------------------- |
+| `src/storage/btree/recordKeyIndexBTree.ts` | Export `clampComparatorResult` ✅                   |
+| `src/storage/datastore/Datastore.ts`       | Use `clampComparatorResult` in `getMany`, `keys` ✅ |
 
 ## 26. P15: Skip JSON.stringify for String Keys in Batch Dedup
 
@@ -959,8 +959,8 @@ Batch dedup in `putManyStrict()` is handled by sorting the tagged records by `(n
 
 ### 26.5 Affected Files
 
-| File                                 | Change                                                           |
-| ------------------------------------ | ---------------------------------------------------------------- |
+| File                                 | Change                                                                                      |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- |
 | `src/storage/datastore/Datastore.ts` | `putManyStrict()` + `buildStrictBatchEntries()` handle batch dedup without `JSON.stringify` |
 
 ## 27. P7-P15 Invariants
@@ -1030,6 +1030,23 @@ All optimizations MUST preserve existing behavior exactly:
 
 Run full test suite (`pnpm test`).
 
+## WI-1: `forEachRange()` — Streaming Range Iteration
+
+### Motivation
+
+`deleteSingle()` and the in-memory path of `deleteMany()` call `rangeQuery()`, which allocates a `BTreeEntry[]` array whose only purpose is summing `sizeBytes`. A non-allocating streaming iterator avoids this throwaway array.
+
+### Solution
+
+Add `forEachRange(start, end, callback)` to `RecordKeyIndexBTree`. It delegates to `InMemoryBTree.forEachRange()` with default inclusive/inclusive bounds, matching `deleteRange()` semantics. Replace `rangeQuery` + loop in `deleteSingle()` and the in-memory `deleteMany()` path with `forEachRange`.
+
+### Affected Files
+
+| File                                       | Change                                                                |
+| ------------------------------------------ | --------------------------------------------------------------------- |
+| `src/storage/btree/recordKeyIndexBTree.ts` | Add `forEachRange()` method                                           |
+| `src/storage/datastore/Datastore.ts`       | Use `forEachRange()` in `deleteSingle()` and in-memory `deleteMany()` |
+
 ## Revision History
 
 | Version | Date       | Summary                                                                                                                                                                                             |
@@ -1042,3 +1059,4 @@ Run full test suite (`pnpm test`).
 | 4.0     | 2026-04-02 | P6: skipPayloadValidation trusted input mode.                                                                                                                                                       |
 | 5.0     | 2026-04-02 | P7-P15: sync read fast-path, native UTF-8, structural size estimation, unified resolvePayload, B-tree lookup reduction, sync batch loops, O(1) mutex, comparator clamping in API, string key dedup. |
 | 5.1     | 2026-04-02 | P3-A fix: payload string size estimation now uses `estimateJsonStringBytes` to account for JSON escaping overhead.                                                                                  |
+| 6.0     | 2026-04-09 | WI-1: `forEachRange()` streaming iteration. WI-4: `entries()`/`entriesReversed()` lazy iterators.                                                                                                   |

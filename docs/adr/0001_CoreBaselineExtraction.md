@@ -12,17 +12,20 @@ A minimum coherent standalone package baseline was required first.
 ## Decision
 
 1. Establish a minimum baseline package around storage-engine core behavior.
+
 - Keep `Datastore` API and core modules.
 - Keep memory and file backend behavior as first-class tested scope.
 - Keep browser implementation files as compatibility code but out of initial expansion scope.
 
 2. Normalize project structure.
+
 - Active source under `src/`.
 - Active tests under `tests/`.
 - Active docs under `docs/architecture`, `docs/specs`, and `docs/adr`.
 - User-facing instructions consolidated in `README.md` (EN) and `README-JA.md` (JA).
 
 3. Enforce spec-first and test-first flow for this repository.
+
 - Update specs first.
 - Add tests reflecting specs.
 - Implement or migrate code to satisfy tests.
@@ -32,9 +35,11 @@ A minimum coherent standalone package baseline was required first.
 ## Consequences
 
 Positive:
+
 - Repository starts from a clear, minimal, testable baseline.
 - Historical artifacts are separated from active contract.
 - Future refactors can proceed incrementally.
 
 Trade-off:
+
 - Browser-focused feature docs and milestone plans are intentionally not promoted into active baseline docs in this step.

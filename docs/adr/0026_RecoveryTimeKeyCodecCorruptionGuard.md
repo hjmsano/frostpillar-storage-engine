@@ -11,6 +11,7 @@ Datastore supports custom key codecs via `config.key.serialize` and
 During durable backend recovery, persisted records are hydrated from
 `keySerialized`.
 Without explicit recovery-time guards:
+
 - a throwing `deserialize` can propagate ambiguous errors during initialization
 - a non-canonical codec pair can return a key that re-serializes to a different
   value, silently drifting from persisted identity
@@ -23,6 +24,7 @@ custom key codecs.
 Enforce strict key codec validation during backend initialization hydration.
 
 Key points:
+
 - if `deserialize(keySerialized)` throws, initialization fails with
   `IndexCorruptionError`
 - datastore validates `serialize(deserialize(keySerialized)) === keySerialized`
@@ -34,12 +36,14 @@ Key points:
 ## Consequences
 
 Positive:
+
 - prevents silent key identity drift on reopen
 - converts recovery-time codec faults into deterministic, typed failures
 - reduces denial-of-service risk from repeated crash/reopen loops caused by
   malformed persisted keys
 
 Trade-offs:
+
 - custom codecs must satisfy stricter round-trip stability on persisted keys
 - previously tolerated but ambiguous recovery behavior now fails fast
 

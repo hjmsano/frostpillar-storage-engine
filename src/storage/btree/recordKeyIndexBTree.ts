@@ -23,6 +23,7 @@ export interface RecordKeyIndexBTreeConfig<TKey> {
   autoScale?: boolean;
   maxLeafEntries?: number;
   maxBranchChildren?: number;
+  deleteRebalancePolicy?: 'standard' | 'lazy';
 }
 
 export const normalizeComparatorResult = (compared: number): number => {
@@ -73,6 +74,7 @@ export class RecordKeyIndexBTree<TKey = unknown, TValue = unknown> {
       autoScale: config.autoScale ?? true,
       maxLeafEntries: config.maxLeafEntries,
       maxBranchChildren: config.maxBranchChildren,
+      deleteRebalancePolicy: config.deleteRebalancePolicy,
     };
     this.tree = new InMemoryBTree<TKey, TValue>(treeConfig);
   }
@@ -89,7 +91,10 @@ export class RecordKeyIndexBTree<TKey = unknown, TValue = unknown> {
     return this.tree.peekById(entryId);
   }
 
-  public updateById(entryId: EntryId, value: TValue): BTreeEntry<TKey, TValue> | null {
+  public updateById(
+    entryId: EntryId,
+    value: TValue,
+  ): BTreeEntry<TKey, TValue> | null {
     return this.tree.updateById(entryId, value);
   }
 
@@ -108,6 +113,14 @@ export class RecordKeyIndexBTree<TKey = unknown, TValue = unknown> {
     });
   }
 
+  public forEachRange(
+    start: TKey,
+    end: TKey,
+    callback: (entry: BTreeEntry<TKey, TValue>) => void,
+  ): void {
+    this.tree.forEachRange(start, end, callback);
+  }
+
   public snapshot(): BTreeEntry<TKey, TValue>[] {
     return this.tree.snapshot();
   }
@@ -118,6 +131,10 @@ export class RecordKeyIndexBTree<TKey = unknown, TValue = unknown> {
 
   public popFirst(): BTreeEntry<TKey, TValue> | null {
     return this.tree.popFirst();
+  }
+
+  public popLast(): BTreeEntry<TKey, TValue> | null {
+    return this.tree.popLast();
   }
 
   public size(): number {
@@ -136,6 +153,14 @@ export class RecordKeyIndexBTree<TKey = unknown, TValue = unknown> {
     return this.tree.hasKey(key);
   }
 
+  public entries(): IterableIterator<BTreeEntry<TKey, TValue>> {
+    return this.tree.entries();
+  }
+
+  public entriesReversed(): IterableIterator<BTreeEntry<TKey, TValue>> {
+    return this.tree.entriesReversed();
+  }
+
   public keys(): IterableIterator<TKey> {
     return this.tree.keys();
   }
@@ -149,18 +174,38 @@ export class RecordKeyIndexBTree<TKey = unknown, TValue = unknown> {
     config: RecordKeyIndexBTreeConfig<TKey>,
   ): RecordKeyIndexBTree<TKey, TValue> {
     const wrappedComparator = buildWrappedComparator(config.compareKeys);
-    const adapter = Object.create(RecordKeyIndexBTree.prototype) as RecordKeyIndexBTree<TKey, TValue>;
+    const adapter = Object.create(
+      RecordKeyIndexBTree.prototype,
+    ) as RecordKeyIndexBTree<TKey, TValue>;
     const resolvedPolicy = config.duplicateKeys ?? 'allow';
-    const resolvedAutoScale = config.autoScale ?? true;
-    const configPatch: BTreeJSON<TKey, TValue>['config'] = { ...json.config, duplicateKeys: resolvedPolicy, autoScale: resolvedAutoScale };
+    const resolvedAutoScale = config.autoScale ?? json.config.autoScale ?? true;
+    const resolvedDeleteRebalancePolicy =
+      config.deleteRebalancePolicy ??
+      json.config.deleteRebalancePolicy ??
+      'standard';
+    const configPatch: BTreeJSON<TKey, TValue>['config'] = {
+      ...json.config,
+      duplicateKeys: resolvedPolicy,
+      autoScale: resolvedAutoScale,
+      deleteRebalancePolicy: resolvedDeleteRebalancePolicy,
+    };
     if (!resolvedAutoScale) {
-      if (config.maxLeafEntries !== undefined) configPatch.maxLeafEntries = config.maxLeafEntries;
-      if (config.maxBranchChildren !== undefined) configPatch.maxBranchChildren = config.maxBranchChildren;
+      if (config.maxLeafEntries !== undefined)
+        configPatch.maxLeafEntries = config.maxLeafEntries;
+      if (config.maxBranchChildren !== undefined)
+        configPatch.maxBranchChildren = config.maxBranchChildren;
     }
-    const patchedJSON: BTreeJSON<TKey, TValue> = { ...json, config: configPatch };
+    const patchedJSON: BTreeJSON<TKey, TValue> = {
+      ...json,
+      config: configPatch,
+    };
     (adapter as unknown as { tree: InMemoryBTree<TKey, TValue> }).tree =
       InMemoryBTree.fromJSON<TKey, TValue>(patchedJSON, wrappedComparator);
     return adapter;
+  }
+
+  public count(start: TKey, end: TKey): number {
+    return this.tree.count(start, end);
   }
 
   public clear(): void {

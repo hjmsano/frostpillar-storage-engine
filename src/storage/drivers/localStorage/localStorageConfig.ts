@@ -16,7 +16,8 @@ export const parseLocalStorageConfig = (
 ): ParsedLocalStorageConfig => {
   const keyPrefix = config?.keyPrefix ?? 'frostpillar';
   const databaseKey = config?.databaseKey ?? 'default';
-  const maxChunkChars = config?.maxChunkChars ?? DEFAULT_LOCAL_STORAGE_MAX_CHUNK_CHARS;
+  const maxChunkChars =
+    config?.maxChunkChars ?? DEFAULT_LOCAL_STORAGE_MAX_CHUNK_CHARS;
   const maxChunks = config?.maxChunks ?? DEFAULT_LOCAL_STORAGE_MAX_CHUNKS;
 
   if (!Number.isSafeInteger(maxChunkChars) || maxChunkChars <= 0) {

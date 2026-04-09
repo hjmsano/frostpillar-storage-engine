@@ -14,6 +14,34 @@ export interface DatastoreCloseOptions {
   clearInMemoryState: () => void;
 }
 
+export interface DatastoreCloseableState {
+  lifecycle: DatastoreLifecycle;
+  pendingInit: Promise<void> | null;
+  pendingInitError: Error | null;
+  backendController: DurableBackendController | null;
+  keyIndex: { clear: () => void };
+  errorListeners: { clear: () => void };
+}
+
+export const buildCloseOptions = (
+  state: DatastoreCloseableState,
+): DatastoreCloseOptions => ({
+  lifecycle: state.lifecycle,
+  getPendingInit: () => state.pendingInit,
+  getPendingInitError: () => state.pendingInitError,
+  setPendingInitError: (e) => {
+    state.pendingInitError = e;
+  },
+  getBackendController: () => state.backendController,
+  setBackendController: (c) => {
+    state.backendController = c;
+  },
+  clearInMemoryState: () => {
+    state.keyIndex.clear();
+    state.errorListeners.clear();
+  },
+});
+
 export const closeDatastore = async (
   options: DatastoreCloseOptions,
 ): Promise<void> => {

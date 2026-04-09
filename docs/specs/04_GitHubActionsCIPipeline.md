@@ -121,9 +121,9 @@ Required:
 
 ## Revision History
 
-| Version | Date | Summary |
-|---------|------|---------|
-| 0.4 | 2026-04-04 | Switch publish target from GitHub Packages to npmjs.org (OIDC), release branch from `release` to `main`. |
-| 0.3 | 2026-03-20 | Add bundle target and package contract details (§6). |
-| 0.2 | 2026-03-20 | Add reproducibility and supply-chain rules (§5). |
-| 0.1 | 2026-03-20 | Initial specification. |
+| Version | Date       | Summary                                                                                                  |
+| ------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| 0.4     | 2026-04-04 | Switch publish target from GitHub Packages to npmjs.org (OIDC), release branch from `release` to `main`. |
+| 0.3     | 2026-03-20 | Add bundle target and package contract details (§6).                                                     |
+| 0.2     | 2026-03-20 | Add reproducibility and supply-chain rules (§5).                                                         |
+| 0.1     | 2026-03-20 | Initial specification.                                                                                   |

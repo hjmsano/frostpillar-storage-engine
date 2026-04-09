@@ -14,7 +14,10 @@ const runBundleTypecheck = () => {
     process.cwd(),
     'node_modules/typescript/bin/tsc',
   );
-  const bundleTsconfigPath = path.resolve(process.cwd(), 'tsconfig.bundle.json');
+  const bundleTsconfigPath = path.resolve(
+    process.cwd(),
+    'tsconfig.bundle.json',
+  );
   return spawnSync(
     process.execPath,
     [tscCliPath, '--project', bundleTsconfigPath, '--noEmit'],

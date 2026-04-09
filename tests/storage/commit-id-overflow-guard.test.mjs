@@ -81,9 +81,7 @@ test('file backend commit rejects when commitId reaches MAX_SAFE_INTEGER', async
 
 test('syncStorage commit rejects when commitId reaches MAX_SAFE_INTEGER', async () => {
   const { commitSyncStorageSnapshot, createSyncStorageBackendState } =
-    await importDistModule(
-      'storage/drivers/syncStorage/syncStorageBackend.js',
-    );
+    await importDistModule('storage/drivers/syncStorage/syncStorageBackend.js');
 
   const store = new Map();
   const state = createSyncStorageBackendState(

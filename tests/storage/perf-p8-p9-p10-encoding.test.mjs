@@ -16,9 +16,9 @@ test('P8: computeUtf8ByteLength with native Buffer produces same results as Text
   const cases = [
     '',
     'hello',
-    '\u00e9',        // 2-byte
-    '\u4e16\u754c',  // 3-byte CJK
-    '\uD83D\uDE00',  // 4-byte emoji surrogate pair
+    '\u00e9', // 2-byte
+    '\u4e16\u754c', // 3-byte CJK
+    '\uD83D\uDE00', // 4-byte emoji surrogate pair
     'hello 世界 café 😀🎉',
     'a'.repeat(10000),
   ];
@@ -65,7 +65,8 @@ test('P9: estimateObjectSizeBytes(true) === 4, false === 5', async () => {
 });
 
 test('P9: estimateObjectSizeBytes numbers match JSON.stringify length', async () => {
-  const { estimateObjectSizeBytes, computeUtf8ByteLength } = await loadEncoding();
+  const { estimateObjectSizeBytes, computeUtf8ByteLength } =
+    await loadEncoding();
   const numbers = [0, 1, -1, 42, 3.14, -100000, 1e20, 0.1, -0.5, 999999999];
   for (const n of numbers) {
     const expected = computeUtf8ByteLength(JSON.stringify(n));
@@ -78,7 +79,8 @@ test('P9: estimateObjectSizeBytes numbers match JSON.stringify length', async ()
 });
 
 test('P9: estimateObjectSizeBytes strings match JSON.stringify byte length', async () => {
-  const { estimateObjectSizeBytes, computeUtf8ByteLength } = await loadEncoding();
+  const { estimateObjectSizeBytes, computeUtf8ByteLength } =
+    await loadEncoding();
   const strings = [
     '',
     'hello',
@@ -106,7 +108,8 @@ test('P9: estimateObjectSizeBytes empty object === 2', async () => {
 });
 
 test('P9: estimateObjectSizeBytes nested objects match JSON.stringify byte length', async () => {
-  const { estimateObjectSizeBytes, computeUtf8ByteLength } = await loadEncoding();
+  const { estimateObjectSizeBytes, computeUtf8ByteLength } =
+    await loadEncoding();
   const objects = [
     { name: 'test' },
     { a: 1, b: 2 },
@@ -126,7 +129,8 @@ test('P9: estimateObjectSizeBytes nested objects match JSON.stringify byte lengt
 });
 
 test('P9: estimateObjectSizeBytes handles undefined values in objects (omitted like JSON.stringify)', async () => {
-  const { estimateObjectSizeBytes, computeUtf8ByteLength } = await loadEncoding();
+  const { estimateObjectSizeBytes, computeUtf8ByteLength } =
+    await loadEncoding();
   const obj = { a: 1, b: undefined, c: 'test' };
   const expected = computeUtf8ByteLength(JSON.stringify(obj));
   assert.equal(estimateObjectSizeBytes(obj), expected);
@@ -151,7 +155,9 @@ test('P9: estimateRecordSizeBytes matches TextEncoder for diverse inputs', async
     { key: 'multibyte', payload: { cjk: '世界こんにちは', emoji: '🎉🔥💯' } },
   ];
   for (const { key, payload } of testCases) {
-    const expected = encoder.encode(JSON.stringify([key, { payload }])).byteLength;
+    const expected = encoder.encode(
+      JSON.stringify([key, { payload }]),
+    ).byteLength;
     assert.equal(
       estimateRecordSizeBytes(key, payload),
       expected,
@@ -169,7 +175,9 @@ test('P9: estimateRecordSizeBytes with number key matches TextEncoder', async ()
     { key: 3.14, payload: { v: 3 } },
   ];
   for (const { key, payload } of cases) {
-    const expected = encoder.encode(JSON.stringify([key, { payload }])).byteLength;
+    const expected = encoder.encode(
+      JSON.stringify([key, { payload }]),
+    ).byteLength;
     assert.equal(
       estimateRecordSizeBytes(key, payload),
       expected,
@@ -182,7 +190,9 @@ test('P9: estimateRecordSizeBytes with null values in payload matches TextEncode
   const { estimateRecordSizeBytes } = await loadEncoding();
   const encoder = new TextEncoder();
   const payload = { a: null, b: null };
-  const expected = encoder.encode(JSON.stringify(['k', { payload }])).byteLength;
+  const expected = encoder.encode(
+    JSON.stringify(['k', { payload }]),
+  ).byteLength;
   assert.equal(estimateRecordSizeBytes('k', payload), expected);
 });
 
@@ -197,7 +207,14 @@ test('P10: estimateKeySizeBytes is exported', async () => {
 
 test('P10: estimateKeySizeBytes matches computeUtf8ByteLength(JSON.stringify(key)) for strings', async () => {
   const { estimateKeySizeBytes, computeUtf8ByteLength } = await loadEncoding();
-  const keys = ['simple', '日本語', 'emoji🔑', '', 'with"quotes', 'back\\slash'];
+  const keys = [
+    'simple',
+    '日本語',
+    'emoji🔑',
+    '',
+    'with"quotes',
+    'back\\slash',
+  ];
   for (const key of keys) {
     const expected = computeUtf8ByteLength(JSON.stringify(key));
     assert.equal(

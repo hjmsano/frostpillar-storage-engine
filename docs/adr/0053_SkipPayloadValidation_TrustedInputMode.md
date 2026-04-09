@@ -26,6 +26,7 @@ When `true`:
 4. **`updateById`**: merged payload also skips validation when the flag is set. Size is computed via `estimateRecordSizeBytes()` when needed.
 
 The caller accepts responsibility for:
+
 - Providing JSON-serializable plain objects only.
 - Avoiding `__proto__` / `constructor` / `prototype` keys.
 - Not mutating the payload object after insertion.

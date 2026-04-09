@@ -53,6 +53,7 @@ projection behavior) was removed from this repository and transferred to
 `frostpillar-query-engine`.
 
 This ADR remains active only for:
+
 - key codec callback documentation and failure semantics
 - constructor-time `ConfigurationError` callback validation clarifications
 - ADR-0017/0018 adapter path reference corrections

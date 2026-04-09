@@ -68,7 +68,11 @@ test('D1: concurrent put() calls with capacity tracking remain consistent', asyn
   await Promise.all(puts);
 
   const count = await datastore.count();
-  assert.equal(count, N, `Expected ${N} records after concurrent puts, got ${count}`);
+  assert.equal(
+    count,
+    N,
+    `Expected ${N} records after concurrent puts, got ${count}`,
+  );
 
   // Verify capacity is not double-counted: put one more record should succeed
   await datastore.put({ key: 'extra', payload: { data: 'small' } });
@@ -100,7 +104,11 @@ test('D1: concurrent put() and delete() operations maintain consistency', async 
 
   const count = await datastore.count();
   // Deletes removed 5 seeds, puts added 5 new -> net 5
-  assert.equal(count, 5, `Expected 5 records after concurrent put+delete, got ${count}`);
+  assert.equal(
+    count,
+    5,
+    `Expected 5 records after concurrent put+delete, got ${count}`,
+  );
 
   await datastore.close();
 });
@@ -125,13 +133,20 @@ test('D1: concurrent updateById operations maintain consistency', async () => {
   const results = await Promise.all(updates);
 
   // All updates must have succeeded
-  assert.ok(results.every((r) => r === true), 'All concurrent updateById must return true');
+  assert.ok(
+    results.every((r) => r === true),
+    'All concurrent updateById must return true',
+  );
 
   // Each record must have the updated value
   for (let i = 0; i < N; i++) {
     const found = await datastore.get(`item-${i}`);
     assert.equal(found.length, 1);
-    assert.equal(found[0].payload.value, i * 10, `item-${i} must be updated to ${i * 10}`);
+    assert.equal(
+      found[0].payload.value,
+      i * 10,
+      `item-${i} must be updated to ${i * 10}`,
+    );
   }
 
   await datastore.close();
@@ -152,7 +167,11 @@ test('D1: concurrent puts with same key under replace policy produce exactly one
   await Promise.all(puts);
 
   const records = await datastore.get('shared');
-  assert.equal(records.length, 1, 'replace policy must leave exactly one record');
+  assert.equal(
+    records.length,
+    1,
+    'replace policy must leave exactly one record',
+  );
 
   await datastore.close();
 });
@@ -180,20 +199,38 @@ test('D1: concurrent replaceById operations maintain consistency', async () => {
 
   // Concurrently replace all records
   const replacements = records.map((r) =>
-    datastore.replaceById(r._id, { replaced: true, seq: r.payload.value * 100 }),
+    datastore.replaceById(r._id, {
+      replaced: true,
+      seq: r.payload.value * 100,
+    }),
   );
   const results = await Promise.all(replacements);
 
   // All replacements must have succeeded
-  assert.ok(results.every((r) => r === true), 'All concurrent replaceById must return true');
+  assert.ok(
+    results.every((r) => r === true),
+    'All concurrent replaceById must return true',
+  );
 
   // Each record must have the replaced payload (old fields gone)
   for (let i = 0; i < N; i++) {
     const found = await datastore.get(`item-${i}`);
     assert.equal(found.length, 1);
-    assert.equal(found[0].payload.replaced, true, `item-${i} must have replaced=true`);
-    assert.equal(found[0].payload.seq, i * 100, `item-${i} must have seq=${i * 100}`);
-    assert.equal(found[0].payload.value, undefined, `item-${i} must not retain old value field`);
+    assert.equal(
+      found[0].payload.replaced,
+      true,
+      `item-${i} must have replaced=true`,
+    );
+    assert.equal(
+      found[0].payload.seq,
+      i * 100,
+      `item-${i} must have seq=${i * 100}`,
+    );
+    assert.equal(
+      found[0].payload.value,
+      undefined,
+      `item-${i} must not retain old value field`,
+    );
   }
 
   await datastore.close();
@@ -240,7 +277,10 @@ test('D1: concurrent replaceById and deleteByIds do not corrupt state', async ()
   // Seed records
   const N = 10;
   for (let i = 0; i < N; i++) {
-    await datastore.put({ key: `item-${i}`, payload: { data: 'x'.repeat(50) } });
+    await datastore.put({
+      key: `item-${i}`,
+      payload: { data: 'x'.repeat(50) },
+    });
   }
 
   const records = await datastore.getAll();
@@ -328,7 +368,9 @@ test('B1: pendingInit is cleared before awaiting (single-flight: no duplicate aw
   const { Datastore } = await loadStorageModule();
 
   let resolveFn;
-  const blocker = new Promise((resolve) => { resolveFn = resolve; });
+  const blocker = new Promise((resolve) => {
+    resolveFn = resolve;
+  });
 
   const datastore = new Datastore({
     key: createStringKeyDefinition(),

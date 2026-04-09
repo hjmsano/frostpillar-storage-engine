@@ -4,8 +4,10 @@ import { importDistModule, loadStorageModule } from '../load-module.mjs';
 
 const createStringKeyDefinition = () => ({
   normalize: (value, fieldName) => {
-    if (typeof value !== 'string') throw new TypeError(`${fieldName} must be string.`);
-    if (value.length === 0) throw new TypeError(`${fieldName} must not be empty.`);
+    if (typeof value !== 'string')
+      throw new TypeError(`${fieldName} must be string.`);
+    if (value.length === 0)
+      throw new TypeError(`${fieldName} must not be empty.`);
     return value;
   },
   compare: (left, right) => (left < right ? -1 : left > right ? 1 : 0),
@@ -104,11 +106,12 @@ describe('P6: skipPayloadValidation', () => {
     });
     try {
       await assert.rejects(
-        () => ds.putMany([
-          { key: 'k1', payload: { v: 'a'.repeat(30) } },
-          { key: 'k2', payload: { v: 'b'.repeat(30) } },
-          { key: 'k3', payload: { v: 'c'.repeat(30) } },
-        ]),
+        () =>
+          ds.putMany([
+            { key: 'k1', payload: { v: 'a'.repeat(30) } },
+            { key: 'k2', payload: { v: 'b'.repeat(30) } },
+            { key: 'k3', payload: { v: 'c'.repeat(30) } },
+          ]),
         (err) => err instanceof QuotaExceededError,
       );
       assert.equal(await ds.count(), 0);
@@ -128,7 +131,10 @@ describe('P6: skipPayloadValidation', () => {
       await ds.put({ key: 'u', payload: { name: 'before' } });
       const records = await ds.get('u');
       const id = records[0]._id;
-      const updated = await ds.updateById(id, { name: 'after', extra: 'field' });
+      const updated = await ds.updateById(id, {
+        name: 'after',
+        extra: 'field',
+      });
       assert.equal(updated, true);
       const after = await ds.getById(id);
       assert.equal(after.payload.name, 'after');
@@ -163,7 +169,7 @@ describe('P6: skipPayloadValidation', () => {
     });
     try {
       // __proto__ key would be rejected by validation, but allowed when skipped
-      await ds.put({ key: 'proto', payload: { '__proto__': 'test' } });
+      await ds.put({ key: 'proto', payload: { __proto__: 'test' } });
       const records = await ds.get('proto');
       assert.equal(records.length, 1);
     } finally {

@@ -31,12 +31,14 @@ Parser compatibility is preserved:
 ## Consequences
 
 Positive:
+
 - removes ambiguity between numeric-looking serialized strings and legacy numeric
   IDs
 - keeps single canonical writer format for new `_id` values
 - preserves compatibility for existing IDs generated before this change
 
 Trade-offs:
+
 - newly generated `_id` values for numeric/timestamp serialized keys now include
   the `k~` prefix (format change)
 

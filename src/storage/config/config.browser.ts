@@ -1,9 +1,6 @@
 import { UnsupportedBackendError } from '../../errors/index.js';
 import type { FileBackendConfig } from '../../types.js';
-export {
-  parseCapacityConfig,
-  parseAutoCommitConfig,
-} from './config.shared.js';
+export { parseCapacityConfig, parseAutoCommitConfig } from './config.shared.js';
 
 export const ensureCanonicalPathWithinWorkingDirectory = (
   _targetPath: string,

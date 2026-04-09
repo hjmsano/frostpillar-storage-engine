@@ -20,10 +20,14 @@ const ensureBuild = async () => {
       process.cwd(),
       'node_modules/typescript/bin/tsc',
     );
-    const result = spawnSync(process.execPath, [tscCliPath, '--build', '--force'], {
-      cwd: process.cwd(),
-      encoding: 'utf8',
-    });
+    const result = spawnSync(
+      process.execPath,
+      [tscCliPath, '--build', '--force'],
+      {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+      },
+    );
 
     if (result.error !== undefined) {
       throw result.error;
@@ -49,7 +53,9 @@ test('public API exports FrostpillarError as root error for family-wide catches'
 
   assert.equal(typeof frostpillarModule.FrostpillarError, 'function');
 
-  const validationError = new frostpillarModule.ValidationError('invalid payload');
+  const validationError = new frostpillarModule.ValidationError(
+    'invalid payload',
+  );
   assert.ok(validationError instanceof frostpillarModule.FrostpillarError);
   assert.ok(validationError instanceof Error);
 
@@ -75,11 +81,26 @@ test('public API exports all core error subclasses for granular instanceof check
   assert.equal(typeof frostpillarModule.StorageEngineError, 'function');
   assert.equal(typeof frostpillarModule.UnsupportedBackendError, 'function');
 
-  assert.ok(new frostpillarModule.StorageEngineError('x') instanceof frostpillarModule.FrostpillarError);
-  assert.ok(new frostpillarModule.BinaryFormatError('x') instanceof frostpillarModule.StorageEngineError);
-  assert.ok(new frostpillarModule.PageCorruptionError('x') instanceof frostpillarModule.StorageEngineError);
-  assert.ok(new frostpillarModule.IndexCorruptionError('x') instanceof frostpillarModule.StorageEngineError);
-  assert.ok(new frostpillarModule.DatabaseLockedError('x') instanceof frostpillarModule.StorageEngineError);
+  assert.ok(
+    new frostpillarModule.StorageEngineError('x') instanceof
+      frostpillarModule.FrostpillarError,
+  );
+  assert.ok(
+    new frostpillarModule.BinaryFormatError('x') instanceof
+      frostpillarModule.StorageEngineError,
+  );
+  assert.ok(
+    new frostpillarModule.PageCorruptionError('x') instanceof
+      frostpillarModule.StorageEngineError,
+  );
+  assert.ok(
+    new frostpillarModule.IndexCorruptionError('x') instanceof
+      frostpillarModule.StorageEngineError,
+  );
+  assert.ok(
+    new frostpillarModule.DatabaseLockedError('x') instanceof
+      frostpillarModule.StorageEngineError,
+  );
 });
 
 test('query-layer error classes are not part of the storage engine public API', async () => {
@@ -87,5 +108,8 @@ test('query-layer error classes are not part of the storage engine public API', 
 
   assert.equal(typeof frostpillarModule.TimestampParseError, 'undefined');
   assert.equal(typeof frostpillarModule.QueryParseError, 'undefined');
-  assert.equal(typeof frostpillarModule.UnsupportedQueryFeatureError, 'undefined');
+  assert.equal(
+    typeof frostpillarModule.UnsupportedQueryFeatureError,
+    'undefined',
+  );
 });

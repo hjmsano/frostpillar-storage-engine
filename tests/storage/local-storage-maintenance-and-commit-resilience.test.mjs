@@ -19,9 +19,10 @@ const createSampleTreeJSON = () => ({
 });
 
 test('localStorage commit cleanup probe is bounded by maxChunks', async () => {
-  const { commitLocalStorageSnapshot, createLocalStorageBackendState } = await importDistModule(
-    'storage/drivers/localStorage/localStorageBackend.js',
-  );
+  const { commitLocalStorageSnapshot, createLocalStorageBackendState } =
+    await importDistModule(
+      'storage/drivers/localStorage/localStorageBackend.js',
+    );
 
   const getItemCalls = [];
   const removeItemCalls = [];

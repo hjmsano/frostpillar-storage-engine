@@ -30,11 +30,13 @@ Add an insertion-order boundary guard aligned with the B-Tree adapter sentinel:
 ## Consequences
 
 Positive:
+
 - preserves deterministic inclusive range-query behavior
 - fails fast with explicit corruption semantics instead of allowing silent drift
 - keeps B-Tree range bound and datastore insertion contract synchronized
 
 Trade-offs:
+
 - datastore now has a hard terminal insertion-order boundary (practically
   unreachable)
 

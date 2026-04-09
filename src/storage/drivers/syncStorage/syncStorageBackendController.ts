@@ -35,7 +35,10 @@ export interface SyncStorageBackendControllerCreateResult {
   initialCurrentSizeBytes: number;
 }
 
-export class SyncStorageBackendController extends AsyncDurableAutoCommitController implements DurableBackendController {
+export class SyncStorageBackendController
+  extends AsyncDurableAutoCommitController
+  implements DurableBackendController
+{
   private readonly backend: SyncStorageBackendState;
   private readonly getSnapshot: () => SyncStorageBackendControllerSnapshot;
 
@@ -90,9 +93,6 @@ export class SyncStorageBackendController extends AsyncDurableAutoCommitControll
 
   protected async executeSingleCommit(): Promise<void> {
     const snapshot = this.getSnapshot();
-    await commitSyncStorageSnapshot(
-      this.backend,
-      snapshot.treeJSON,
-    );
+    await commitSyncStorageSnapshot(this.backend, snapshot.treeJSON);
   }
 }

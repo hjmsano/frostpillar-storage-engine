@@ -35,7 +35,10 @@ export interface LocalStorageBackendControllerCreateResult {
   initialCurrentSizeBytes: number;
 }
 
-export class LocalStorageBackendController extends AsyncDurableAutoCommitController implements DurableBackendController {
+export class LocalStorageBackendController
+  extends AsyncDurableAutoCommitController
+  implements DurableBackendController
+{
   private readonly backend: LocalStorageBackendState;
   private readonly getSnapshot: () => LocalStorageBackendControllerSnapshot;
 
@@ -89,10 +92,7 @@ export class LocalStorageBackendController extends AsyncDurableAutoCommitControl
 
   protected executeSingleCommit(): Promise<void> {
     const snapshot = this.getSnapshot();
-    commitLocalStorageSnapshot(
-      this.backend,
-      snapshot.treeJSON,
-    );
+    commitLocalStorageSnapshot(this.backend, snapshot.treeJSON);
     return Promise.resolve();
   }
 }

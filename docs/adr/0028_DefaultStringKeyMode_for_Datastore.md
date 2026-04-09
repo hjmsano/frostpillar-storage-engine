@@ -19,6 +19,7 @@ failed with `TimestampParseError`.
 Switch the built-in default key definition from timestamp-based to string-based.
 
 Key points:
+
 - default mode key type is non-empty `string`
 - default comparator is lexicographic ascending
 - default serializer/deserializer keep string identity
@@ -29,11 +30,13 @@ Key points:
 ## Consequences
 
 Positive:
+
 - README quickstart behavior matches runtime default behavior
 - default mode now targets generic key-value scenarios without extra config
 - timestamp use cases remain available via explicit `config.key` definition
 
 Trade-offs:
+
 - projects relying on implicit default timestamp behavior must add `config.key`
 - existing wording in earlier ADRs/docs required alignment updates
 

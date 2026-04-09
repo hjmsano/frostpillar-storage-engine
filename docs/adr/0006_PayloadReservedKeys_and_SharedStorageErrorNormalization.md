@@ -15,11 +15,13 @@ The project requires explicit security constraints and maintainable internal con
 ## Decision
 
 1. Reject reserved payload keys
+
 - `validatePayloadKey` now rejects `__proto__`, `constructor`, and `prototype` with `ValidationError`.
 - This applies to both top-level and nested payload objects.
 - Specs and usage docs (EN/JA) now document this constraint.
 
 2. Centralize storage error normalization
+
 - Add shared `toStorageEngineError(error, fallbackMessage)` in `src/errors/index.ts`.
 - Replace per-file duplicated `throwStorageError` helpers in:
   - `src/storage/drivers/file/fileBackend.ts`
@@ -29,10 +31,12 @@ The project requires explicit security constraints and maintainable internal con
 ## Consequences
 
 Positive:
+
 - Reduces prototype pollution attack surface in payload ingestion paths.
 - Makes file durability error-wrapping behavior consistent and easier to maintain.
 
 Trade-off:
+
 - Payloads that previously included reserved keys are now rejected.
 
 ## References

@@ -52,10 +52,7 @@ test('computeUtf8ByteLength: mixed string matches TextEncoder', async () => {
   const { computeUtf8ByteLength } = await loadEncoding();
   const encoder = new TextEncoder();
   const mixed = 'hello 世界 café 😀🎉';
-  assert.equal(
-    computeUtf8ByteLength(mixed),
-    encoder.encode(mixed).byteLength,
-  );
+  assert.equal(computeUtf8ByteLength(mixed), encoder.encode(mixed).byteLength);
 });
 
 test('computeUtf8ByteLength: JSON.stringify output matches TextEncoder for representative records', async () => {
@@ -119,7 +116,9 @@ test('estimateRecordSizeBytes returns identical values with computeUtf8ByteLengt
     { key: 'emoji🔑', payload: { icon: '😀', nested: { a: 1 } } },
   ];
   for (const { key, payload } of testCases) {
-    const expected = encoder.encode(JSON.stringify([key, { payload }])).byteLength;
+    const expected = encoder.encode(
+      JSON.stringify([key, { payload }]),
+    ).byteLength;
     assert.equal(
       estimateRecordSizeBytes(key, payload),
       expected,

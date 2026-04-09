@@ -1,7 +1,4 @@
-import type {
-  KeyedRecord,
-  PersistedRecord,
-} from '../../types.js';
+import type { KeyedRecord, PersistedRecord } from '../../types.js';
 import type { EntryId } from '../btree/recordKeyIndexBTree.js';
 
 export const toPublicRecord = (

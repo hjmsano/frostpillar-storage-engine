@@ -18,6 +18,7 @@ Adopt `@frostpillar/frostpillar-btree` as the underlying in-memory tree engine f
 datastore key indexing.
 
 Keep `src/storage/btree/recordKeyIndexBTree.ts` as an internal adapter that:
+
 - preserves Frostpillar datastore ordering semantics:
   1. key comparator ascending
   2. insertion order ascending for key ties
@@ -32,11 +33,13 @@ integration boundary remains localized.
 ## Consequences
 
 Positive:
+
 - single source of truth for B-Tree mutation/integrity logic
 - lower maintenance burden in this repository
 - clearer contract for future B-Tree package upgrades
 
 Trade-offs:
+
 - a new dependency/versioning surface is introduced
 - adapter tests are required to prevent behavioral drift at the integration
   boundary

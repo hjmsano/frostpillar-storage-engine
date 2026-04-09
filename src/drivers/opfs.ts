@@ -1,10 +1,5 @@
-import {
-  OpfsBackendController,
-} from '../storage/drivers/opfs/opfsBackendController.js';
-import type {
-  DatastoreDriver,
-  OpfsConfig,
-} from '../types.js';
+import { OpfsBackendController } from '../storage/drivers/opfs/opfsBackendController.js';
+import type { DatastoreDriver, OpfsConfig } from '../types.js';
 
 export type OpfsDriverOptions = OpfsConfig;
 

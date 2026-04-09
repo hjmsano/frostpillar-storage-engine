@@ -29,11 +29,13 @@ Any non-canonical multi-separator ID is rejected with `ValidationError`.
 ## Consequences
 
 Positive:
+
 - deterministic, strict `RecordId` validation
 - clear rejection path for malformed IDs instead of ambiguous parsing
 - colon-containing keys continue to work via canonical encoded `_id` values
 
 Trade-offs:
+
 - previously accepted non-canonical IDs with extra separators are now invalid
 
 ## References

@@ -31,12 +31,14 @@ Two reliability/maintainability concerns were identified:
 ## Consequences
 
 Positive:
+
 - Backend close failures are no longer silently suppressed when init already
   failed.
 - Diagnostics improve for lock-release and cleanup failures.
 - `loadFileSnapshot` intent is explicit and less likely to be misread.
 
 Trade-off:
+
 - Callers that assumed a single `Error` from `close()` must now handle
   `AggregateError` for dual-failure cases.
 

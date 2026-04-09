@@ -17,6 +17,7 @@ unpredictable query behavior.
 Enforce a runtime comparator-result contract at the B-Tree adapter boundary.
 
 Key points:
+
 - comparator output MUST be a finite integer
 - adapter normalizes valid non-zero integers to ordering sign (`-1` / `1`)
 - invalid outputs fail fast with `IndexCorruptionError`
@@ -26,11 +27,13 @@ Key points:
 ## Consequences
 
 Positive:
+
 - prevents silent propagation of invalid comparator outputs into B-Tree state
 - converts configuration/logic defects into deterministic explicit failures
 - aligns runtime behavior with deterministic-ordering principles
 
 Trade-offs:
+
 - custom key comparator implementations now have a stricter runtime contract
 - invalid comparator behavior that was previously tolerated now fails immediately
 

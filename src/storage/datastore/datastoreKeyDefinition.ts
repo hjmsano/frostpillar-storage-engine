@@ -1,11 +1,5 @@
-import {
-  ConfigurationError,
-  ValidationError,
-} from '../../errors/index.js';
-import type {
-  DatastoreConfig,
-  DatastoreKeyDefinition,
-} from '../../types.js';
+import { ConfigurationError, ValidationError } from '../../errors/index.js';
+import type { DatastoreConfig, DatastoreKeyDefinition } from '../../types.js';
 
 const ensureNonEmptyStringKey = (value: unknown, fieldName: string): string => {
   if (typeof value !== 'string') {
@@ -18,8 +12,8 @@ const ensureNonEmptyStringKey = (value: unknown, fieldName: string): string => {
 };
 
 export const DEFAULT_STRING_KEY_DEFINITION: DatastoreKeyDefinition<
-string,
-string
+  string,
+  string
 > = {
   normalize: (value: string, fieldName: string): string => {
     return ensureNonEmptyStringKey(value, fieldName);
@@ -62,7 +56,10 @@ export const resolveKeyDefinition = (
   config: DatastoreConfig,
 ): DatastoreKeyDefinition<unknown, unknown> => {
   if (config.key === undefined) {
-    return DEFAULT_STRING_KEY_DEFINITION as DatastoreKeyDefinition<unknown, unknown>;
+    return DEFAULT_STRING_KEY_DEFINITION as DatastoreKeyDefinition<
+      unknown,
+      unknown
+    >;
   }
   validateKeyDefinition(config.key);
   return config.key;

@@ -212,7 +212,10 @@ test('P11: put with replace policy and capacity tracks size correctly', async ()
   // If size tracking is broken (double-counted), adding more records would
   // exceed capacity prematurely.
   for (let i = 0; i < 20; i++) {
-    await ds.put({ key: `item-${String(i).padStart(3, '0')}`, payload: { n: i } });
+    await ds.put({
+      key: `item-${String(i).padStart(3, '0')}`,
+      payload: { n: i },
+    });
   }
 
   assert.equal(await ds.count(), 21); // 1 replaced + 20 new
@@ -246,7 +249,10 @@ test('P12: putMany on pure in-memory datastore inserts all records', async () =>
 
   const records = [];
   for (let i = 0; i < 50; i++) {
-    records.push({ key: `key-${String(i).padStart(3, '0')}`, payload: { n: i } });
+    records.push({
+      key: `key-${String(i).padStart(3, '0')}`,
+      payload: { n: i },
+    });
   }
 
   await ds.putMany(records);
@@ -272,10 +278,11 @@ test('P12: putMany with reject policy throws on duplicate within batch (across p
 
   // putMany with a record that has the same key should throw
   await assert.rejects(
-    () => ds.putMany([
-      { key: 'new1', payload: { v: 2 } },
-      { key: 'dup', payload: { v: 3 } },
-    ]),
+    () =>
+      ds.putMany([
+        { key: 'new1', payload: { v: 2 } },
+        { key: 'dup', payload: { v: 3 } },
+      ]),
     (error) => error instanceof Error && error.name === 'ValidationError',
   );
 
@@ -291,10 +298,11 @@ test('P12: putMany with reject policy throws on intra-batch duplicate', async ()
 
   // Two records with the same key in one batch
   await assert.rejects(
-    () => ds.putMany([
-      { key: 'same', payload: { v: 1 } },
-      { key: 'same', payload: { v: 2 } },
-    ]),
+    () =>
+      ds.putMany([
+        { key: 'same', payload: { v: 1 } },
+        { key: 'same', payload: { v: 2 } },
+      ]),
     (error) => error instanceof Error && error.name === 'ValidationError',
   );
 

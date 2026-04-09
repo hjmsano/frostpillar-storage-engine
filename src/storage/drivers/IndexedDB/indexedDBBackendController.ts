@@ -3,7 +3,11 @@ import type {
   BTreeJSON,
   IndexedDBConfig,
 } from '../../../types.js';
-import { StorageEngineError, UnsupportedBackendError, toErrorInstance } from '../../../errors/index.js';
+import {
+  StorageEngineError,
+  UnsupportedBackendError,
+  toErrorInstance,
+} from '../../../errors/index.js';
 import { parseAutoCommitConfig } from '../../config/config.shared.js';
 import { parseIndexedDBConfig } from './indexedDBConfig.js';
 import { AsyncDurableAutoCommitController } from '../../backend/asyncDurableAutoCommitController.js';
@@ -35,7 +39,10 @@ export interface IndexedDBBackendControllerCreateResult {
   initialCurrentSizeBytes: number;
 }
 
-export class IndexedDBBackendController extends AsyncDurableAutoCommitController implements DurableBackendController {
+export class IndexedDBBackendController
+  extends AsyncDurableAutoCommitController
+  implements DurableBackendController
+{
   private db: IDBDatabaseHandle;
   private readonly objectStoreName: string;
   private readonly getSnapshot: () => IndexedDBBackendControllerSnapshot;
@@ -70,7 +77,12 @@ export class IndexedDBBackendController extends AsyncDurableAutoCommitController
     const { databaseName, objectStoreName, version } = idbConfig;
     const autoCommit = parseAutoCommitConfig(options.autoCommit);
 
-    const db = await openIndexedDB(factory, databaseName, objectStoreName, version);
+    const db = await openIndexedDB(
+      factory,
+      databaseName,
+      objectStoreName,
+      version,
+    );
     let loaded: Awaited<ReturnType<typeof loadIndexedDBSnapshot>>;
     try {
       loaded = await loadIndexedDBSnapshot(db, objectStoreName);
@@ -105,7 +117,9 @@ export class IndexedDBBackendController extends AsyncDurableAutoCommitController
   protected async executeSingleCommit(): Promise<void> {
     const snapshot = this.getSnapshot();
     if (this.commitId >= Number.MAX_SAFE_INTEGER) {
-      throw new StorageEngineError('IndexedDB commitId has reached Number.MAX_SAFE_INTEGER.');
+      throw new StorageEngineError(
+        'IndexedDB commitId has reached Number.MAX_SAFE_INTEGER.',
+      );
     }
     const nextCommitId = this.commitId + 1;
     await commitIndexedDBSnapshot(

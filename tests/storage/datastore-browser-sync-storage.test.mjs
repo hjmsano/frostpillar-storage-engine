@@ -6,11 +6,12 @@ const createPromiseSyncStorageArea = () => {
   const store = new Map();
   return {
     get: async (keys) => {
-      const normalizedKeys = keys === null
-        ? Array.from(store.keys())
-        : Array.isArray(keys)
-          ? keys
-          : [keys];
+      const normalizedKeys =
+        keys === null
+          ? Array.from(store.keys())
+          : Array.isArray(keys)
+            ? keys
+            : [keys];
       const result = {};
       for (const key of normalizedKeys) {
         if (store.has(key)) {
@@ -37,11 +38,12 @@ const createChromeCallbackSyncStorageArea = () => {
   const store = new Map();
   return {
     get: (keys, callback) => {
-      const normalizedKeys = keys === null
-        ? Array.from(store.keys())
-        : Array.isArray(keys)
-          ? keys
-          : [keys];
+      const normalizedKeys =
+        keys === null
+          ? Array.from(store.keys())
+          : Array.isArray(keys)
+            ? keys
+            : [keys];
       const result = {};
       for (const key of normalizedKeys) {
         if (store.has(key)) {
@@ -83,7 +85,9 @@ const createSyncStorageConfig = (databaseKey) => {
 };
 
 const loadSyncStorageDriver = async () => {
-  const { syncStorageDriver } = await importDistModule('drivers/syncStorage.js');
+  const { syncStorageDriver } = await importDistModule(
+    'drivers/syncStorage.js',
+  );
   return syncStorageDriver;
 };
 

@@ -9,12 +9,7 @@
       "sentence-length": false,
       "no-exclamation-question-mark": false,
       "ja-no-mixed-period": {
-        "allowPeriodMarks": [
-          ".",
-          "。",
-          ":",
-          "："
-        ]
+        "allowPeriodMarks": [".", "。", ":", "："]
       }
     }
   }

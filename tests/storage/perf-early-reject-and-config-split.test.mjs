@@ -155,7 +155,10 @@ test('syncStorageConfig module exports parseSyncStorageConfig and related', asyn
     'storage/drivers/syncStorage/syncStorageConfig.js',
   );
   assert.equal(typeof mod.parseSyncStorageConfig, 'function');
-  assert.equal(typeof mod.parseSyncStorageMaxTotalBytesForBackendLimit, 'function');
+  assert.equal(
+    typeof mod.parseSyncStorageMaxTotalBytesForBackendLimit,
+    'function',
+  );
   assert.equal(typeof mod.DEFAULT_SYNC_STORAGE_MAX_TOTAL_BYTES, 'number');
 });
 

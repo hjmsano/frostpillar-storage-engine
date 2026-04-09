@@ -1,6 +1,12 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+} from 'node:fs';
 import { join, resolve } from 'node:path';
 import { importDistModule, loadStorageModule } from '../load-module.mjs';
 
@@ -44,17 +50,27 @@ describe('clear() durable commit integration', () => {
       const genBefore = findLatestGenerationFile(sandbox, 'test.fpdb');
       assert.ok(genBefore !== null, 'generation file must exist after commit');
       const contentBefore = readFileSync(genBefore, 'utf8');
-      assert.ok(contentBefore.includes('"seed"'), 'generation must contain seed record');
+      assert.ok(
+        contentBefore.includes('"seed"'),
+        'generation must contain seed record',
+      );
 
       await datastore.clear();
 
       const genAfter = findLatestGenerationFile(sandbox, 'test.fpdb');
       assert.ok(genAfter !== null, 'generation file must exist after clear');
       const contentAfter = readFileSync(genAfter, 'utf8');
-      assert.ok(!contentAfter.includes('"seed"'), 'generation must not contain cleared records');
+      assert.ok(
+        !contentAfter.includes('"seed"'),
+        'generation must not contain cleared records',
+      );
 
       const parsed = JSON.parse(contentAfter);
-      assert.deepStrictEqual(parsed.treeJSON.entries, [], 'generation treeJSON entries must be empty after clear');
+      assert.deepStrictEqual(
+        parsed.treeJSON.entries,
+        [],
+        'generation treeJSON entries must be empty after clear',
+      );
 
       await datastore.close();
     } finally {
@@ -81,7 +97,11 @@ describe('clear() durable commit integration', () => {
         driver: fileDriver({ filePath }),
       });
       const beforeClear = await ds2.getAll();
-      assert.equal(beforeClear.length, 2, 'reopened datastore must have persisted records');
+      assert.equal(
+        beforeClear.length,
+        2,
+        'reopened datastore must have persisted records',
+      );
 
       await ds2.clear();
       await ds2.commit();
