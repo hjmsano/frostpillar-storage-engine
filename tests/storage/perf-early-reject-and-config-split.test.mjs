@@ -25,8 +25,10 @@ const createStringKeyDefinition = () => ({
 // Change #3: Early reject — duplicate key check before validation
 // ---------------------------------------------------------------------------
 
-test('put with reject policy and duplicate key should throw ValidationError', async () => {
+test('put with reject policy and duplicate key should throw DuplicateKeyError', async () => {
   const { Datastore } = await loadStorageModule();
+  const { DuplicateKeyError, ValidationError } =
+    await importDistModule('errors/index.js');
   const ds = new Datastore({
     key: createStringKeyDefinition(),
     duplicateKeys: 'reject',
@@ -36,7 +38,8 @@ test('put with reject policy and duplicate key should throw ValidationError', as
 
   await assert.rejects(
     () => ds.put({ key: 'k1', payload: { v: 2 } }),
-    (error) => error instanceof Error && error.name === 'ValidationError',
+    (error) =>
+      error instanceof DuplicateKeyError && error instanceof ValidationError,
   );
 
   await ds.close();
@@ -60,6 +63,7 @@ test('put with reject policy and unique key should succeed', async () => {
 
 test('put with reject policy, duplicate key, and invalid payload throws duplicate-key error (not payload error)', async () => {
   const { Datastore } = await loadStorageModule();
+  const { DuplicateKeyError } = await importDistModule('errors/index.js');
   const ds = new Datastore({
     key: createStringKeyDefinition(),
     duplicateKeys: 'reject',
@@ -75,7 +79,7 @@ test('put with reject policy, duplicate key, and invalid payload throws duplicat
   await assert.rejects(
     () => ds.put({ key: 'dup', payload: circular }),
     (error) => {
-      assert.equal(error.name, 'ValidationError');
+      assert.ok(error instanceof DuplicateKeyError);
       assert.ok(
         error.message.includes('Duplicate key rejected'),
         `Expected "Duplicate key rejected" in message, got: ${error.message}`,

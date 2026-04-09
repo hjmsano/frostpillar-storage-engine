@@ -1,6 +1,10 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { Datastore, ValidationError } from '../../dist/index.js';
+import {
+  Datastore,
+  ValidationError,
+  DuplicateKeyError,
+} from '../../dist/index.js';
 
 describe('Duplicate key policy: allow (default)', () => {
   let ds;
@@ -90,12 +94,22 @@ describe('Duplicate key policy: reject', () => {
     await ds.close();
   });
 
-  it('rejects duplicate key with ValidationError', async () => {
+  it('rejects duplicate key with DuplicateKeyError (also instanceof ValidationError)', async () => {
     await ds.put({ key: 'unique', payload: { v: 1 } });
 
     await assert.rejects(
       () => ds.put({ key: 'unique', payload: { v: 2 } }),
-      (err) => err instanceof ValidationError,
+      (err) => {
+        assert.ok(err instanceof DuplicateKeyError);
+        assert.ok(err instanceof ValidationError);
+        assert.ok(err instanceof Error);
+        assert.equal(
+          err.message,
+          'Duplicate key rejected: a record with this key already exists.',
+        );
+        assert.equal(err.name, 'DuplicateKeyError');
+        return true;
+      },
     );
 
     const results = await ds.get('unique');
@@ -113,5 +127,37 @@ describe('Duplicate key policy: reject', () => {
     const first = await ds.getFirst('unique');
     const last = await ds.getLast('unique');
     assert.deepStrictEqual(first, last);
+  });
+});
+
+describe('Duplicate key policy: reject (putMany)', () => {
+  let ds;
+
+  before(async () => {
+    ds = new Datastore({ duplicateKeys: 'reject' });
+    await ds.put({ key: 'k1', payload: { v: 1 } });
+  });
+
+  after(async () => {
+    await ds.close();
+  });
+
+  it('rejects putMany containing a duplicate key with DuplicateKeyError (also instanceof ValidationError)', async () => {
+    await assert.rejects(
+      () =>
+        ds.putMany([
+          { key: 'k2', payload: { v: 2 } },
+          { key: 'k1', payload: { v: 3 } },
+        ]),
+      (err) => {
+        assert.ok(err instanceof DuplicateKeyError);
+        assert.ok(err instanceof ValidationError);
+        assert.equal(
+          err.message,
+          'Duplicate key rejected: a record with this key already exists.',
+        );
+        return true;
+      },
+    );
   });
 });

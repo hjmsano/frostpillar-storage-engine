@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { loadStorageModule } from '../load-module.mjs';
+import { importDistModule, loadStorageModule } from '../load-module.mjs';
 
 const createStringKeyDefinition = () => ({
   normalize: (value, fieldName) => {
@@ -268,6 +268,8 @@ test('P12: putMany on pure in-memory datastore inserts all records', async () =>
 
 test('P12: putMany with reject policy throws on duplicate within batch (across puts)', async () => {
   const { Datastore } = await loadStorageModule();
+  const { DuplicateKeyError, ValidationError } =
+    await importDistModule('errors/index.js');
   const ds = new Datastore({
     key: createStringKeyDefinition(),
     duplicateKeys: 'reject',
@@ -283,7 +285,8 @@ test('P12: putMany with reject policy throws on duplicate within batch (across p
         { key: 'new1', payload: { v: 2 } },
         { key: 'dup', payload: { v: 3 } },
       ]),
-    (error) => error instanceof Error && error.name === 'ValidationError',
+    (error) =>
+      error instanceof DuplicateKeyError && error instanceof ValidationError,
   );
 
   await ds.close();
@@ -291,6 +294,8 @@ test('P12: putMany with reject policy throws on duplicate within batch (across p
 
 test('P12: putMany with reject policy throws on intra-batch duplicate', async () => {
   const { Datastore } = await loadStorageModule();
+  const { DuplicateKeyError, ValidationError } =
+    await importDistModule('errors/index.js');
   const ds = new Datastore({
     key: createStringKeyDefinition(),
     duplicateKeys: 'reject',
@@ -303,7 +308,8 @@ test('P12: putMany with reject policy throws on intra-batch duplicate', async ()
         { key: 'same', payload: { v: 1 } },
         { key: 'same', payload: { v: 2 } },
       ]),
-    (error) => error instanceof Error && error.name === 'ValidationError',
+    (error) =>
+      error instanceof DuplicateKeyError && error instanceof ValidationError,
   );
 
   await ds.close();

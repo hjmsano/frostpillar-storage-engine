@@ -199,11 +199,11 @@ const db = new Datastore({
 });
 ```
 
-| ポリシー    | 動作                                | ユースケース                 |
-| ----------- | ----------------------------------- | ---------------------------- |
-| `'allow'`   | キーごとに複数レコード              | ログ、イベント、時系列データ |
-| `'replace'` | 最後の書き込みで上書き              | 設定、キャッシュ             |
-| `'reject'`  | 重複時に `ValidationError` をスロー | ユニーク制約                 |
+| ポリシー    | 動作                                                             | ユースケース                 |
+| ----------- | ---------------------------------------------------------------- | ---------------------------- |
+| `'allow'`   | キーごとに複数レコード                                           | ログ、イベント、時系列データ |
+| `'replace'` | 最後の書き込みで上書き                                           | 設定、キャッシュ             |
+| `'reject'`  | 重複時に `DuplicateKeyError`（`ValidationError` を継承）をスロー | ユニーク制約                 |
 
 #### ペイロードバリデーション
 
@@ -1060,6 +1060,7 @@ try {
 | ------------------------- | --------------------------------------------------------------------- |
 | `FrostpillarError`        | すべての Frostpillar エラーのルートクラス                             |
 | `ValidationError`         | 不正な入力（payload キー、ネスト深度など）                            |
+| `DuplicateKeyError`       | `duplicateKeys: 'reject'` 下での重複キー（`ValidationError` を継承）  |
 | `ConfigurationError`      | 不正なデータストア設定                                                |
 | `InvalidQueryRangeError`  | `getRange()` で `start > end`                                         |
 | `ClosedDatastoreError`    | クローズ済みデータストアへの操作                                      |
@@ -1163,6 +1164,7 @@ try {
 | `SyncStorageConfig`           | Sync Storage ドライバ設定                                                                                           |
 | `FrostpillarError`            | すべての Frostpillar エラーのルートクラス                                                                           |
 | `ValidationError`             | 不正な入力エラー                                                                                                    |
+| `DuplicateKeyError`           | `duplicateKeys: 'reject'` で投げられる重複キーエラー（`ValidationError` を継承）                                    |
 | `ConfigurationError`          | 不正な設定エラー                                                                                                    |
 | `QuotaExceededError`          | 容量超過エラー                                                                                                      |
 | `StorageEngineError`          | ストレージ層エラー                                                                                                  |

@@ -1,4 +1,4 @@
-import { ValidationError } from '../../errors/index.js';
+import { DuplicateKeyError } from '../../errors/index.js';
 import type {
   DatastoreKeyDefinition,
   InputRecord,
@@ -26,7 +26,7 @@ export const putManyInMemory = (
       ctx.duplicateKeyPolicy === 'reject' &&
       ctx.keyIndex.findFirst(nk) !== null
     ) {
-      throw new ValidationError(
+      throw new DuplicateKeyError(
         'Duplicate key rejected: a record with this key already exists.',
       );
     }

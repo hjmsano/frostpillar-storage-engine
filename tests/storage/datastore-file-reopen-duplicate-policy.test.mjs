@@ -64,6 +64,8 @@ describe('file backend reopen preserves duplicateKeys policy for empty DB', () =
 
   test("reopen with duplicateKeys: 'reject' preserves policy for empty DB", async () => {
     const { Datastore } = await loadStorageModule();
+    const { DuplicateKeyError, ValidationError } =
+      await importDistModule('errors/index.js');
     const { fileDriver } = await importDistModule('drivers/file.js');
 
     const sandbox = createSandboxDirectory('reopen-reject');
@@ -85,8 +87,10 @@ describe('file backend reopen preserves duplicateKeys policy for empty DB', () =
 
       await assert.rejects(
         () => ds2.put({ key: 'x', payload: { v: 2 } }),
-        (error) => error instanceof Error && error.name === 'ValidationError',
-        'reject policy must be preserved after reopen: second put must throw ValidationError',
+        (error) =>
+          error instanceof DuplicateKeyError &&
+          error instanceof ValidationError,
+        'reject policy must be preserved after reopen: second put must throw DuplicateKeyError',
       );
 
       await ds2.close();

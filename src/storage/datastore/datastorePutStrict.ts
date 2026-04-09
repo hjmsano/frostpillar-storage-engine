@@ -1,4 +1,4 @@
-import { QuotaExceededError, ValidationError } from '../../errors/index.js';
+import { DuplicateKeyError, QuotaExceededError } from '../../errors/index.js';
 import type { InputRecord, PersistedRecord } from '../../types.js';
 import type { DuplicateKeyPolicy } from '../btree/recordKeyIndexBTree.js';
 import { clampComparatorResult } from '../btree/recordKeyIndexBTree.js';
@@ -62,7 +62,7 @@ const validateAndPrepareEntry = (
       isIntraBatchDuplicate ||
       ctx.keyIndex.findFirst(normalizedKey) !== null
     ) {
-      throw new ValidationError(
+      throw new DuplicateKeyError(
         'Duplicate key rejected: a record with this key already exists.',
       );
     }

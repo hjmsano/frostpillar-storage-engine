@@ -1,7 +1,7 @@
 # Spec: Datastore API (Core Baseline)
 
 Status: Active
-Version: 0.15
+Version: 0.16
 Last Updated: 2026-04-09
 
 ## 1. Scope
@@ -84,6 +84,8 @@ Validation rules:
 - when `duplicateKeys` is omitted or `undefined`, MUST default to `'allow'`.
 - when `duplicateKeys` is not one of the three valid string values, construction MUST fail with `ConfigurationError`.
 - the resolved policy value is stored internally for forwarding to the B+Tree adapter (see §6 B-Tree Adapter Boundary in `03_InternalArchitecture.md`).
+
+When the resolved policy is `'reject'` and a `put`/`putMany` operation targets an already-existing key, the operation MUST throw `DuplicateKeyError` (which extends `ValidationError`). The thrown message MUST be the stable string `"Duplicate key rejected: a record with this key already exists."`. Consumers SHOULD prefer `instanceof DuplicateKeyError` over message matching; `instanceof ValidationError` MUST continue to match for back-compat.
 
 ### 2.2 Index Configuration (`config.index`)
 
@@ -414,7 +416,9 @@ Close behavior:
 Public error family:
 
 - all public errors extend `FrostpillarError` (which extends `Error`).
-- core exported errors include `ValidationError`, `ConfigurationError`, `InvalidQueryRangeError`, `ClosedDatastoreError`, `UnsupportedBackendError`, `StorageEngineError`, `DatabaseLockedError`, `BinaryFormatError`, `PageCorruptionError`, `IndexCorruptionError`, and `QuotaExceededError`.
+- core exported errors include `ValidationError`, `ConfigurationError`, `InvalidQueryRangeError`, `ClosedDatastoreError`, `UnsupportedBackendError`, `StorageEngineError`, `DatabaseLockedError`, `BinaryFormatError`, `PageCorruptionError`, `IndexCorruptionError`, `QuotaExceededError`, and `DuplicateKeyError`.
+
+`DuplicateKeyError` extends `ValidationError` and is thrown by `put`/`putMany` under `duplicateKeys: 'reject'` when a duplicate key is encountered (see §2.1).
 
 ## 9. Concurrency Model
 
@@ -441,6 +445,7 @@ Serialization rules:
 
 | Version | Date       | Summary                                                                                                                                                                   |
 | ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.16    | 2026-04-09 | Add typed `DuplicateKeyError` (extends `ValidationError`) thrown under `duplicateKeys: 'reject'` (§2.1, §8).                                                              |
 | 0.15    | 2026-04-09 | Add `countRange(start, end)` range counting API (§3, §3.1). Add `deleteRebalancePolicy` index config (§2.2). Add `countRange` to read operations concurrency list (§9).   |
 | 0.14    | 2026-04-08 | Specify `ValidationError` for `put`/`putMany` when record is null, non-object, or missing `key` (§3).                                                                     |
 | 0.13    | 2026-04-07 | Clarify `putMany` atomicity by capacity policy (§3.1). Clarify `payloadLimits` with `skipPayloadValidation` (§7.1). Require NaN rejection in all comparator paths (§4.3). |

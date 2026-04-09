@@ -1,7 +1,7 @@
 import {
+  DuplicateKeyError,
   IndexCorruptionError,
   QuotaExceededError,
-  ValidationError,
 } from '../../errors/index.js';
 import type {
   InputRecord,
@@ -123,7 +123,7 @@ export const executePutSingle = async (
     ctx.duplicateKeyPolicy === 'reject' &&
     ctx.keyIndex.findFirst(normalizedKey) !== null
   ) {
-    throw new ValidationError(
+    throw new DuplicateKeyError(
       'Duplicate key rejected: a record with this key already exists.',
     );
   }

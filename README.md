@@ -199,11 +199,11 @@ const db = new Datastore({
 });
 ```
 
-| Policy      | Behavior                              | Use case                  |
-| ----------- | ------------------------------------- | ------------------------- |
-| `'allow'`   | Multiple records per key              | Logs, events, time-series |
-| `'replace'` | Last-write-wins overwrite             | Config, settings, cache   |
-| `'reject'`  | Throws `ValidationError` on duplicate | Unique constraints        |
+| Policy      | Behavior                                                            | Use case                  |
+| ----------- | ------------------------------------------------------------------- | ------------------------- |
+| `'allow'`   | Multiple records per key                                            | Logs, events, time-series |
+| `'replace'` | Last-write-wins overwrite                                           | Config, settings, cache   |
+| `'reject'`  | Throws `DuplicateKeyError` (extends `ValidationError`) on duplicate | Unique constraints        |
 
 #### Payload Validation
 
@@ -1056,20 +1056,21 @@ try {
 
 #### Error Types
 
-| Error                     | Description                                                            |
-| ------------------------- | ---------------------------------------------------------------------- |
-| `FrostpillarError`        | Root class for all Frostpillar errors                                  |
-| `ValidationError`         | Invalid input (payload keys, nesting depth, etc.)                      |
-| `ConfigurationError`      | Invalid datastore configuration                                        |
-| `InvalidQueryRangeError`  | `start > end` in `getRange()`                                          |
-| `ClosedDatastoreError`    | Operation on a closed datastore                                        |
-| `QuotaExceededError`      | Capacity exceeded under `strict` policy                                |
-| `StorageEngineError`      | Storage-layer I/O or internal error                                    |
-| `DatabaseLockedError`     | File lock conflict (extends `StorageEngineError`)                      |
-| `BinaryFormatError`       | Corrupt binary data (extends `StorageEngineError`)                     |
-| `PageCorruptionError`     | Corrupt page/generation data (extends `StorageEngineError`)            |
-| `IndexCorruptionError`    | Corrupt index or invalid internal state (extends `StorageEngineError`) |
-| `UnsupportedBackendError` | Backend not available in current environment                           |
+| Error                     | Description                                                               |
+| ------------------------- | ------------------------------------------------------------------------- |
+| `FrostpillarError`        | Root class for all Frostpillar errors                                     |
+| `ValidationError`         | Invalid input (payload keys, nesting depth, etc.)                         |
+| `DuplicateKeyError`       | Duplicate key under `duplicateKeys: 'reject'` (extends `ValidationError`) |
+| `ConfigurationError`      | Invalid datastore configuration                                           |
+| `InvalidQueryRangeError`  | `start > end` in `getRange()`                                             |
+| `ClosedDatastoreError`    | Operation on a closed datastore                                           |
+| `QuotaExceededError`      | Capacity exceeded under `strict` policy                                   |
+| `StorageEngineError`      | Storage-layer I/O or internal error                                       |
+| `DatabaseLockedError`     | File lock conflict (extends `StorageEngineError`)                         |
+| `BinaryFormatError`       | Corrupt binary data (extends `StorageEngineError`)                        |
+| `PageCorruptionError`     | Corrupt page/generation data (extends `StorageEngineError`)               |
+| `IndexCorruptionError`    | Corrupt index or invalid internal state (extends `StorageEngineError`)    |
+| `UnsupportedBackendError` | Backend not available in current environment                              |
 
 #### `close()` Error Aggregation
 
@@ -1163,6 +1164,7 @@ If both a deferred backend initialization failure and a backend close failure oc
 | `SyncStorageConfig`           | Sync storage driver configuration                                                                                              |
 | `FrostpillarError`            | Root error class for all Frostpillar errors                                                                                    |
 | `ValidationError`             | Invalid input error                                                                                                            |
+| `DuplicateKeyError`           | Duplicate-key error thrown under `duplicateKeys: 'reject'` (extends `ValidationError`)                                         |
 | `ConfigurationError`          | Invalid configuration error                                                                                                    |
 | `QuotaExceededError`          | Capacity exceeded error                                                                                                        |
 | `StorageEngineError`          | Storage-layer error                                                                                                            |
