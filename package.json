@@ -106,6 +106,6 @@
   },
   "packageManager": "pnpm@10.30.3",
   "dependencies": {
-    "@frostpillar/frostpillar-btree": "0.2.7"
+    "@frostpillar/frostpillar-btree": "0.2.9"
   }
 }
