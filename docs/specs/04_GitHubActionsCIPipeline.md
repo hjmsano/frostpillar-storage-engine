@@ -1,8 +1,8 @@
 # Spec: GitHub Actions CI and Release Pipeline
 
 Status: Active
-Version: 0.4
-Last Updated: 2026-04-04
+Version: 0.5
+Last Updated: 2026-07-03
 
 ## 1. Scope
 
@@ -30,9 +30,10 @@ Repository MUST define:
 Trigger policy:
 
 - workflow name MUST be `CI`.
-- trigger MUST be `push`.
-- `main/*` branches MUST be excluded.
-- tags matching `v*` MUST be excluded.
+- triggers MUST be `pull_request` and `push`.
+- `pull_request` MUST run the quality gate for every pull request, including pull requests from forks.
+- `push` MUST be restricted to the `main` branch. Feature branches receive CI through their pull request, so plain branch pushes MUST NOT trigger a duplicate run.
+- `branches-ignore` / `tags-ignore` patterns MUST NOT be used (the previous `main/*` ignore pattern did not match `main` itself).
 
 Permission policy:
 
@@ -40,7 +41,11 @@ Permission policy:
 
 Job contract:
 
-- one `lint-and-test` job on `ubuntu-latest`.
+- one `lint-and-test` job running on an OS matrix.
+- the OS matrix MUST include `ubuntu-latest` and `macos-latest`.
+  (`windows-latest` joins the matrix together with the file-backend directory-fsync guard, tracked as separate work.)
+- the matrix MUST set `fail-fast: false` so one OS failure does not cancel the others.
+- Node.js version MUST be `24.x` for every matrix entry.
 - steps run in order:
   1. checkout
   2. setup pnpm (no auto-install)
@@ -123,6 +128,7 @@ Required:
 
 | Version | Date       | Summary                                                                                                  |
 | ------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| 0.5     | 2026-07-03 | Add `pull_request` trigger, restrict `push` to `main`, add OS matrix (ubuntu + macos, `fail-fast: false`). |
 | 0.4     | 2026-04-04 | Switch publish target from GitHub Packages to npmjs.org (OIDC), release branch from `release` to `main`. |
 | 0.3     | 2026-03-20 | Add bundle target and package contract details (§6).                                                     |
 | 0.2     | 2026-03-20 | Add reproducibility and supply-chain rules (§5).                                                         |
