@@ -1,7 +1,7 @@
 # Spec: GitHub Actions CI and Release Pipeline
 
 Status: Active
-Version: 0.5
+Version: 0.6
 Last Updated: 2026-07-03
 
 ## 1. Scope
@@ -41,11 +41,9 @@ Permission policy:
 
 Job contract:
 
-- one `lint-and-test` job running on an OS matrix.
-- the OS matrix MUST include `ubuntu-latest` and `macos-latest`.
-  (`windows-latest` joins the matrix together with the file-backend directory-fsync guard, tracked as separate work.)
-- the matrix MUST set `fail-fast: false` so one OS failure does not cancel the others.
-- Node.js version MUST be `24.x` for every matrix entry.
+- one `lint-and-test` job on `ubuntu-latest` (single OS, matching the CI convention of the Frostpillar package family, e.g. `frostpillar-btree`).
+- an OS matrix MUST NOT be used; platform-specific behavior is addressed per feature, not by blanket matrix runs.
+- Node.js version MUST be `24.x`.
 - steps run in order:
   1. checkout
   2. setup pnpm (no auto-install)
@@ -128,6 +126,7 @@ Required:
 
 | Version | Date       | Summary                                                                                                  |
 | ------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| 0.6     | 2026-07-03 | Remove OS matrix; single `ubuntu-latest` job to match Frostpillar family CI convention.                   |
 | 0.5     | 2026-07-03 | Add `pull_request` trigger, restrict `push` to `main`, add OS matrix (ubuntu + macos, `fail-fast: false`). |
 | 0.4     | 2026-04-04 | Switch publish target from GitHub Packages to npmjs.org (OIDC), release branch from `release` to `main`. |
 | 0.3     | 2026-03-20 | Add bundle target and package contract details (§6).                                                     |

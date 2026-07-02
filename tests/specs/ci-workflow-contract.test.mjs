@@ -26,14 +26,17 @@ test('ci workflow push trigger is restricted to main', async () => {
   assert.equal('tags-ignore' in push, false);
 });
 
-test('ci workflow runs lint-and-test on an OS matrix', async () => {
+test('ci workflow runs lint-and-test on a single ubuntu runner', async () => {
   const workflow = await readCiWorkflow();
   const job = workflow.jobs['lint-and-test'];
 
   assert.ok(job, 'lint-and-test job is required');
-  assert.equal(job.strategy['fail-fast'], false);
-  assert.deepEqual(job.strategy.matrix.os, ['ubuntu-latest', 'macos-latest']);
-  assert.equal(job['runs-on'], '${{ matrix.os }}');
+  assert.equal(job['runs-on'], 'ubuntu-latest');
+  assert.equal(
+    'strategy' in job,
+    false,
+    'OS matrix must not be used (Frostpillar family CI convention)',
+  );
 });
 
 test('ci workflow keeps Node.js 24 with pnpm cache and frozen lockfile', async () => {
