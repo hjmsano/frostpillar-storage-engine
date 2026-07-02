@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.7](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.6...v0.1.7) (2026-07-02)
+
+
+### Bug Fixes
+
+* **deps:** update @frostpillar/frostpillar-btree to 0.2.9 ([843e60d](https://github.com/hjmsano/frostpillar-storage-engine/commit/843e60ddc8b72d8412b5a21dd419a4ec8558aad9))
+* **deps:** update @frostpillar/frostpillar-btree to 0.2.9 ([ea246a4](https://github.com/hjmsano/frostpillar-storage-engine/commit/ea246a46be742229fd2387c7cfe19a38a66e4c02))
+
 ## [0.1.6](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.5...v0.1.6) (2026-04-09)
 
 
