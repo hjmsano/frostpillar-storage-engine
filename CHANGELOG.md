@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.8](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.7...v0.1.8) (2026-07-03)
+
+
+### Bug Fixes
+
+* skip directory fsync on Windows in file backend commit ([d9d82f0](https://github.com/hjmsano/frostpillar-storage-engine/commit/d9d82f09afbfa22b6591224f83fc08df1cb000d1))
+* skip directory fsync on Windows in file backend commit ([baf6481](https://github.com/hjmsano/frostpillar-storage-engine/commit/baf6481f0a63ac8634bb3cd23b3618de2750a8df))
+
 ## [0.1.7](https://github.com/hjmsano/frostpillar-storage-engine/compare/v0.1.6...v0.1.7) (2026-07-02)
 
 
