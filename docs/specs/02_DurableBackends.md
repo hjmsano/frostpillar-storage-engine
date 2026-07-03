@@ -1,8 +1,8 @@
 # Spec: Durable Backends and Capacity Resolution
 
 Status: Active
-Version: 0.3
-Last Updated: 2026-03-30
+Version: 0.4
+Last Updated: 2026-07-03
 
 ## 1. Scope
 
@@ -91,8 +91,16 @@ File commit MUST use generation files plus sidecar metadata in this order:
 4. write sidecar temp (`*.meta.json.tmp`) with new active generation pointer
 5. persist sidecar temp
 6. atomic replace sidecar (`*.meta.json`)
+7. fsync the parent directory so the rename metadata itself survives power loss (POSIX platforms only — see platform note)
 
 `commit()` durable boundary is sidecar activation.
+
+Platform note (directory fsync):
+
+- on POSIX platforms (Linux, macOS), step 7 MUST be performed after sidecar activation.
+- on Windows (`process.platform === 'win32'`), step 7 MUST be skipped and the skip MUST NOT fail the commit. Windows has no directory-sync API: `FlushFileBuffers` operates only on file handles, and Node.js `fs.fsync` on a directory handle fails with `EPERM`. Rename metadata durability is delegated to NTFS metadata journaling.
+- file-content fsync (steps 2 and 5) applies on all platforms.
+- rationale and references: ADR-0057.
 
 ### 3.3 Recovery Contract
 
@@ -183,6 +191,7 @@ Commit robustness:
 
 | Version | Date       | Summary                                                                                                  |
 | ------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| 0.4     | 2026-07-03 | Document directory-fsync step (§3.2 step 7) and Windows skip contract (ADR-0057).                        |
 | 0.3     | 2026-03-30 | Add treeJSON structural validation (§2.2), stale lock recovery (§3.4), working directory capture (§3.6). |
 | 0.2     | 2026-03-25 | Switch to BTreeJSON persistence (§2.1), simplify PersistedRecord, add size estimation contract.          |
 | 0.1     | 2026-03-20 | Initial specification.                                                                                   |

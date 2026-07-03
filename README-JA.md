@@ -523,6 +523,8 @@ await db.close();
 
 > **パス制約:** すべての解決済みファイルパス（`filePath`、`target.directory`）は `process.cwd()` 内に収まる必要があります。`../` トラバーサルや外部を指す絶対パスなど、作業ディレクトリの外に解決されるパスは `ConfigurationError` で拒否されます。
 
+> **Windows に関する注意:** Windows にはディレクトリ同期 API がないため、コミットプロトコルの親ディレクトリ fsync ステップは Windows ではスキップされます。ファイル内容の fsync はすべてのコミットで引き続き実行され、リネームメタデータの永続化は NTFS のジャーナリングに委ねられます。
+
 **ロックファイルの動作：**
 
 `fileDriver` は単一 writer を保証するために `${filePath}.lock` を使用します。

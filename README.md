@@ -523,6 +523,8 @@ Alternatively, use directory-based targeting via the `target` option:
 
 > **Path containment:** All resolved file paths (`filePath`, `target.directory`) must stay within `process.cwd()`. Paths that resolve outside the working directory (e.g. via `../` traversal or absolute paths pointing elsewhere) are rejected with `ConfigurationError`.
 
+> **Windows note:** The commit protocol's parent-directory fsync step is skipped on Windows, which has no directory-sync API. File contents are still fsynced on every commit; rename metadata durability is delegated to NTFS journaling.
+
 **Lock file behavior:**
 
 `fileDriver` uses `${filePath}.lock` to enforce a single writer.
