@@ -61,6 +61,7 @@ Numbering policy:
 - [0023_InsertionOrderSentinelBoundaryGuard.md](./0023_InsertionOrderSentinelBoundaryGuard.md)
 - [0029_RemoveTimestampAliasInput_for_Insert.md](./0029_RemoveTimestampAliasInput_for_Insert.md)
 - [0036_AutoCommitDriverGuard_and_ConfigDefaultConsolidation.md](./0036_AutoCommitDriverGuard_and_ConfigDefaultConsolidation.md)
+- [0057_WindowsDirectoryFsyncSkip_for_FileBackendCommit.md](./0057_WindowsDirectoryFsyncSkip_for_FileBackendCommit.md)
 
 ## Browser
 

@@ -33,7 +33,16 @@ const writeFsync = (filePath: string, content: string): void => {
   }
 };
 
+// Windows has no directory-sync API: FlushFileBuffers works only on file
+// handles, so fs.fsync on a directory handle fails with EPERM there. Rename
+// metadata durability on Windows is delegated to NTFS journaling (ADR-0057).
+export const isDirectoryFsyncSupported = (platform: string): boolean =>
+  platform !== 'win32';
+
 const fsyncDirectory = (dirPath: string): void => {
+  if (!isDirectoryFsyncSupported(process.platform)) {
+    return;
+  }
   const fd = openSync(dirPath, 'r');
   try {
     fsyncSync(fd);
