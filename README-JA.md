@@ -135,7 +135,7 @@ pnpm add @frostpillar/frostpillar-storage-engine
 
 > **ドライバ別互換性：** 上記の表はコアエンジンおよびインメモリモードのベースラインです。各ドライバはさらに以下のブラウザサポートを必要とします：
 >
-> - `opfsDriver` は `FileSystemWritableFileStream.createWritable()` を必要とします（Chrome 86+、Edge 86+、Firefox 111+、Safari 26.0+。参照：[caniuse.com](https://caniuse.com/mdn-api_filesystemwritablefilestream)）。
+> - `opfsDriver` は `FileSystemFileHandle.createWritable()` を必要とします（Chrome 86+、Edge 86+、Firefox 111+、Safari 26.0+。参照：[caniuse.com](https://caniuse.com/mdn-api_filesystemwritablefilestream)）。
 > - `syncStorageDriver` はブラウザ拡張コンテキスト（`storage` 権限を持つ `browser.storage.sync` / `chrome.storage.sync`）を必要とし、通常のウェブページでは使用できません。
 
 > **プレリリースについて:** 本パッケージは [SemVer](https://semver.org/) に従います。メジャーバージョンが `0` の間は、マイナーバージョンの更新に破壊的変更が含まれる場合があります。依存バージョンを固定し、アップグレード前にチェンジログを確認してください。
