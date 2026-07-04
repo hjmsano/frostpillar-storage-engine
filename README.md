@@ -362,7 +362,7 @@ All record-returning APIs include the `_id` field in the result.
 
 #### Update
 
-**`updateById(id, patch)`** — shallow-merge `patch` into the existing payload. Returns `true` if found, `false` otherwise. Does not change `key` or `_id`. A patch value of `undefined` is rejected with `ValidationError`; to remove existing fields, use `replaceById` with the complete new payload.
+**`updateById(id, patch)`** — shallow-merge `patch` into the existing payload. Returns `true` if found, `false` otherwise. Does not change `key` or `_id`. A patch containing `undefined` property values is rejected with `ValidationError`; to remove existing fields, use `replaceById` with the complete new payload.
 
 ```ts
 const updated = await db.updateById(id, { name: 'Alice V2' });
