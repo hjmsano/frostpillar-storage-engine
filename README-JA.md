@@ -117,7 +117,7 @@ pnpm add @frostpillar/frostpillar-storage-engine
 
 ### インストール（ブラウザ）
 
-[GitHub Releases](https://github.com/hjmsano/frostpillar-storage-engine/releases) から minify 済み IIFE バンドルをダウンロードし、`<script>` タグで読み込みます。`<TAG>` はリリース済みタグ（例: `v0.2.1`）に置き換えてください。
+[GitHub Releases](https://github.com/hjmsano/frostpillar-storage-engine/releases) から minify 済み IIFE バンドルをダウンロードし、`<script>` タグで読み込みます。`<TAG>` はリリース済みタグ（例: `v0.1.8`）に置き換えてください。
 
 ```html
 <script src="https://github.com/hjmsano/frostpillar-storage-engine/releases/download/<TAG>/frostpillar-storage-engine.min.js"></script>
@@ -132,6 +132,11 @@ pnpm add @frostpillar/frostpillar-storage-engine
 | Node.js    | >= 24.0.0（ESM および CJS）                                  |
 | ブラウザ   | ES2020 互換（Chrome 80+、Firefox 74+、Safari 14+、Edge 80+） |
 | TypeScript | >= 5.0                                                       |
+
+> **ドライバ別互換性：** 上記の表はコアエンジンおよびインメモリモードのベースラインです。各ドライバはさらに以下のブラウザサポートを必要とします：
+>
+> - `opfsDriver` は `FileSystemFileHandle.createWritable()` を必要とします（Chrome 86+、Edge 86+、Firefox 111+、Safari 26.0+。参照：[caniuse.com](https://caniuse.com/mdn-api_filesystemwritablefilestream)）。
+> - `syncStorageDriver` はブラウザ拡張コンテキスト（`storage` 権限を持つ `browser.storage.sync` / `chrome.storage.sync`）を必要とし、通常のウェブページでは使用できません。
 
 > **プレリリースについて:** 本パッケージは [SemVer](https://semver.org/) に従います。メジャーバージョンが `0` の間は、マイナーバージョンの更新に破壊的変更が含まれる場合があります。依存バージョンを固定し、アップグレード前にチェンジログを確認してください。
 
@@ -357,7 +362,7 @@ const exists = await db.has('k1');
 
 #### 更新
 
-**`updateById(id, patch)`** — 既存の payload に `patch` を shallow merge します。見つかった場合は `true`、見つからなかった場合は `false` を返します。`key` や `_id` は変更されません。
+**`updateById(id, patch)`** — 既存の payload に `patch` を shallow merge します。見つかった場合は `true`、見つからなかった場合は `false` を返します。`key` や `_id` は変更されません。プロパティの値に `undefined` を含むパッチは `ValidationError` で拒否されます。既存フィールドを削除するには、完全な新しいペイロードを指定して `replaceById` を使用してください。
 
 ```ts
 const updated = await db.updateById(id, { name: 'Alice V2' });
@@ -542,7 +547,7 @@ await db.close();
 #### localStorage ドライバ
 
 > **ブラウザ / 拡張機能環境専用。** このドライバは Node.js では利用できません。
-> Node.js でのインメモリストレージには `memoryDriver`、永続化には `fileDriver` を使用してください。
+> Node.js でインプロセスに保持する場合はデフォルトのインメモリモード（`driver` を省略）、永続化には `fileDriver` を使用してください。
 
 **ブラウザ（ESM）:**
 
@@ -585,7 +590,7 @@ const db = new Datastore({
 #### IndexedDB ドライバ
 
 > **ブラウザ / 拡張機能環境専用。** このドライバは Node.js では利用できません。
-> Node.js でのインメモリストレージには `memoryDriver`、永続化には `fileDriver` を使用してください。
+> Node.js でインプロセスに保持する場合はデフォルトのインメモリモード（`driver` を省略）、永続化には `fileDriver` を使用してください。
 
 **ブラウザ（ESM）:**
 
@@ -627,7 +632,7 @@ const db = new Datastore({
 #### OPFS ドライバ
 
 > **ブラウザ / 拡張機能環境専用。** このドライバは Node.js では利用できません。
-> Node.js でのインメモリストレージには `memoryDriver`、永続化には `fileDriver` を使用してください。
+> Node.js でインプロセスに保持する場合はデフォルトのインメモリモード（`driver` を省略）、永続化には `fileDriver` を使用してください。
 
 **ブラウザ（ESM）:**
 
@@ -663,7 +668,7 @@ const db = new Datastore({
 #### Sync Storage ドライバ（ブラウザ拡張）
 
 > **ブラウザ / 拡張機能環境専用。** このドライバは Node.js では利用できません。
-> Node.js でのインメモリストレージには `memoryDriver`、永続化には `fileDriver` を使用してください。
+> Node.js でインプロセスに保持する場合はデフォルトのインメモリモード（`driver` を省略）、永続化には `fileDriver` を使用してください。
 
 **ブラウザ（ESM）:**
 
@@ -901,6 +906,8 @@ const db = new Datastore({
 - **`strict`**（デフォルト）— 制限を超える書き込みを `QuotaExceededError` で拒否します。
 - **`turnover`** — 新しいレコードが収まるまで、B+Tree のキー昇順で最小キーを持つレコードから順に退避します。
 
+> **注意：** `updateById` / `replaceById` はレコードを退避しません。更新後のペイロードが `maxSize` に収まらない場合、`'turnover'` ポリシーでも `QuotaExceededError` がスローされます。
+
 **`backendLimit` センチネル：**
 
 `maxSize: 'backendLimit'` を設定すると、ドライバ固有の制限値を使用します（例: `localStorageDriver` では `maxChunkChars * maxChunks`、`syncStorageDriver` では `maxTotalBytes`）。バックエンド制限解決をサポートする永続ドライバが必要です。
@@ -1058,21 +1065,21 @@ try {
 
 #### エラー型一覧
 
-| エラー                    | 説明                                                                  |
-| ------------------------- | --------------------------------------------------------------------- |
-| `FrostpillarError`        | すべての Frostpillar エラーのルートクラス                             |
-| `ValidationError`         | 不正な入力（payload キー、ネスト深度など）                            |
-| `DuplicateKeyError`       | `duplicateKeys: 'reject'` 下での重複キー（`ValidationError` を継承）  |
-| `ConfigurationError`      | 不正なデータストア設定                                                |
-| `InvalidQueryRangeError`  | `getRange()` で `start > end`                                         |
-| `ClosedDatastoreError`    | クローズ済みデータストアへの操作                                      |
-| `QuotaExceededError`      | `strict` ポリシーで容量超過                                           |
-| `StorageEngineError`      | ストレージ層の I/O または内部エラー                                   |
-| `DatabaseLockedError`     | ファイルロック競合（`StorageEngineError` を継承）                     |
-| `BinaryFormatError`       | バイナリデータの破損（`StorageEngineError` を継承）                   |
-| `PageCorruptionError`     | ページ/世代データの破損（`StorageEngineError` を継承）                |
-| `IndexCorruptionError`    | インデックスの破損または不正な内部状態（`StorageEngineError` を継承） |
-| `UnsupportedBackendError` | 現在の環境でバックエンドが利用不可                                    |
+| エラー                    | 説明                                                                                                                              |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `FrostpillarError`        | すべての Frostpillar エラーのルートクラス                                                                                         |
+| `ValidationError`         | 不正な入力（payload キー、ネスト深度など）                                                                                        |
+| `DuplicateKeyError`       | `duplicateKeys: 'reject'` 下での重複キー（`ValidationError` を継承）                                                              |
+| `ConfigurationError`      | 不正なデータストア設定                                                                                                            |
+| `InvalidQueryRangeError`  | `getRange()` で `start > end`                                                                                                     |
+| `ClosedDatastoreError`    | クローズ済みデータストアへの操作                                                                                                  |
+| `QuotaExceededError`      | 容量超過（`strict` ポリシーでの書き込み、または任意の容量ポリシーで更新後サイズが `maxSize` を超える `updateById`/`replaceById`） |
+| `StorageEngineError`      | ストレージ層の I/O または内部エラー                                                                                               |
+| `DatabaseLockedError`     | ファイルロック競合（`StorageEngineError` を継承）                                                                                 |
+| `BinaryFormatError`       | バイナリデータの破損（`StorageEngineError` を継承）                                                                               |
+| `PageCorruptionError`     | ページ/世代データの破損（`StorageEngineError` を継承）                                                                            |
+| `IndexCorruptionError`    | インデックスの破損または不正な内部状態（`StorageEngineError` を継承）                                                             |
+| `UnsupportedBackendError` | 現在の環境でバックエンドが利用不可                                                                                                |
 
 #### `close()` のエラー集約
 

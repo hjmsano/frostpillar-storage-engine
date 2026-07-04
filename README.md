@@ -117,7 +117,7 @@ This package is published to [npm](https://www.npmjs.com/package/@frostpillar/fr
 
 ### Installation (Browser)
 
-Download the minified IIFE bundle from [GitHub Releases](https://github.com/hjmsano/frostpillar-storage-engine/releases) and load it with a `<script>` tag. Replace `<TAG>` with a released tag (e.g. `v0.2.1`).
+Download the minified IIFE bundle from [GitHub Releases](https://github.com/hjmsano/frostpillar-storage-engine/releases) and load it with a `<script>` tag. Replace `<TAG>` with a released tag (e.g. `v0.1.8`).
 
 ```html
 <script src="https://github.com/hjmsano/frostpillar-storage-engine/releases/download/<TAG>/frostpillar-storage-engine.min.js"></script>
@@ -132,6 +132,11 @@ Download the minified IIFE bundle from [GitHub Releases](https://github.com/hjms
 | Node.js     | >= 24.0.0 (ESM and CJS)                                           |
 | Browser     | ES2020-compatible (Chrome 80+, Firefox 74+, Safari 14+, Edge 80+) |
 | TypeScript  | >= 5.0                                                            |
+
+> **Driver-specific compatibility:** The table above is the baseline for the core engine and in-memory mode. Individual drivers may require additional browser support:
+>
+> - `opfsDriver` additionally requires `FileSystemFileHandle.createWritable()` (Chrome 86+, Edge 86+, Firefox 111+, Safari 26.0+; source: [caniuse.com](https://caniuse.com/mdn-api_filesystemwritablefilestream)).
+> - `syncStorageDriver` requires a browser-extension context (`browser.storage.sync` / `chrome.storage.sync` with the `storage` permission) and is not available on regular web pages.
 
 > **Pre-1.0 notice:** This package follows [SemVer](https://semver.org/). While the major version is `0`, minor version bumps may include breaking changes. Pin your dependency version and review changelogs before upgrading.
 
@@ -357,7 +362,7 @@ All record-returning APIs include the `_id` field in the result.
 
 #### Update
 
-**`updateById(id, patch)`** — shallow-merge `patch` into the existing payload. Returns `true` if found, `false` otherwise. Does not change `key` or `_id`.
+**`updateById(id, patch)`** — shallow-merge `patch` into the existing payload. Returns `true` if found, `false` otherwise. Does not change `key` or `_id`. A patch containing `undefined` property values is rejected with `ValidationError`; to remove existing fields, use `replaceById` with the complete new payload.
 
 ```ts
 const updated = await db.updateById(id, { name: 'Alice V2' });
@@ -542,7 +547,7 @@ If the owning process is still alive (or the lock file is malformed), the open f
 #### localStorage Driver
 
 > **Browser / Extension environments only.** This driver is not available on Node.js.
-> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
+> Use the default in-memory mode (omit `driver`) for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -585,7 +590,7 @@ const db = new Datastore({
 #### IndexedDB Driver
 
 > **Browser / Extension environments only.** This driver is not available on Node.js.
-> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
+> Use the default in-memory mode (omit `driver`) for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -627,7 +632,7 @@ const db = new Datastore({
 #### OPFS Driver
 
 > **Browser / Extension environments only.** This driver is not available on Node.js.
-> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
+> Use the default in-memory mode (omit `driver`) for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -663,7 +668,7 @@ const db = new Datastore({
 #### Sync Storage Driver (Browser Extensions)
 
 > **Browser / Extension environments only.** This driver is not available on Node.js.
-> Use `memoryDriver` for in-process storage, or `fileDriver` for persistent storage on Node.js.
+> Use the default in-memory mode (omit `driver`) for in-process storage, or `fileDriver` for persistent storage on Node.js.
 
 **Browser (ESM):**
 
@@ -901,6 +906,8 @@ const db = new Datastore({
 - **`strict`** (default) — rejects writes that exceed the limit with `QuotaExceededError`.
 - **`turnover`** — evicts records with the smallest key first (ascending B+Tree key order) until the new record fits.
 
+> **Note:** `updateById` / `replaceById` never evict records. If the updated payload no longer fits within `maxSize`, they throw `QuotaExceededError` even under `'turnover'`.
+
 **`backendLimit` sentinel:**
 
 Set `maxSize: 'backendLimit'` to use the driver's own limit (e.g. `maxChunkChars * maxChunks` for `localStorageDriver`, `maxTotalBytes` for `syncStorageDriver`). Requires a durable driver that supports backend-limit resolution.
@@ -1058,21 +1065,21 @@ try {
 
 #### Error Types
 
-| Error                     | Description                                                               |
-| ------------------------- | ------------------------------------------------------------------------- |
-| `FrostpillarError`        | Root class for all Frostpillar errors                                     |
-| `ValidationError`         | Invalid input (payload keys, nesting depth, etc.)                         |
-| `DuplicateKeyError`       | Duplicate key under `duplicateKeys: 'reject'` (extends `ValidationError`) |
-| `ConfigurationError`      | Invalid datastore configuration                                           |
-| `InvalidQueryRangeError`  | `start > end` in `getRange()`                                             |
-| `ClosedDatastoreError`    | Operation on a closed datastore                                           |
-| `QuotaExceededError`      | Capacity exceeded under `strict` policy                                   |
-| `StorageEngineError`      | Storage-layer I/O or internal error                                       |
-| `DatabaseLockedError`     | File lock conflict (extends `StorageEngineError`)                         |
-| `BinaryFormatError`       | Corrupt binary data (extends `StorageEngineError`)                        |
-| `PageCorruptionError`     | Corrupt page/generation data (extends `StorageEngineError`)               |
-| `IndexCorruptionError`    | Corrupt index or invalid internal state (extends `StorageEngineError`)    |
-| `UnsupportedBackendError` | Backend not available in current environment                              |
+| Error                     | Description                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `FrostpillarError`        | Root class for all Frostpillar errors                                                                           |
+| `ValidationError`         | Invalid input (payload keys, nesting depth, etc.)                                                               |
+| `DuplicateKeyError`       | Duplicate key under `duplicateKeys: 'reject'` (extends `ValidationError`)                                       |
+| `ConfigurationError`      | Invalid datastore configuration                                                                                 |
+| `InvalidQueryRangeError`  | `start > end` in `getRange()`                                                                                   |
+| `ClosedDatastoreError`    | Operation on a closed datastore                                                                                 |
+| `QuotaExceededError`      | Capacity exceeded (`strict` policy writes; `updateById`/`replaceById` growth beyond `maxSize` under any policy) |
+| `StorageEngineError`      | Storage-layer I/O or internal error                                                                             |
+| `DatabaseLockedError`     | File lock conflict (extends `StorageEngineError`)                                                               |
+| `BinaryFormatError`       | Corrupt binary data (extends `StorageEngineError`)                                                              |
+| `PageCorruptionError`     | Corrupt page/generation data (extends `StorageEngineError`)                                                     |
+| `IndexCorruptionError`    | Corrupt index or invalid internal state (extends `StorageEngineError`)                                          |
+| `UnsupportedBackendError` | Backend not available in current environment                                                                    |
 
 #### `close()` Error Aggregation
 
