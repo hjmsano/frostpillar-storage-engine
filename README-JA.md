@@ -362,7 +362,7 @@ const exists = await db.has('k1');
 
 #### 更新
 
-**`updateById(id, patch)`** — 既存の payload に `patch` を shallow merge します。見つかった場合は `true`、見つからなかった場合は `false` を返します。`key` や `_id` は変更されません。`undefined` を含むパッチ値は `ValidationError` で拒否されます。既存フィールドを削除するには、完全な新しいペイロードを指定して `replaceById` を使用してください。
+**`updateById(id, patch)`** — 既存の payload に `patch` を shallow merge します。見つかった場合は `true`、見つからなかった場合は `false` を返します。`key` や `_id` は変更されません。プロパティの値に `undefined` を含むパッチは `ValidationError` で拒否されます。既存フィールドを削除するには、完全な新しいペイロードを指定して `replaceById` を使用してください。
 
 ```ts
 const updated = await db.updateById(id, { name: 'Alice V2' });
