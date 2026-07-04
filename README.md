@@ -135,7 +135,7 @@ Download the minified IIFE bundle from [GitHub Releases](https://github.com/hjms
 
 > **Driver-specific compatibility:** The table above is the baseline for the core engine and in-memory mode. Individual drivers may require additional browser support:
 >
-> - `opfsDriver` additionally requires `FileSystemWritableFileStream.createWritable()` (Chrome 86+, Edge 86+, Firefox 111+, Safari 26.0+; source: [caniuse.com](https://caniuse.com/mdn-api_filesystemwritablefilestream)).
+> - `opfsDriver` additionally requires `FileSystemFileHandle.createWritable()` (Chrome 86+, Edge 86+, Firefox 111+, Safari 26.0+; source: [caniuse.com](https://caniuse.com/mdn-api_filesystemwritablefilestream)).
 > - `syncStorageDriver` requires a browser-extension context (`browser.storage.sync` / `chrome.storage.sync` with the `storage` permission) and is not available on regular web pages.
 
 > **Pre-1.0 notice:** This package follows [SemVer](https://semver.org/). While the major version is `0`, minor version bumps may include breaking changes. Pin your dependency version and review changelogs before upgrading.
